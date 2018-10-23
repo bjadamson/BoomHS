@@ -7,7 +7,6 @@
 #include <array>
 #include <cmath>
 #include <limits>
-#include <ostream>
 #include <string>
 
 namespace boomhs
@@ -23,12 +22,43 @@ using TranslationMatrix = glm::mat4;
 using ScaleMatrix       = glm::mat4;
 using RotationMatrix    = glm::mat4;
 
-template <typename T, typename V>
+template <typename V, size_t N>
+struct PolygonVertices
+{
+  std::array<V, N> vertices;
+
+  template <typename ...P>
+  constexpr PolygonVertices(P&&... points) noexcept
+      : vertices(common::make_array<V>(FORWARD(points)))
+  {
+    auto constexpr NUM_POINTS_PASSED_TO_CTOR = sizeof...(P);
+    static_assert(N == NUM_POINTS_PASSED_TO_CTOR, "Not enough points provided.");
+  }
+
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(vertices);
+
+  auto to_string() const
+  {
+    static_assert(N == 4, "Exactly 4 points required (for now).");
+    return fmt::sprintf("{%s, %s, %s, %s}",
+        glm::to_string(vertices[0]),
+        glm::to_string(vertices[1]),
+        glm::to_string(vertices[2]),
+        glm::to_string(vertices[3]));
+  }
+};
+
+template <typename V>
 struct RectT
 {
+  static auto constexpr num_vertices = 4;
+  using vertex_type                  = V;
+  using value_type                   = typename V::value_type;
+  using array_type                   = PolygonVertices<V, num_vertices>;
+
   // fields
-  T left, top;
-  T right, bottom;
+  value_type left, top;
+  value_type right, bottom;
 
   // methods
   auto constexpr left_top() const { return V{left, top}; }
@@ -52,7 +82,7 @@ struct RectT
   auto center_top() const { return V{center().x, top}; }
   auto center_bottom() const { return V{center().x, bottom}; }
 
-  void move(T const& x, T const& y)
+  void move(value_type const& x, value_type const& y)
   {
     left  += x;
     right += x;
@@ -93,40 +123,14 @@ struct RectT
     return V{};
   }
 
-  struct RectPoints
-  {
-    std::array<V, 4> vertices;
-
-    RectPoints(V const& p0, V const& p1, V const& p2, V const& p3)
-        : vertices(common::make_array<V>(p0, p1, p2, p3))
-    {
-    }
-
-    RectPoints(V&& p0, V&& p1, V&& p2, V&& p3)
-        : vertices(common::make_array<V>(MOVE(p0), MOVE(p1), MOVE(p2), MOVE(p3)))
-    {
-    }
-
-    DEFINE_ARRAY_LIKE_WRAPPER_FNS(vertices);
-
-    auto to_string() const
-    {
-      return fmt::sprintf("{%s, %s, %s, %s}",
-          glm::to_string(vertices[0]),
-          glm::to_string(vertices[1]),
-          glm::to_string(vertices[2]),
-          glm::to_string(vertices[3]));
-    }
-  };
-
   auto constexpr points() const {
-    return RectPoints(p0(), p1(), p2(), p3());
+    return vertices_type(p0(), p1(), p2(), p3());
   }
 };
 
-template <typename T, typename V>
-constexpr RectT<T, V>
-operator/(RectT<T, V> const& rect, T const& d)
+template <typename V>
+constexpr RectT<V>
+operator/(RectT<V> const& rect, typename RectT<V>::value_type const& d)
 {
   auto constexpr left   = rect.left()   / d;
   auto constexpr top    = rect.top()    / d;
@@ -146,7 +150,7 @@ std::string to_string() const                                                   
       width(), height());                                                                          \
 }
 
-class RectFloat : public RectT<float, glm::vec2>
+class RectFloat : public RectT<glm::vec2>
 {
   float cast(int const v) const { return static_cast<float>(v); }
 public:
@@ -171,7 +175,7 @@ public:
   DEFINE_RECT_TO_STRING_MEMBER_IMPL(%f);
 };
 
-struct RectInt : public RectT<int, glm::ivec2>
+struct RectInt : public RectT<glm::ivec2>
 {
   constexpr RectInt(int const l, int const t, int const r, int const b)
       : RectT{l, t, r, b}

@@ -153,8 +153,9 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
   return true;
 }
 
+template <typename V>
 auto
-rotated_rectangle_points(RectFloat const& rect, Transform const& tr, ModelViewMatrix const& mv)
+rotated_rectangle_points(RectT<V> const& rect, Transform const& tr, ModelViewMatrix const& mv)
 {
   auto const mv_matrix = mv * tr.model_matrix();
 
@@ -171,20 +172,22 @@ rotated_rectangle_points(RectFloat const& rect, Transform const& tr, ModelViewMa
   auto const v4p2 = mv_matrix * VEC4(p2.x, p2.y, Z, W) / W;
   auto const v4p3 = mv_matrix * VEC4(p3.x, p3.y, Z, W) / W;
 
-  auto const v2p0 = VEC2(v4p0.x, v4p0.y);
-  auto const v2p1 = VEC2(v4p1.x, v4p1.y);
-  auto const v2p2 = VEC2(v4p2.x, v4p2.y);
-  auto const v2p3 = VEC2(v4p3.x, v4p3.y);
+  using VerticesT   = typename RectT<V>::vertex_type;
+  auto const v2p0 = VerticesT{v4p0.x, v4p0.y};
+  auto const v2p1 = VerticesT{v4p1.x, v4p1.y};
+  auto const v2p2 = VerticesT{v4p2.x, v4p2.y};
+  auto const v2p3 = VerticesT{v4p3.x, v4p3.y};
 
-  return RectFloat::RectPoints{v2p0, v2p1, v2p2, v2p3};
+  using VerticesArray = typename RectT<V>::array_type;
+  return VerticesArray{v2p0, v2p1, v2p2, v2p3};
 }
 
 // Determine whether two (possibly rotated) polygons overlap eachother.
 // Algorithm mutated from:
 // https://www.codeproject.com/Articles/15573/2D-Polygon-Collision-Detection
-template <typename T, typename V>
+template <typename V, size_t N>
 bool
-overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::RectPoints const& b)
+overlap_polygon(PolygonVertices<V, N> const& a, PolygonVertices<V, N> const& b)
 {
   static auto constexpr MIN = std::numeric_limits<float>::max();
   static auto constexpr MAX = std::numeric_limits<float>::min();
@@ -203,22 +206,36 @@ overlap_rect(typename RectT<T, V>::RectPoints const& a, typename RectT<T, V>::Re
     return PAIR(min, max);
   };
 
-  std::array<typename RectT<T, V>::RectPoints, 2> const rects{{a, b}};
+  auto const projected_axis_overlap = [&](auto const& polygon, auto const i0) {
+    auto const polygon_vertex_count = polygon.size();
+    int const i1 = (i0 + 1) % polygon_vertex_count;
+    auto const& p1 = polygon[i0];
+    auto const& p2 = polygon[i1];
+
+    glm::vec2 const normal{p2.y - p1.y, p1.x - p2.x};
+
+    auto const [min_a, max_a] = calc_minmax(a, normal);
+    auto const [min_b, max_b] = calc_minmax(b, normal);
+
+    return !(max_a < min_b || max_b < min_a);
+  };
+
+  auto const any_projected_vertices_overlap = [&](auto const& polygon) {
+    auto const polygon_vertex_count = polygon.size();
+    FOR(i, polygon_vertex_count)
+    {
+      if (!projected_axis_overlap(polygon, i)) {
+        return false;
+      }
+    }
+  };
+
+  std::array<PolygonVertices<V, N>, 2> const rects{{a, b}};
   for (auto const& polygon : rects) {
     auto const polygon_vertex_count = polygon.size();
-    FOR(i1, polygon_vertex_count)
+    FOR(i, polygon_vertex_count)
     {
-      int const   i2 = (i1 + 1) % polygon_vertex_count;
-      auto const& p1 = polygon[i1];
-      auto const& p2 = polygon[i2];
-
-      glm::vec2 const normal{p2.y - p1.y, p1.x - p2.x};
-
-      auto const [min_a, max_a] = calc_minmax(a, normal);
-      auto const [min_b, max_b] = calc_minmax(b, normal);
-
-      if (max_a < min_b || max_b < min_a) {
-        // not overlapping
+      if (!projected_axis_overlap(polygon, i)) {
         return false;
       }
     }
@@ -321,11 +338,14 @@ overlap(RectTransform const& a, RectTransform const& b, ModelViewMatrix const& m
 
   bool const simple_test = ta.rotation == glm::quat{} && tb.rotation == glm::quat{};
 
+  // Rotate the rectangles using their vertices/transform and mv matrix.
   auto const a_points = rotated_rectangle_points(a.rect, ta, mv);
   auto const b_points = rotated_rectangle_points(b.rect, tb, mv);
 
+  // There are 4 vertices in a rectangle.
+  constexpr auto N = 4;
   return simple_test ? overlap_axis_aligned(ra, rb)
-                     : overlap_rect<float, glm::vec2>(a_points, b_points);
+                     : overlap_polygon<glm::vec2, N>(a_points, b_points);
 }
 
 } // namespace boomhs::collision
