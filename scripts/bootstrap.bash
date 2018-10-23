@@ -251,6 +251,20 @@ target_link_libraries(viewport_mouse_raycast_boxselection
 target_include_directories(viewport_mouse_raycast_boxselection PUBLIC)
 
 ###################################################################################################
+## COMPILE -- Seperating Axis Theorem Demo
+##
+## Application for testing/visualing the implementation of the seperating axis theorem.
+add_executable(seperating_axis_theorem ${DEMO_DIRECTORY}/seperating_axis_theorem.cxx)
+
+target_link_libraries(seperating_axis_theorem
+  PROJECT_SOURCE_CODE
+  ${SYSTEM_LIBS}
+  ${EXTERNAL_LIBS}
+  )
+
+target_include_directories(seperating_axis_theorem PUBLIC)
+
+###################################################################################################
 ## COMPILE -- Memory BUG I want to make sure doesn't show up in future tests.
 ##
 ##            I'm PRETTY reasonably sure there is a bug, but not 100% sure.

@@ -84,6 +84,54 @@ static bool MOUSE_BUTTON_PRESSED        = false;
 static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
 static MouseCursorInfo MOUSE_INFO;
 
+struct PmRect
+{
+  RectFloat       rect;
+  DrawInfo        di;
+
+  bool selected = false;
+
+  explicit PmRect(RectFloat const& r, DrawInfo &&d)
+      : rect(r)
+      , di(MOVE(d))
+  {}
+
+  MOVE_DEFAULT_ONLY(PmRect);
+};
+
+struct ViewportPmRects
+{
+  std::vector<PmRect> rects;
+  Viewport            viewport;
+
+  MOVE_DEFAULT_ONLY(ViewportPmRects);
+};
+
+struct PmViewports
+{
+  std::vector<ViewportPmRects> viewports;
+
+  MOVE_DEFAULT_ONLY(PmViewports);
+
+  INDEX_OPERATOR_FNS(viewports);
+  BEGIN_END_FORWARD_FNS(viewports);
+
+  // TODO: DON'T HAVE TO WRITE MANUALLY.
+  auto size() const { return viewports.size(); }
+};
+
+struct PmDrawInfo
+{
+  ViewportPmRects  vp_rects;
+  ShaderProgram&   sp;
+};
+
+struct PmDrawInfos
+{
+  std::vector<PmDrawInfo> infos;
+  DEFINE_VECTOR_LIKE_WRAPPER_FNS(infos);
+};
+
 struct CameraMatrices
 {
   glm::mat4 pm, vm;
@@ -473,43 +521,6 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, CameraPositio
   return false;
 }
 
-struct PmRect
-{
-  RectFloat const rect;
-  DrawInfo        di;
-
-  bool selected = false;
-
-  explicit PmRect(RectFloat const& r, DrawInfo &&d)
-      : rect(r)
-      , di(MOVE(d))
-  {}
-
-  MOVE_CONSTRUCTIBLE_ONLY(PmRect);
-};
-
-struct ViewportPmRects
-{
-  std::vector<PmRect> rects;
-  Viewport const      viewport;
-
-  MOVE_CONSTRUCTIBLE_ONLY(ViewportPmRects);
-};
-
-struct PmViewports
-{
-  std::vector<ViewportPmRects> viewports;
-
-  MOVE_DEFAULT(PmViewports);
-  NO_COPY(PmViewports);
-
-  INDEX_OPERATOR_FNS(viewports);
-  BEGIN_END_FORWARD_FNS(viewports);
-
-  // TODO: DON'T HAVE TO WRITE MANUALLY.
-  auto size() const { return viewports.size(); }
-};
-
 void
 cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mouse_pos,
                                     ViewportInfo const& vi, CubeEntities& cube_ents)
@@ -589,7 +600,8 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, CameraMatrices const&
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    ViewportGrid const& vp_grid, PmViewports& pm_vps, CubeEntities& cube_ents)
+                    ViewportGrid const& vp_grid, PmDrawInfos& pmdis,
+                    CubeEntities& cube_ents)
 {
   auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
   MOUSE_INFO.sector      = mouse_pos_to_screensector(vp_grid, mouse_pos);
@@ -619,8 +631,8 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
       std::abort();
   }
 
-  for (auto& pm_vp : pm_vps) {
-    for (auto& pm_rect : pm_vp.rects) {
+  for (auto& pm_vp : pmdis.infos) {
+    for (auto& pm_rect : pm_vp.vp_rects.rects) {
       pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
     }
   }
@@ -628,7 +640,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
-              CubeEntities& cube_ents, PmViewports& pm_vps, FrameTime const& ft)
+              CubeEntities& cube_ents, PmDrawInfos& pmdis, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
   auto &camera = vp_grid.active_camera();
@@ -649,7 +661,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
     (camera.*fn)(1.0f, ft);
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, vp_grid, pm_vps, cube_ents);
+    process_mousemotion(logger, event.motion, vp_grid, pmdis, cube_ents);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
@@ -739,20 +751,6 @@ draw_mouserect(common::Logger& logger, glm::ivec2 const& mouse_pos, ShaderProgra
   allocate_and_draw_line_rect(logger, screen_size, view_port.rect(), sp, mouse_rect, ds);
 }
 
-struct PmDrawInfo
-{
-  ViewportPmRects& vp_rects;
-  ShaderProgram&   sp;
-};
-
-struct PmDrawInfos
-{
-  std::vector<PmDrawInfo> infos;
-  PmViewports             viewports;
-
-
-  DEFINE_VECTOR_LIKE_WRAPPER_FNS(infos);
-};
 
 void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
@@ -777,7 +775,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     }
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
-    for (auto const& pm_info : pm_infos) {
+    for (auto& pm_info : pm_infos) {
       auto& vi             = pm_info.vp_rects;
       auto const& viewport = vi.viewport;
       OR::set_viewport_and_scissor(viewport, screen_height);
@@ -974,10 +972,10 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng, ViewportGrid c
 
   std::vector<PmDrawInfo> pm_infos_vec;
   FOR(i, pm_vps.size()) {
-    PmDrawInfo info{pm_vps[i], sp};
+    PmDrawInfo info{MOVE(pm_vps[i]), sp};
     pm_infos_vec.emplace_back(MOVE(info));
   }
-  return PmDrawInfos{MOVE(pm_infos_vec), MOVE(pm_vps)};
+  return PmDrawInfos{MOVE(pm_infos_vec)};
 }
 
 auto
@@ -1040,7 +1038,7 @@ main(int argc, char **argv)
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, vp_grid, cube_ents, pm_infos.viewports, ft);
+      quit = process_event(logger, event, vp_grid, cube_ents, pm_infos, ft);
     }
 
     auto const mouse_pos = get_mousepos();

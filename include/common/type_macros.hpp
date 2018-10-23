@@ -154,9 +154,6 @@ using VALUE_T     = typename decltype(CONTAINER)::value_type;                   
                                                                                                    \
   auto clear() { VEC_LIKE_CONTAINER.clear(); }                                                     \
                                                                                                    \
-  void push_back(VALUE_T const& item) {                                                            \
-    VEC_LIKE_CONTAINER.push_back(item);                                                            \
-  }                                                                                                \
   void push_back(VALUE_T&& item) {                                                                 \
     VEC_LIKE_CONTAINER.push_back(MOVE(item));                                                      \
   }                                                                                                \
@@ -164,19 +161,6 @@ using VALUE_T     = typename decltype(CONTAINER)::value_type;                   
   void emplace_back(Args&&... args) {                                                              \
     VEC_LIKE_CONTAINER.emplace_back(FORWARD(args));                                                \
   }                                                                                                \
-/*                                                                                                   \
-  template<typename F>                                                                             \
-  CONTAINER_T where(F const& fn) const                                                             \
-  {                                                                                                \
-    CONTAINER_T result;                                                                            \
-    for (auto const& it : VEC_LIKE_CONTAINER) {                                                    \
-      if (fn(it)) {                                                                                \
-        result.emplace_back(it);                                                                   \
-      }                                                                                            \
-    }                                                                                              \
-    return result;                                                                                 \
-  }                                                                                                \
-*/
 
 namespace common
 {
