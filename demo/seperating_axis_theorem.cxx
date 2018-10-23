@@ -24,48 +24,51 @@
 #include <cstdlib>
 
 //
-// A test application used to develop/maintain code regarding muliple viewports and mouse selection
-// using different camera perspectives.
-//
-// This application was developed as a sandbox application for implementing the above features.
+// A test application used to develop/check the math for collision detection between different
+// polygon's using the seperating axis theorem.
 //
 // Summary:
-//          Splits the screen into multiple viewports, rendering the same scene of 3dimensional
-//          cubes from multiple camera positions/types (orthographic/perspective).
+//      Splits the screen into multiple viewports, rendering the same scene of 3dimensional
+//      cubes from multiple camera positions/types (orthographic/perspective).
 //
-//          + If the user clicks and holds the left mouse button down within a orthographic
-//          viewports a hollow rectangle is drawn from the point where the user clicked the mouse
-//          initially and where the cursor is currently. This is used to test mouse box selection.
+//      + If the user clicks and holds the left mouse button down within a orthographic
+//        viewports a hollow rectangle is drawn from the point where the user clicked the mouse
+//        initially and where the cursor is currently. This is used to test mouse box selection.
 //
-//          + If the user moves the mouse over a cube within one of the perspective viewports the
-//          cube all of the cubes the mouse is over change color. This is used to test mouse
-//          raycasting.
+// User Input:
+//      The following table indicates how the user may interact with the demo.
 //
-//          + If the user uses the arrow keys the entities within the scene are translated
-//          accordingly.
+//      No key-modier will result in the action being applied to a single rectangle.
+//
+//      Holding the left-shift modifier while pressing any of the keys in the following table
+//      will cause the function to be applied to ALL entities in the scene.
+//
+//        + [w,a,s,d]           : translate
+//        + [NUMPAD_2, NUMPAD_8]: rotate
+//        + [e, q]              : scale
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace common;
 using namespace gl_sdl;
 using namespace opengl;
 
-static auto constexpr FOV = glm::radians(110.0f);
-static auto constexpr AR  = AspectRatio{4.0f, 3.0f};
-static int constexpr NEAR = -1.0;
-static int constexpr FAR  = 1.0f;
-
+static int constexpr NUM_RECTS = 40;
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
+static auto constexpr FOV      = glm::radians(110.0f);
+static auto constexpr AR       = AspectRatio{4.0f, 3.0f};
+static int constexpr NEAR      = -1.0;
+static int constexpr FAR       = 1.0f;
+
 struct PmRect
 {
-  RectFloat       rect;
-  DrawInfo        di;
-
+  RectFloat rect;
+  DrawInfo  di;
   Transform transform;
 
-  bool selected = false;
+  bool overlapping = false;
 
   explicit PmRect(RectFloat const& r, DrawInfo &&d)
       : rect(r)
@@ -105,13 +108,32 @@ make_rectangle_program(common::Logger& logger)
 }
 
 bool
-process_keydown(common::Logger& logger, SDL_Keycode const keycode)
+process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRects& vp_rects,
+                Transform& controlled_tr)
 {
+  uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
+  assert(keystate);
+  bool const shift_down = keystate[SDL_SCANCODE_LSHIFT];
+
+  auto const iter_rects = [&](auto const& fn) {
+    if (shift_down) {
+      for (auto& rect : vp_rects.rects) {
+        fn(rect.transform);
+      }
+    }
+    else {
+      fn(controlled_tr);
+    }
+  };
+
   auto const rotate_ents = [&](float const angle_degrees, glm::vec3 const& axis) {
-    //for (auto& cube_ent : cube_ents) {
-      //auto& tr = cube_ent.transform();
-      //tr.rotate_degrees(angle_degrees, axis);
-    //}
+    iter_rects([&](auto& tr) { tr.rotate_degrees(angle_degrees, axis); });
+  };
+  auto const transform_ents = [&](glm::vec3 const& delta) {
+    iter_rects([&](auto& tr) { tr.translation += 4 * delta; });
+  };
+  auto const scale_ents = [&](glm::vec3 const& delta) {
+    iter_rects([&](auto& tr) { tr.scale += delta; });
   };
   switch (keycode)
   {
@@ -120,27 +142,35 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode)
       return true;
       break;
 
+    // translation
+    case SDLK_d:
+      transform_ents(+constants::X_UNIT_VECTOR);
+      break;
+    case SDLK_a:
+      transform_ents(-constants::X_UNIT_VECTOR);
+      break;
+    case SDLK_w:
+      transform_ents(-constants::Y_UNIT_VECTOR);
+      break;
+    case SDLK_s:
+      transform_ents(+constants::Y_UNIT_VECTOR);
+      break;
+
+    // scaling
+    case SDLK_e:
+      scale_ents(VEC3(0.2));
+      break;
+    case SDLK_q:
+      scale_ents(-VEC3(0.2));
+      break;
+
+    // rotation
     case SDLK_KP_2:
-        rotate_ents(1.0f, constants::Y_UNIT_VECTOR);
-        break;
+      rotate_ents(1.0f, constants::Z_UNIT_VECTOR);
+      break;
     case SDLK_KP_8:
-        rotate_ents(-1.0f, constants::Y_UNIT_VECTOR);
-        break;
-
-    case SDLK_KP_4:
-        rotate_ents(1.0f, constants::X_UNIT_VECTOR);
-        break;
-    case SDLK_KP_6:
-        rotate_ents(-1.0f, constants::X_UNIT_VECTOR);
-        break;
-
-    case SDLK_KP_3:
-        rotate_ents(1.0f, constants::Z_UNIT_VECTOR);
-        break;
-    case SDLK_KP_9:
-        rotate_ents(-1.0f, constants::Z_UNIT_VECTOR);
-        break;
-
+      rotate_ents(-1.0f, constants::Z_UNIT_VECTOR);
+      break;
     default:
       break;
   }
@@ -148,36 +178,44 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode)
 }
 
 void
-process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-                    ViewportPmRects& vp_rects)
+update(common::Logger& logger, ViewportPmRects& vp_rects, glm::mat4 const& pm)
 {
-  auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
+  assert(!vp_rects.rects.empty());
+  auto& a = vp_rects.rects.front();
 
-  for (auto& pm_rect : vp_rects.rects) {
-    pm_rect.selected = collision::intersects(mouse_pos, pm_rect.rect);
+  for (auto& a : vp_rects.rects) {
+    bool overlap = false;
+    for (auto& b : vp_rects.rects) {
+      if (&a == &b || overlap) continue;
+
+      RectTransform const ra{a.rect, a.transform};
+      RectTransform const rb{b.rect, b.transform};
+
+      overlap |= collision::overlap(ra, rb, pm);
+    }
+
+    a.overlapping = overlap;
   }
 }
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rects,
-              FrameTime const& ft)
+              glm::mat4 const& pm, Transform& controlled_tr, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
-    if (process_keydown(logger, key_pressed)) {
+    if (process_keydown(logger, key_pressed, vp_rects, controlled_tr)) {
       return true;
     }
-  }
-  else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, vp_rects);
   }
   return event.type == SDL_QUIT;
 }
 
 auto
-make_pminfo(common::Logger& logger, Viewport const& viewport, ShaderProgram& sp, RNG &rng)
+make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport, ShaderProgram& sp,
+    RNG &rng)
 {
   auto const make_perspective_rect = [&](glm::ivec2 const& offset) {
     return RectFloat{-50, -50, 50, 50};
@@ -187,11 +225,11 @@ make_pminfo(common::Logger& logger, Viewport const& viewport, ShaderProgram& sp,
   auto const make_viewportpm_rects = [&](auto const& r, auto const& viewport) {
     std::vector<PmRect> vector_pms;
 
-    auto di = make_perspective_rect_gpuhandle(logger, r, va);
-    vector_pms.emplace_back(PmRect{r, MOVE(di)});
+    FORI(i, num_rects) {
+      auto di = make_perspective_rect_gpuhandle(logger, r, va);
+      vector_pms.emplace_back(PmRect{r, MOVE(di)});
+    }
 
-    di = make_perspective_rect_gpuhandle(logger, r, va);
-    vector_pms.emplace_back(PmRect{r, MOVE(di)});
     return ViewportPmRects{MOVE(vector_pms), viewport, &sp};
   };
 
@@ -203,8 +241,7 @@ make_pminfo(common::Logger& logger, Viewport const& viewport, ShaderProgram& sp,
     auto const rmatrix = glm::toMat4(q);
 
     for (auto& rect : vppm_rects.rects) {
-      rect.transform.translation = glm::vec3{rng.gen_3dposition(VEC3{0}, VEC3{500})};
-      rect.transform.translation.z = 0.0f;
+      rect.transform.translation = glm::vec3{rng.gen_3dposition(VEC3{0}, VEC3{WIDTH, HEIGHT, 0})};
       rect.transform.rotation = rmatrix;
     }
   }
@@ -221,9 +258,8 @@ draw_rectangle_pm(common::Logger& logger, Frustum const& frustum, ShaderProgram&
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
 
-  auto const rmatrix = glm::toMat4(pm_rect.transform.rotation);
-  auto const tmatrix = glm::translate(glm::mat4{}, pm_rect.transform.translation);
-  auto const model = tmatrix * rmatrix;
+
+  auto const model = pm_rect.transform.model_matrix();
   sp.set_uniform_mat4(logger,  "u_projmatrix", pm * model);
   sp.set_uniform_color(logger, "u_color", color);
 
@@ -243,7 +279,7 @@ draw_pm(common::Logger& logger, Frustum const& frustum, DrawState& ds, ViewportP
   auto const pm = CameraORTHO::compute_pm(AR, frustum, viewport.size(), constants::ZERO, ZOOM);
 
   for (auto& pm_rect : vp_rects.rects) {
-    auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
+    auto const color = pm_rect.overlapping ? LOC::RED : LOC::LIGHT_SEAGREEN;
     draw_rectangle_pm(logger, frustum, *vp_rects.sp, pm_rect, pm, color, GL_TRIANGLES, ds);
   }
 };
@@ -261,19 +297,17 @@ main(int argc, char **argv)
   };
 
   auto gl_sdl = TRY_OR(GlSdl::make_default(logger, TITLE, FULLSCREEN, WIDTH, HEIGHT), on_error);
-
   OR::init(logger);
-  ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT();
-
   auto& window           = gl_sdl.window;
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
   RNG rng;
-  auto rect_sp            = make_rectangle_program(logger);
+  auto rect_sp  = make_rectangle_program(logger);
+  auto vp_rects = make_rects(logger, NUM_RECTS, VIEWPORT, rect_sp, rng);
+  assert(!vp_rects.rects.empty());
 
-  auto vp_rects           = make_pminfo(logger, VIEWPORT, rect_sp, rng);
-  glm::mat4 const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  glm::mat4 const pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
 
   FrameCounter fcounter;
   SDL_Event event;
@@ -283,8 +317,11 @@ main(int argc, char **argv)
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      quit = process_event(logger, event, vp_rects, ft);
+      auto& controlled_tr = vp_rects.rects.back().transform;
+      quit = process_event(logger, event, vp_rects, pm, controlled_tr, ft);
     }
+
+    update(logger, vp_rects, pm);
 
     DrawState ds;
     OR::clear_screen(LOC::DEEP_SKY_BLUE);

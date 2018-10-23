@@ -51,16 +51,16 @@ overlap_axis_aligned(RectFloat const&, RectFloat const&);
 bool
 overlap_axis_aligned(common::Logger&, CubeTransform const&, CubeTransform const&);
 
-// Determine if two rectangles overlap with eachother.
+// Determine if two rectangles overlap.
 //
-// The first rectangle has no rotation, but has been scaled.
-// The second rectangle has an associated transform (that may contain a rotation).
-// The Camera matrix associated with the rectangles.
+// If the rectangles are aligned, it uses a simple test. If there is a rotation, then a test using
+// the seperating axis theorem is used.
 bool
-overlap(RectFloat const&, RectTransform const&, glm::mat4 const&);
+overlap(RectTransform const&, RectTransform const&, ModelViewMatrix const&);
 
-// Determine if two rectangles overlap with eachother.
-//bool
-//overlap(RectInt const&, RectInt const&, Transform const&);
+// Helper for determining if two rectangles overlap.
+// Creates an empty transform for the RectFloat and delegates to another overlap() overload.
+bool
+overlap(RectFloat const&, RectTransform const&, ModelViewMatrix const&);
 
 } // namespace boomhs::collision

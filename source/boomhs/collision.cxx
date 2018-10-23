@@ -19,23 +19,23 @@ namespace
 bool
 ray_obb_intersection(
     Ray const&       ray,
-    glm::vec3 const& aabb_min,     // Minimum X,Y,Z coords of the mesh when not transformed at all.
-    glm::vec3 const& aabb_max,     // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is
-                                   // centered, but it's not always the case.
-    glm::mat4 const& model_matrix, // Transformation applied to the mesh (which will thus be also
-    float& intersection_distance   // Output : distance between ray_origin and the OBB intersection.
+    glm::vec3 const& aabb_min,   // Minimum X,Y,Z coords of the mesh when not transformed at all.
+    glm::vec3 const& aabb_max,   // Maximum X,Y,Z coords. Often aabb_min*-1 if your mesh is
+                                 // centered, but it's not always the case.
+    ModelMatrix const& mm,       // Transformation applied to the mesh (which will thus be also
+    float& intersection_distance // Output : distance between ray_origin and the OBB intersection.
 )
 {
   // Intersection method from Real-Time Rendering and Essential Mathematics for Games
   float t_min = 0.0f;
   float t_max = 100000.0f;
 
-  glm::vec3 const OBB_position_worldspace(model_matrix[3].x, model_matrix[3].y, model_matrix[3].z);
+  glm::vec3 const OBB_position_worldspace(mm[3].x, mm[3].y, mm[3].z);
   glm::vec3 const delta = OBB_position_worldspace - ray.origin;
 
 #define TEST_PLANE_INTERSECTION_IMPL(INDEX, AABB_MIN, AABB_MAX)                                    \
   {                                                                                                \
-    glm::vec3 const axis(model_matrix[INDEX].x, model_matrix[INDEX].y, model_matrix[INDEX].z);     \
+    glm::vec3 const axis(mm[INDEX].x, mm[INDEX].y, mm[INDEX].z);                                   \
     float const     e = glm::dot(axis, delta);                                                     \
     float const     f = glm::dot(ray.direction, axis);                                             \
                                                                                                    \
@@ -154,27 +154,22 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 }
 
 auto
-rotated_rectangle_points(RectFloat const& rect, Transform const& tr, glm::mat4 const& cam_matrix)
+rotated_rectangle_points(RectFloat const& rect, Transform const& tr, ModelViewMatrix const& mv)
 {
-  auto const mvp_matrix = cam_matrix * tr.model_matrix();
+  auto const mv_matrix = mv * tr.model_matrix();
 
   auto const p0 = rect.p0();
   auto const p1 = rect.p1();
   auto const p2 = rect.p2();
   auto const p3 = rect.p3();
 
-  // auto const rect_c = rect.center();
-  // glm::vec3 const rect_center{rect_c.x, rect_c.y, 0};
+  auto constexpr W = 1;
+  auto constexpr Z = 0;
 
-  auto const v4p0 = mvp_matrix * VEC4(p0.x, p0.y, 0, 1) / 1;
-  auto const v4p1 = mvp_matrix * VEC4(p1.x, p1.y, 0, 1) / 1;
-  auto const v4p2 = mvp_matrix * VEC4(p2.x, p2.y, 0, 1) / 1;
-  auto const v4p3 = mvp_matrix * VEC4(p3.x, p3.y, 0, 1) / 1;
-
-  // auto const v4p0 = rotate_around(VEC3(p0.x, p0.y, 0), rect_center, rmatrix);
-  // auto const v4p1 = rotate_around(VEC3(p1.x, p1.y, 0), rect_center, rmatrix);
-  // auto const v4p2 = rotate_around(VEC3(p2.x, p2.y, 0), rect_center, rmatrix);
-  // auto const v4p3 = rotate_around(VEC3(p3.x, p3.y, 0), rect_center, rmatrix);
+  auto const v4p0 = mv_matrix * VEC4(p0.x, p0.y, Z, W) / W;
+  auto const v4p1 = mv_matrix * VEC4(p1.x, p1.y, Z, W) / W;
+  auto const v4p2 = mv_matrix * VEC4(p2.x, p2.y, Z, W) / W;
+  auto const v4p3 = mv_matrix * VEC4(p3.x, p3.y, Z, W) / W;
 
   auto const v2p0 = VEC2(v4p0.x, v4p0.y);
   auto const v2p1 = VEC2(v4p1.x, v4p1.y);
@@ -308,16 +303,28 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 }
 
 bool
-overlap(RectFloat const& a, RectTransform const& rect_tr, glm::mat4 const& cam_matrix)
+overlap(RectFloat const& a, RectTransform const& rb, ModelViewMatrix const& mv)
 {
-  auto const& b  = rect_tr.rect;
-  auto const& tr = rect_tr.transform;
+  Transform ta;
+  RectTransform const ra{a, ta};
+  return overlap(ra, rb, mv);
+}
 
-  auto const a_points = rotated_rectangle_points(a, Transform{}, cam_matrix);
-  auto const b_points = rotated_rectangle_points(b, tr, cam_matrix);
+bool
+overlap(RectTransform const& a, RectTransform const& b, ModelViewMatrix const& mv)
+{
+  auto const& ta = a.transform;
+  auto const& tb = b.transform;
 
-  bool const simple_test = tr.rotation == glm::quat{};
-  return simple_test ? overlap_axis_aligned(a, b)
+  auto const& ra = a.rect;
+  auto const& rb = a.rect;
+
+  bool const simple_test = ta.rotation == glm::quat{} && tb.rotation == glm::quat{};
+
+  auto const a_points = rotated_rectangle_points(a.rect, ta, mv);
+  auto const b_points = rotated_rectangle_points(b.rect, tb, mv);
+
+  return simple_test ? overlap_axis_aligned(ra, rb)
                      : overlap_rect<float, glm::vec2>(a_points, b_points);
 }
 

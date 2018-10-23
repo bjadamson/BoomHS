@@ -14,6 +14,15 @@ namespace boomhs
 {
 struct Transform;
 
+using ModelMatrix       = glm::mat4;
+using ProjMatrix        = glm::mat4;
+using ViewMatrix        = glm::mat4;
+using ModelViewMatrix   = glm::mat4;
+
+using TranslationMatrix = glm::mat4;
+using ScaleMatrix       = glm::mat4;
+using RotationMatrix    = glm::mat4;
+
 template <typename T, typename V>
 struct RectT
 {
@@ -326,17 +335,17 @@ namespace boomhs::math::space_conversions
 {
 
 inline glm::vec4
-clip_to_eye(glm::vec4 const& clip, glm::mat4 const& proj_matrix, float const z)
+clip_to_eye(glm::vec4 const& clip, ProjMatrix const& pm, float const z)
 {
-  auto const      inv_proj   = glm::inverse(proj_matrix);
+  auto const      inv_proj   = glm::inverse(pm);
   glm::vec4 const eye_coords = inv_proj * clip;
   return glm::vec4{eye_coords.x, eye_coords.y, z, 0.0f};
 }
 
 inline glm::vec3
-eye_to_world(glm::vec4 const& eye, glm::mat4 const& view_matrix)
+eye_to_world(glm::vec4 const& eye, ViewMatrix const& vm)
 {
-  glm::mat4 const inv_view  = glm::inverse(view_matrix);
+  auto const inv_view       = glm::inverse(vm);
   glm::vec4 const ray       = inv_view * eye;
   glm::vec3 const ray_world = glm::vec3{ray.x, ray.y, ray.z};
   return glm::normalize(ray_world);
@@ -363,13 +372,13 @@ ndc_to_clip(glm::vec2 const& ndc, float const z)
 }
 
 inline glm::vec3
-screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, glm::mat4 const& proj_matrix,
-                glm::mat4 const& view_matrix, float const z)
+screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, ProjMatrix const& pm,
+                ViewMatrix const& vm, float const z)
 {
   glm::vec2 const ndc   = screen_to_ndc(scoords, view_rect);
   glm::vec4 const clip  = ndc_to_clip(ndc, z);
-  glm::vec4 const eye   = clip_to_eye(clip, proj_matrix, z);
-  glm::vec3 const world = eye_to_world(eye, view_matrix);
+  glm::vec4 const eye   = clip_to_eye(clip, pm, z);
+  glm::vec3 const world = eye_to_world(eye, vm);
   return world;
 }
 
@@ -476,17 +485,17 @@ angle_between_vectors(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& o
 
 inline glm::vec3
 rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
-              glm::mat4x4 const& rot_matrix)
+              RotationMatrix const& rot_matrix)
 {
-  glm::mat4x4 const translate     = glm::translate(glm::mat4{}, rot_center);
-  glm::mat4x4 const inv_translate = glm::translate(glm::mat4{}, -rot_center);
+  auto const translate     = glm::translate(glm::mat4{}, rot_center);
+  auto const inv_translate = glm::translate(glm::mat4{}, -rot_center);
 
   // The idea:
   // 1) Translate the object to the center
   // 2) Make the rotation
   // 3) Translate the object back to its original location
-  glm::mat4x4 const transform = translate * rot_matrix * inv_translate;
-  auto const        pos       = transform * glm::vec4{point_to_rotate, 1.0f};
+  auto const mm  = translate * rot_matrix * inv_translate;
+  auto const pos = mm * glm::vec4{point_to_rotate, 1.0f};
   return glm::vec3{pos.x, pos.y, pos.z};
 }
 
@@ -510,7 +519,7 @@ compute_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
   return glm::vec3{w, h, l};
 }
 
-inline glm::mat4
+inline ModelMatrix
 compute_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
 {
   auto const tmatrix = glm::translate(glm::mat4{}, translation);
@@ -519,14 +528,14 @@ compute_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm
   return tmatrix * rmatrix * smatrix;
 }
 
-inline glm::mat4
-compute_modelview_matrix(glm::mat4 const& model, glm::mat4 const& view)
+inline ModelViewMatrix
+compute_modelview_matrix(ModelMatrix const& model, ViewMatrix const& view)
 {
   return view * model;
 }
 
-inline glm::mat4
-compute_mvp_matrix(glm::mat4 const& model, glm::mat4 const& view, glm::mat4 const& proj)
+inline ModelViewMatrix
+compute_mvp_matrix(ModelMatrix const& model, ViewMatrix const& view, ProjMatrix const& proj)
 {
   return proj * view * model;
 }
