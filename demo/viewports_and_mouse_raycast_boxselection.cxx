@@ -421,7 +421,7 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
   auto const pm = CameraORTHO::compute_pm(AR, f, ss, constants::ZERO, ZOOM);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform_mat4(logger,  "u_projmatrix", pm);
+  sp.set_uniform_mat4(logger,  "u_mv", pm);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);

@@ -260,7 +260,7 @@ draw_rectangle_pm(common::Logger& logger, Frustum const& frustum, ShaderProgram&
 
 
   auto const model = pm_rect.transform.model_matrix();
-  sp.set_uniform_mat4(logger,  "u_projmatrix", pm * model);
+  sp.set_uniform_mat4(logger,  "u_mv", pm * model);
   sp.set_uniform_color(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);

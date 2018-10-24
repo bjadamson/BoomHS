@@ -94,7 +94,7 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
 
       auto const model_matrix = transform.model_matrix();
       auto const mvp_matrix   = math::compute_mvp_matrix(model_matrix, view_matrix, proj_matrix);
-      sp_->set_uniform_mat4(logger, "u_mvpmatrix", mvp_matrix);
+      sp_->set_uniform_mat4(logger, "u_mv", mvp_matrix);
     }
     sp_->set_uniform_color(logger, "u_fog.color", fog.color);
 

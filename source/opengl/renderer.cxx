@@ -420,7 +420,7 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   DrawInfo   dinfo       = OG::copy_rectangle(logger, sp.va(), vuvs);
   auto const proj_matrix = fstate.projection_matrix();
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform_mat4(logger, "u_projmatrix", proj_matrix);
+  sp.set_uniform_mat4(logger, "u_mv", proj_matrix);
 
   glActiveTexture(GL_TEXTURE0);
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
@@ -489,7 +489,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto const  rmatrix         = glm::toMat4(rot);
 
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
-    sp.set_uniform_mat4(logger, "u_mvpmatrix", mvp_matrix);
+    sp.set_uniform_mat4(logger, "u_mv", mvp_matrix);
 
     auto const& player       = find_player(registry);
     auto const  target_level = registry.get<NPCData>(npc_selected_eid).level;
@@ -501,7 +501,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 
   auto const draw_glow = [&](auto& sp) {
     auto const mvp_matrix = proj_matrix * view_model;
-    sp.set_uniform_mat4(logger, "u_mvpmatrix", mvp_matrix);
+    sp.set_uniform_mat4(logger, "u_mv", mvp_matrix);
     draw_billboard(rstate, transform, sp, "NearbyTargetGlow");
   };
 
@@ -562,7 +562,7 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
               ShaderProgram& sp)
 {
   auto const mvp_matrix = camera_matrix * model_matrix;
-  sp.set_uniform_mat4(logger, "u_mvpmatrix", mvp_matrix);
+  sp.set_uniform_mat4(logger, "u_mv", mvp_matrix);
 }
 
 namespace detail
