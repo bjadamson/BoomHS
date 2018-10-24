@@ -330,17 +330,18 @@ overlap(RectFloat const& a, RectTransform const& rb, ModelViewMatrix const& mv)
 bool
 overlap(RectTransform const& a, RectTransform const& b, ModelViewMatrix const& mv)
 {
+  auto const& ra = a.rect;
+  auto const& rb = b.rect;
+
   auto const& ta = a.transform;
   auto const& tb = b.transform;
 
-  auto const& ra = a.rect;
-  auto const& rb = a.rect;
-
-  bool const simple_test = ta.rotation == glm::quat{} && tb.rotation == glm::quat{};
+  // Only perform the simple test if both rectangles are not rotated.
+  bool const simple_test = !ta.is_rotated() && !tb.is_rotated();
 
   // Rotate the rectangles using their vertices/transform and mv matrix.
-  auto const a_points = rotated_rectangle_points(a.rect, ta, mv);
-  auto const b_points = rotated_rectangle_points(b.rect, tb, mv);
+  auto const a_points = rotated_rectangle_points(ra, ta, mv);
+  auto const b_points = rotated_rectangle_points(rb, tb, mv);
 
   // There are 4 vertices in a rectangle.
   constexpr auto N = 4;

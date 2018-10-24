@@ -32,6 +32,7 @@ struct Transform
     move(VEC3(x, y, z));
   }
 
+  bool is_rotated() const { return rotation != glm::quat{}; }
   void rotate_radians(float, glm::vec3 const&);
   void rotate_radians(float, math::EulerAxis);
 
