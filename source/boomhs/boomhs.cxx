@@ -25,7 +25,6 @@
 #include <boomhs/scene_renderer.hpp>
 
 #include <boomhs/player.hpp>
-#include <boomhs/rexpaint.hpp>
 
 #include <boomhs/random.hpp>
 #include <boomhs/skybox.hpp>
@@ -578,20 +577,6 @@ init_gamestate_inplace(GameState& gs, Camera& camera)
     gs.set_renderers(MOVE(srs));
   }
 
-  {
-    auto test_r = rexpaint::RexImage::load("assets/test.xp");
-    if (!test_r) {
-      LOG_ERROR_SPRINTF("%s", test_r.unwrapErrMove());
-      std::abort();
-    }
-    auto test = test_r.expect_moveout("loading text.xp");
-    test.flatten();
-    auto save = rexpaint::RexImage::save(test, "assets/test.xp");
-    if (!save) {
-      LOG_ERROR_SPRINTF("%s", save.unwrapErrMove().to_string());
-      std::abort();
-    }
-  }
   {
     auto& ingame       = es.ui_state.ingame;
     auto& chat_history = ingame.chat_history;
