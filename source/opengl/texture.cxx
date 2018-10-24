@@ -233,7 +233,7 @@ upload_2d_texture(common::Logger& logger, std::string const& filename, TextureIn
   GLenum const format = ti.format;
   GLint const  uv_max = ti.uv_max;
 
-  assert(ANYOF(format == GL_RGB, format == GL_RGBA));
+  assert(common::or_all(format == GL_RGB, format == GL_RGBA));
 
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_2D;
@@ -270,7 +270,7 @@ upload_3dcube_texture(common::Logger& logger, std::vector<std::string> const& pa
 {
   auto const format = ti.format;
   assert(paths.size() == 6);
-  assert(ANYOF(format == GL_RGB, format == GL_RGBA));
+  assert(common::or_all(format == GL_RGB, format == GL_RGBA));
 
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_CUBE_MAP;

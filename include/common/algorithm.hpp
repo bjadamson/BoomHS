@@ -14,47 +14,14 @@
 #define PAIR(...) std::make_pair(__VA_ARGS__)
 #define BREAK_THIS_LOOP_IF(v) if (v) { break; }
 
-namespace common::anyof_detail
-{
-
-inline bool
-orcombo()
-{
-  return false;
-}
-
-template <typename First, typename... Rest>
-bool
-orcombo(First const& first, Rest&&... rest)
-{
-  return first || orcombo(FORWARD(rest));
-}
-
-} // namespace common::anyof_detail
-
-namespace common::allof_detail
-{
-
-inline bool
-allcombo()
-{
-  return true;
-}
-
-template <typename First, typename... Rest>
-bool
-allcombo(First const& first, Rest&&... rest)
-{
-  return first && allcombo(FORWARD(rest));
-}
-
-} // namespace common::allof_detail
-
-#define ALLOF(a, ...) ::common::allof_detail::allcombo(a, ##__VA_ARGS__)
-#define ANYOF(a, ...) ::common::anyof_detail::orcombo(a, ##__VA_ARGS__)
-
 namespace common
 {
+
+template <typename ...Ts>
+bool and_all(Ts... ts) { return (... && ts); }
+
+template <typename ...Ts>
+bool or_all(Ts... ts) { return (... || ts); }
 
 inline bool
 cstrcmp(char const* a, char const* b)
@@ -65,13 +32,6 @@ cstrcmp(char const* a, char const* b)
 inline void
 memzero(void* const dest, size_t const count)
 {
-  // TODO: move these into a proper test... such a hack
-  assert(ANYOF(true, false));
-  assert(!ANYOF(false, false));
-  assert(ANYOF(false, true));
-  assert(!(ANYOF(false)));
-  assert(ANYOF(true));
-
   std::memset(dest, 0, count);
 }
 

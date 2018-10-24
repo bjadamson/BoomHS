@@ -36,7 +36,7 @@ bool
 operator==(BufferFlags const& a, BufferFlags const& b)
 {
   // clang-format off
-  return ALLOF(
+  return common::and_all(
     a.vertices == b.vertices,
     a.normals == b.normals,
     b.colors == a.colors,

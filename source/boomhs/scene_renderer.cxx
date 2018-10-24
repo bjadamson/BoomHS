@@ -21,7 +21,6 @@
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/random.hpp>
-#include <boomhs/rexpaint.hpp>
 #include <boomhs/skybox.hpp>
 #include <boomhs/start_area_generator.hpp>
 #include <boomhs/state.hpp>
