@@ -737,22 +737,6 @@ allocate_and_draw_line_rect(common::Logger& logger, ScreenSize const& ss, RectIn
 }
 
 void
-draw_mouserect(common::Logger& logger, glm::ivec2 const& mouse_pos, ShaderProgram& sp,
-               ScreenSize const& screen_size, Viewport const& view_port,
-               DrawState& ds)
-{
-  auto const& click_pos = MOUSE_INFO.click_positions.left_right;
-  float const minx = click_pos.x;
-  float const miny = click_pos.y;
-  float const maxx = mouse_pos.x;
-  float const maxy = mouse_pos.y;
-
-  RectFloat mouse_rect{minx, miny, maxx, maxy};
-  allocate_and_draw_line_rect(logger, screen_size, view_port.rect(), sp, mouse_rect, ds);
-}
-
-
-void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
            Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
            glm::ivec2 const& mouse_pos, CubeEntities& cube_ents)
@@ -771,7 +755,15 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     draw_viewport(ds, vi);
     if (MOUSE_BUTTON_PRESSED) {
       OR::set_viewport_and_scissor(fs_vp, screen_height);
-      draw_mouserect(logger, mouse_pos, sp, screen_size, fs_vp, ds);
+
+      auto const& click_pos = MOUSE_INFO.click_positions.left_right;
+      float const minx = click_pos.x;
+      float const miny = click_pos.y;
+      float const maxx = mouse_pos.x;
+      float const maxy = mouse_pos.y;
+      RectFloat mouse_rect{minx, miny, maxx, maxy};
+
+      allocate_and_draw_line_rect(logger, screen_size, fs_vp.rect(), sp, mouse_rect, ds);
     }
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
