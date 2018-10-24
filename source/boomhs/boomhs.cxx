@@ -241,7 +241,7 @@ update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng, 
     auto const v       = std::sin(ft.since_start_millis() * M_PI);
     auto&      flicker = registry.get<LightFlicker>(eid);
     auto&      light   = pointlight.light;
-    light.diffuse      = Color::lerp(flicker.colors[0], flicker.colors[1], v);
+    light.diffuse      = color::lerp(flicker.colors[0], flicker.colors[1], v);
     light.specular     = light.diffuse;
 
     auto& item            = registry.get<Item>(eid);

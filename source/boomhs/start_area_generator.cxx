@@ -93,7 +93,7 @@ place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& regist
     auto const eid = registry.create();
 
     auto& wi     = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-    wi.mix_color = Color::random(rng);
+    wi.mix_color = color::random(rng);
 
     auto& tr         = registry.get<Transform>(eid);
     tr.translation.x = pos.x;

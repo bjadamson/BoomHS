@@ -17,9 +17,6 @@ class ObjData;
 class ObjStore;
 class EntityRegistry;
 
-template <size_t N>
-using TreeColors = std::array<Color, N>;
-
 enum class TreeColorType
 {
   Trunk = 0,
@@ -39,7 +36,7 @@ class TreeComponent
 
 public:
   static constexpr int               MAX_NUMBER_TREE_COLORS = 4;
-  TreeColors<MAX_NUMBER_TREE_COLORS> colors;
+  ColorArray<MAX_NUMBER_TREE_COLORS> colors;
 
   ObjData&       obj();
   ObjData const& obj() const;

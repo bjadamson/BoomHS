@@ -137,12 +137,8 @@ get_color(CppTable const& table, char const* name)
   std::vector<double> const& c = *load_colors;
   assert(4 == c.size() || 3 == c.size());
 
-  Color color;
-  color.set_r(c[0]);
-  color.set_g(c[1]);
-  color.set_b(c[2]);
-
   auto const alpha = (3 == c.size()) ? 1.0f : c[3];
+  auto color       = color::make(c[0], c[1], c[2]);
   color.set_a(alpha);
   return std::make_optional(color);
 }
@@ -546,8 +542,7 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets& 
       billboard.value = parse_billboard(geometry);
     }
     if (color) {
-      auto& cc = registry.assign<Color>(eid);
-      *&cc     = *color;
+      registry.assign<Color>(eid, *color);
     }
     if (texture_name) {
       LOG_DEBUG_SPRINTF("Looking up texture %s", *texture_name);
