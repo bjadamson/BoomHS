@@ -1,5 +1,4 @@
 #pragma once
-#include <common/tuple.hpp>
 #include <common/type_macros.hpp>
 
 #include <array>
@@ -11,17 +10,36 @@
 
 #define FOR(q, n) for (unsigned int q = 0u; q < n; ++q)
 #define FORI(q, n) for (int q = 0; q < n; ++q)
-#define PAIR(...) std::make_pair(__VA_ARGS__)
+#define PAIR(...) std::pair{__VA_ARGS__}
 #define BREAK_THIS_LOOP_IF(v) if (v) { break; }
 
 namespace common
 {
 
 template <typename ...Ts>
-bool and_all(Ts... ts) { return (... && ts); }
+bool constexpr and_all(Ts... ts) noexcept { return (... && ts); }
 
 template <typename ...Ts>
-bool or_all(Ts... ts) { return (... || ts); }
+bool constexpr or_all(Ts... ts) noexcept { return (... || ts); }
+
+template <typename F, typename... Args>
+void constexpr
+for_each(F f, Args&&... args) noexcept
+{
+  (f(std::forward<Args>(args)), ...);
+}
+
+template <class Target = void, class... Args>
+constexpr auto
+concat(Args&&... args) noexcept
+{
+  auto constexpr fn = [](auto&& first, auto&&... rest) {
+    using T =
+        std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
+    return std::array<T, (sizeof...(rest) + 1)>{{decltype(first)(first), decltype(rest)(rest)...}};
+  };
+  return std::apply(fn, std::tuple_cat(FORWARD(args)));
+}
 
 inline bool
 cstrcmp(char const* a, char const* b)
@@ -59,19 +77,6 @@ auto
 vec_from_array(std::array<T, N> &&array)
 {
   return std::vector<T>{array.cbegin(), array.cend()};
-}
-
-// Combines tuples/arrays at compile time into a user defined type.
-template <class Target = void, class... TupleLike>
-constexpr auto
-concat(TupleLike&&... tuples)
-{
-  auto constexpr fn = [](auto&& first, auto&&... rest) {
-    using T =
-        std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
-    return std::array<T, (sizeof...(rest) + 1)>{{decltype(first)(first), decltype(rest)(rest)...}};
-  };
-  return std::apply(fn, std::tuple_cat(std::forward<TupleLike>(tuples)...));
 }
 
 } // namespace common
@@ -268,26 +273,15 @@ concat_string()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // zip
-template <typename FirstBegin, typename FirstEnd, typename SecondBegin, typename FN>
+template <typename FirstBegin, typename FirstEnd, typename OutputBegin, typename FN>
 void
-zip(FirstBegin fb, FirstEnd fe, SecondBegin sb, FN const& fn)
+zip(FirstBegin fb, FirstEnd fe, OutputBegin ob, FN const& fn)
 {
-  // Assumes length(sb) > length(fe - fb)
-  auto it = sb;
+  // Assumes length(ob) > length(fe - fb)
+  auto it = ob;
   for (auto i{fb}; i < fe; ++i, ++it) {
     fn(*i, *it);
   }
-}
-
-template <typename ContainerIter, typename FN, typename... T>
-void
-zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
-{
-  auto const zip_fn = [&fn, &it](auto const& value) {
-    fn(value, *it);
-    it++;
-  };
-  common::for_each(tuple, zip_fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

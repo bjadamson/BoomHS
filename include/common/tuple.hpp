@@ -25,6 +25,9 @@ constexpr bool is_member_pointer_v = std::is_member_pointer<T>::value;
 template <class T>
 constexpr size_t tuple_size_v = std::tuple_size<T>::value;
 
+namespace detail
+{
+
 template <typename Tuple, typename F, size_t... Indices>
 void
 for_each_impl(Tuple&& tuple, F&& f, std::index_sequence<Indices...>)
@@ -33,12 +36,25 @@ for_each_impl(Tuple&& tuple, F&& f, std::index_sequence<Indices...>)
   (void)swallow{1, (f(std::get<Indices>(std::forward<Tuple>(tuple))), void(), int{})...};
 }
 
+} // namespace detail
+
 template <typename Tuple, typename F>
 void
-for_each(Tuple&& tuple, F&& f)
+tuple_for_each(Tuple&& tuple, F&& f)
 {
   constexpr size_t N = std::tuple_size<std::remove_reference_t<Tuple>>::value;
-  for_each_impl(std::forward<Tuple>(tuple), std::forward<F>(f), std::make_index_sequence<N>{});
+  detail::for_each_impl(std::forward<Tuple>(tuple), std::forward<F>(f), std::make_index_sequence<N>{});
+}
+
+template <typename ContainerIter, typename FN, typename... T>
+void
+tuple_zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
+{
+  auto const zip_fn = [&fn, &it](auto const& value) {
+    fn(value, *it);
+    it++;
+  };
+  common::tuple_for_each(tuple, zip_fn);
 }
 
 /////

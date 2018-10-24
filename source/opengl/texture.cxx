@@ -301,7 +301,7 @@ upload_3dcube_texture(common::Logger& logger, std::vector<std::string> const& pa
         GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
     };
 
-    common::zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
+    common::tuple_zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
 
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
