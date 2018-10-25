@@ -7,6 +7,7 @@
 #include <common/compiler.hpp>
 #include <common/optional.hpp>
 #include <common/result.hpp>
+#include <common/type_alias.hpp>
 #include <common/type_macros.hpp>
 
 #include <algorithm>
@@ -225,73 +226,119 @@ namespace shader
 // matrices.
 //
 // This mapping from user-type to OpenGL type happens at compile time.
-template <typename U, size_t N>
+template <typename Uniform>
 void
-set_uniform(common::Logger& logger, ShaderProgram& sp, GLchar const* name, U const& uniform)
+set_uniform(common::Logger& logger, ShaderProgram& sp, GLchar const* name, Uniform const& uniform)
 {
+  static_assert(!std::is_const<Uniform>::value);
+  static_assert(!std::is_reference<Uniform>::value);
+
+  using namespace boomhs;
   DEBUG_ASSERT_BOUND(sp);
-  auto const loc         = sp.get_uniform_location(logger, name);
-  auto const log_uniform = [&](char const* type_name, auto const& data_string) {
+
+  // Lookup the location of the uniform in the shader program.
+  auto const loc = sp.get_uniform_location(logger, name);
+
+  // Helper function that firsts log's information about the uniform varible being set, and then
+  // executes the function to set the uniform variable.
+  auto const log_then_set = [&](char const* type_name, auto const& data_string,
+                                auto const& set_uniform_fn, auto&&... args) {
     LOG_DEBUG_SPRINTF("Setting OpenGL Program uniform, name: '%s:%s' location: '%d' data: '%s'",
                       name,
                       type_name,
                       loc,
                       data_string);
-  };
-  auto const set_then_log = [&loc](auto const& f, auto const& value, char const* type_name,
-                               auto const& data_string) {
-    f(loc, value, type_name);
-    log_uniform(type_name, data_string);
+    set_uniform_fn(FORWARD(args));
   };
 
-  auto const set_value = [&](auto const& f, auto const& value, char const* type_name) {
-    set_then_log(&detail::set_uniform_value, value, type_name, std::to_string(value));
+  // Setup a bunch of lambda functions that handle capturing the relavent variables so we can make
+  // the table below as simple as possible.
+  auto const set_pod = [&](auto const& gl_fn, auto const& value, char const* type_name) {
+    auto const fn = [&]() { detail::set_uniform_value(loc, gl_fn, value); };
+    log_then_set(type_name, std::to_string(value), fn);
+  };
+  auto const set_array = [&](auto const& gl_fn, auto const& array, char const* type_name) {
+    auto const fn = [&]() { detail::set_uniform_array(loc, gl_fn, array.data()); };
+    log_then_set(type_name, common::stringify(array), fn);
+  };
+  auto const set_vecn = [&](auto const& gl_fn, auto const& vecn, char const* type_name) {
+    auto const fn = [&]() { detail::set_uniform_array(loc, gl_fn, glm::value_ptr(vecn)); };
+    log_then_set(type_name, glm::to_string(vecn), fn);
+  };
+  auto const set_color = [&](auto const& gl_fn, auto const& color, char const* type_name) {
+    if constexpr(TYPES_MATCH(Uniform, ColorRGB)) {
+      set_vecn(gl_fn, color.vec3(), type_name);
+    }
+    else if constexpr(TYPES_MATCH(Uniform, ColorRGBA)) {
+      set_vecn(gl_fn, color.vec4(), type_name);
+    }
+    else {
+      LOG_ERROR("Invalid Color Type, cannot set.");
+      std::abort();
+    }
+  };
+  auto const set_matrix = [&](auto const& gl_fn, auto const& matrix, char const* type_name) {
+    auto const fn = [&]() { detail::set_uniform_matrix(loc, gl_fn, matrix); };
+    log_then_set(type_name, glm::to_string(matrix), fn);
   };
 
-  auto const set_array = [&](auto const& f, std::array<U, N> const& array, char const* type_name) {
-    set_then_log(&detail::set_uniform_array, array, type_name, common::stringify(array));
-  };
-  auto const set_vecn = [&](auto const& f, auto const& vecn, char const* type_name) {
-    set_array(f, glm::value_ptr(vecn), type_name);
-  };
-  auto const set_matrix = [&](auto const& f, auto const& matrix, char const* type_name) {
-    set_then_log(&detail::set_uniform_matrix, matrix, type_name, glm::to_string(matrix));
-  };
+  // clang-format on
+  // This table uses the above macros to select exactly 1 implementation based on the uniform
+  // type. Effectively a bunch of template specialization's, except using "constexpr if" to pick one
+  // lambda function to call per-uniform type.
+  //
+  // The table below maps user types (such as int, vec3, ...) to OpenGL types, for the purposes of
+  // setting an opengl program uniform value.
+  // Inside the macro **_TYPE_TO_FN (defined below) we call through to the lambdas eventually
+  // setting the uniform by calling the OpenGL function provided. This is all handled
+  // automatically.
+  //
+  // Type's not explicitely mapped in the table result in execution ending with a call to
+  // std::abort().
+  //
+  // NOTE: The 'uniform' field must remain in the table below, because it's type is evaluated
+  // polymorphically at compile time thanks to "constexpr if" and polymorhic lambdas inside the
+  // macro.
+  //
+  // Unfortunately for now this means 'uniform' must remain as an explicit column. Trying to capture
+  // 'uniform' in the helper macros above result's in a compile-time error (this due to the lambda
+  // not being in a polymorphic context when instantiated outside of the 'constexpr if').
+  //
+  // Macro for Mapping a user type -> OpenGL type.
+#define IF___MAP_TYPE(UserType, FN, ...)                                                           \
+    if constexpr (TYPES_MATCH(Uniform, UserType)) {                                                \
+        FN(__VA_ARGS__);                                                                           \
+    }
+#define ELIF_MAP_TYPE(...) else IF___MAP_TYPE(__VA_ARGS__)
 
-  using UniformType = typename std::remove_reference<typename std::remove_const<U>::type>::type;
-#define TYPE_TO_FN(TYPE, FN) if constexpr (std::is_same<UniformType, TYPE>::value) { [&]() { FN; }(); }
+  //              TYPE         HELPER_FN   OPENGL_FN           UNIFORM                  UNIFORM_TYPE
+  //              ----------------------------------------------------------------------------------
+  IF___MAP_TYPE(int,         set_pod,    glUniform1i,        uniform,                   "int1")
+  ELIF_MAP_TYPE(bool,        set_pod,    glUniform1i,        uniform,                   "bool1")
+  ELIF_MAP_TYPE(float,       set_pod,    glUniform1f,        uniform,                   "float")
 
-using Array2 = std::array<float, 2>;
-using Array3 = std::array<float, 3>;
-using Array4 = std::array<float, 4>;
-using namespace boomhs;
+  ELIF_MAP_TYPE(ColorRGB,    set_color,  glUniform3fv,       uniform,                   "ColorRGB")
+  ELIF_MAP_TYPE(ColorRGBA,   set_color,  glUniform4fv,       uniform,                   "ColorRGBA")
 
-// clang-format on
-       TYPE_TO_FN(int,       set_value(glUniform1i,         uniform,                 "int1"))
-  else TYPE_TO_FN(bool,      set_value(glUniform1i,         uniform,                 "bool1"))
-  else TYPE_TO_FN(float,     set_value(glUniform1f,         uniform,                 "float"))
+  ELIF_MAP_TYPE(FloatArray2, set_array,  glUniform2fv,       uniform,                   "array2")
+  ELIF_MAP_TYPE(FloatArray3, set_array,  glUniform3fv,       uniform,                   "array3")
+  ELIF_MAP_TYPE(FloatArray4, set_array,  glUniform4fv,       uniform,                   "array4")
 
-  else TYPE_TO_FN(ColorRGB,  set_vecn(glUniform3fv,         uniform.vec3(),          "ColorRGB"))
-  else TYPE_TO_FN(ColorRGBA, set_vecn(glUniform4fv,         uniform.vec4(),          "ColorRGBA"))
+  ELIF_MAP_TYPE(glm::vec2,   set_vecn,   glUniform2fv,       uniform,                   "vec2")
+  ELIF_MAP_TYPE(glm::vec3,   set_vecn,   glUniform3fv,       uniform,                   "vec3")
+  ELIF_MAP_TYPE(glm::vec4,   set_vecn,   glUniform4fv,       uniform,                   "vec4")
 
-  else TYPE_TO_FN(Array2,    set_array(glUniform2fv,        uniform.data(),          "array2"))
-  else TYPE_TO_FN(Array3,    set_array(glUniform3fv,        uniform.data(),          "array3"))
-  else TYPE_TO_FN(Array4,    set_array(glUniform4fv,        uniform.data(),          "array4"))
-
-  else TYPE_TO_FN(glm::vec2, set_array(glUniform2fv,        glm::value_ptr(uniform), "vec2"))
-  else TYPE_TO_FN(glm::vec3, set_array(glUniform3fv,        glm::value_ptr(uniform), "vec3"))
-  else TYPE_TO_FN(glm::vec4, set_array(glUniform4fv,        glm::value_ptr(uniform), "vec4"))
-
-  else TYPE_TO_FN(glm::mat2, set_matrix(glUniformMatrix2fv, uniform,                 "mat2"))
-  else TYPE_TO_FN(glm::mat3, set_matrix(glUniformMatrix3fv, uniform,                 "mat3"))
-  else TYPE_TO_FN(glm::mat4, set_matrix(glUniformMatrix4fv, uniform,                 "mat4"))
+  ELIF_MAP_TYPE(glm::mat2,   set_matrix, glUniformMatrix2fv, uniform,                   "mat2")
+  ELIF_MAP_TYPE(glm::mat3,   set_matrix, glUniformMatrix3fv, uniform,                   "mat3")
+  ELIF_MAP_TYPE(glm::mat4,   set_matrix, glUniformMatrix4fv, uniform,                   "mat4")
   else {
     // This code path only gets instantiated by unhandled types.
     LOG_ERROR("Invalid type of uniform, cannot set.");
     std::abort();
   }
-// clang-format off
-#undef MAP_TYPE_TO_FN
+  // clang-format off
+#undef IF___MAP_TYPE
+#undef ELIF_MAP_TYPE
 }
 
 template <typename T>

@@ -1,14 +1,19 @@
 #pragma once
+#include <type_traits>
 #include <utility>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MISC
 #define MOVE(a) std::move(a)
 #define FORWARD(a) std::forward<decltype(a)>(a)...
+#define TYPES_MATCH(A, B) std::is_same<A, B>::value
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BASIC
 #define DEFAULT_CONSTRUCTIBLE(CLASSNAME) CLASSNAME() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Basic COPY/MOVE definitions
+// COPY/MOVE
 #define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
 #define COPY_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = default;
 
