@@ -107,77 +107,77 @@ public:
   void unbind_impl(common::Logger&);
   DEFAULT_WHILEBOUND_MEMBERFN_DECLATION();
 
-  GLint get_uniform_location(common::Logger&, GLchar const*);
-
-  void set_uniform_mat3(common::Logger&, GLchar const*, glm::mat3 const&);
-  void set_uniform_mat4(common::Logger&, GLchar const*, glm::mat4 const&);
-
-  void set_uniform_array2(common::Logger&, GLchar const*, std::array<float, 2> const&);
-  void set_uniform_array3(common::Logger&, GLchar const*, std::array<float, 3> const&);
-  void set_uniform_array4(common::Logger&, GLchar const*, std::array<float, 4> const&);
-
   std::string to_string() const;
 
-  void set_uniform_vec2(common::Logger& logger, GLchar const* name, glm::vec2 const& v)
+  GLint get_uniform_location(common::Logger&, GLchar const*);
+
+  void set_uniform(common::Logger&, GLchar const*, glm::mat3 const&);
+  void set_uniform(common::Logger&, GLchar const*, glm::mat4 const&);
+
+  void set_uniform(common::Logger&, GLchar const*, std::array<float, 2> const&);
+  void set_uniform(common::Logger&, GLchar const*, std::array<float, 3> const&);
+  void set_uniform(common::Logger&, GLchar const*, std::array<float, 4> const&);
+
+  void set_uniform(common::Logger& logger, GLchar const* name, glm::vec2 const& v)
   {
     auto const arr = common::make_array<float>(v.x, v.y);
-    set_uniform_array2(logger, name, arr);
+    set_uniform(logger, name, arr);
   }
 
-  void set_uniform_vec3(common::Logger& logger, GLchar const* name, glm::vec3 const& v)
+  void set_uniform(common::Logger& logger, GLchar const* name, glm::vec3 const& v)
   {
     auto const arr = common::make_array<float>(v.x, v.y, v.z);
-    set_uniform_array3(logger, name, arr);
+    set_uniform(logger, name, arr);
   }
 
-  void set_uniform_vec3(common::Logger& logger, std::string const& name, glm::vec3 const& v)
+  void set_uniform(common::Logger& logger, std::string const& name, glm::vec3 const& v)
   {
-    return set_uniform_vec3(logger, name.c_str(), v);
+    return set_uniform(logger, name.c_str(), v);
   }
 
-  void set_uniform_vec4(common::Logger& logger, GLchar const* name, glm::vec4 const& v)
+  void set_uniform(common::Logger& logger, GLchar const* name, glm::vec4 const& v)
   {
     auto const arr = common::make_array<float>(v.x, v.y, v.z, v.w);
-    set_uniform_array4(logger, name, arr);
+    set_uniform(logger, name, arr);
   }
 
-  void set_uniform_vec4(common::Logger& logger, std::string const& name, glm::vec4 const& v)
+  void set_uniform(common::Logger& logger, std::string const& name, glm::vec4 const& v)
   {
-    return set_uniform_vec4(logger, name.c_str(), v);
+    return set_uniform(logger, name.c_str(), v);
   }
 
-  void set_uniform_color(common::Logger& logger, GLchar const* name, boomhs::ColorRGBA const& c)
+  void set_uniform(common::Logger& logger, GLchar const* name, boomhs::ColorRGBA const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b(), c.a());
-    set_uniform_array4(logger, name, arr);
+    set_uniform(logger, name, arr);
   }
 
-  void set_uniform_color(common::Logger& logger, std::string const& name, boomhs::ColorRGBA const& c)
+  void set_uniform(common::Logger& logger, std::string const& name, boomhs::ColorRGBA const& c)
   {
-    return set_uniform_color(logger, name.c_str(), c);
+    return set_uniform(logger, name.c_str(), c);
   }
 
-  void set_uniform_color(common::Logger& logger, GLchar const* name, boomhs::ColorRGB const& c)
+  void set_uniform(common::Logger& logger, GLchar const* name, boomhs::ColorRGB const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b());
-    set_uniform_array3(logger, name, arr);
+    set_uniform(logger, name, arr);
   }
 
   void
-  set_uniform_color(common::Logger& logger, std::string const& name, boomhs::ColorRGB const& c)
+  set_uniform(common::Logger& logger, std::string const& name, boomhs::ColorRGB const& c)
   {
-    return set_uniform_color(logger, name.c_str(), c);
+    return set_uniform(logger, name.c_str(), c);
   }
 
-  void set_uniform_float1(common::Logger&, GLchar const*, float const);
+  void set_uniform(common::Logger&, GLchar const*, float const);
 
-  void set_uniform_float1(common::Logger& logger, std::string const& name, float const value)
+  void set_uniform(common::Logger& logger, std::string const& name, float const value)
   {
-    return set_uniform_float1(logger, name.c_str(), value);
+    return set_uniform(logger, name.c_str(), value);
   }
 
-  void set_uniform_bool(common::Logger&, GLchar const*, bool const);
-  void set_uniform_int1(common::Logger&, GLchar const*, int const);
+  void set_uniform(common::Logger&, GLchar const*, bool const);
+  void set_uniform(common::Logger&, GLchar const*, int const);
 };
 
 class ShaderPrograms

@@ -23,11 +23,11 @@ void
 set_dirlight(common::Logger& logger, ShaderProgram& sp, GlobalLight const& global_light)
 {
   auto const& directional_light = global_light.directional;
-  sp.set_uniform_vec3(logger, "u_dirlight.direction", directional_light.direction);
+  sp.set_uniform(logger, "u_dirlight.direction", directional_light.direction);
 
   auto const& light = directional_light.light;
-  sp.set_uniform_color(logger, "u_dirlight.diffuse", light.diffuse);
-  sp.set_uniform_color(logger, "u_dirlight.specular", light.specular);
+  sp.set_uniform(logger, "u_dirlight.diffuse", light.diffuse);
+  sp.set_uniform(logger, "u_dirlight.specular", light.specular);
 }
 
 void
@@ -37,9 +37,9 @@ set_pointlight(common::Logger& logger, ShaderProgram& sp, size_t const index,
   std::string const varname = "u_pointlights[" + std::to_string(index) + "]";
   auto const make_field = [&varname](char const* fieldname) { return varname + "." + fieldname; };
 
-  sp.set_uniform_color(logger, make_field("diffuse"), pointlight.light.diffuse);
-  sp.set_uniform_color(logger, make_field("specular"), pointlight.light.specular);
-  sp.set_uniform_vec3(logger, make_field("position"), pointlight_position);
+  sp.set_uniform(logger, make_field("diffuse"), pointlight.light.diffuse);
+  sp.set_uniform(logger, make_field("specular"), pointlight.light.specular);
+  sp.set_uniform(logger, make_field("position"), pointlight_position);
 
   auto const& attenuation       = pointlight.attenuation;
   auto const  attenuation_field = [&make_field](char const* fieldname) {
@@ -48,9 +48,9 @@ set_pointlight(common::Logger& logger, ShaderProgram& sp, size_t const index,
   auto const constant  = attenuation_field("constant");
   auto const linear    = attenuation_field("linear");
   auto const quadratic = attenuation_field("quadratic");
-  sp.set_uniform_float1(logger, constant, attenuation.constant);
-  sp.set_uniform_float1(logger, linear, attenuation.linear);
-  sp.set_uniform_float1(logger, quadratic, attenuation.quadratic);
+  sp.set_uniform(logger, constant, attenuation.constant);
+  sp.set_uniform(logger, linear, attenuation.linear);
+  sp.set_uniform(logger, quadratic, attenuation.quadratic);
 }
 
 struct PointlightTransform
@@ -77,23 +77,23 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
 
   render::set_modelmatrix(logger, model_matrix, sp);
   if (set_normalmatrix) {
-    sp.set_uniform_mat3(logger, "u_normalmatrix",
-                              glm::inverseTranspose(glm::mat3{model_matrix}));
+    glm::mat3 const nmatrix = glm::inverseTranspose(glm::mat3{model_matrix});
+    sp.set_uniform(logger, "u_normalmatrix", nmatrix);
   }
 
   set_dirlight(logger, sp, global_light);
 
   // ambient
-  sp.set_uniform_color(logger, "u_ambient.color", global_light.ambient);
+  sp.set_uniform(logger, "u_ambient.color", global_light.ambient);
 
   // specular
-  sp.set_uniform_float1(logger, "u_reflectivity", 1.0f);
+  sp.set_uniform(logger, "u_reflectivity", 1.0f);
 
   // pointlight
   auto const view_matrix = fstate.view_matrix();
   {
-    auto const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
-    sp.set_uniform_mat4(logger, "u_invviewmatrix", inv_viewmatrix);
+    glm::mat4 const inv_viewmatrix = glm::inverse(glm::mat3{view_matrix});
+    sp.set_uniform(logger, "u_invviewmatrix", inv_viewmatrix);
   }
 
   FOR(i, pointlights.size())
@@ -104,14 +104,14 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   }
 
   // Material uniforms
-  sp.set_uniform_vec3(logger, "u_material.ambient", material.ambient);
-  sp.set_uniform_vec3(logger, "u_material.diffuse", material.diffuse);
-  sp.set_uniform_vec3(logger, "u_material.specular", material.specular);
-  sp.set_uniform_float1(logger, "u_material.shininess", material.shininess);
+  sp.set_uniform(logger, "u_material.ambient", material.ambient);
+  sp.set_uniform(logger, "u_material.diffuse", material.diffuse);
+  sp.set_uniform(logger, "u_material.specular", material.specular);
+  sp.set_uniform(logger, "u_material.shininess", material.shininess);
   // TODO: when re-implementing LOS restrictions
-  // sp.set_uniform_vec3(logger, "u_player.position",  player.world_position());
-  // sp.set_uniform_vec3(logger, "u_player.direction",  player.forward_vector());
-  // sp.set_uniform_float1(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
+  // sp.set_uniform(logger, "u_player.position",  player.world_position());
+  // sp.set_uniform(logger, "u_player.direction",  player.forward_vector());
+  // sp.set_uniform(logger, "u_player.cutoff",  glm::cos(glm::radians(90.0f)));
 }
 
 } // namespace

@@ -393,7 +393,7 @@ ShaderProgram::get_uniform_location(common::Logger& logger, GLchar const* name)
 }
 
 void
-ShaderProgram::set_uniform_mat3(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
                                       glm::mat3 const& matrix)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -416,7 +416,7 @@ ShaderProgram::set_uniform_mat3(common::Logger& logger, GLchar const* name,
 }
 
 void
-ShaderProgram::set_uniform_mat4(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
                                       glm::mat4 const& matrix)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -439,7 +439,7 @@ ShaderProgram::set_uniform_mat4(common::Logger& logger, GLchar const* name,
 }
 
 void
-ShaderProgram::set_uniform_array2(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
                                      std::array<float, 2> const& array)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -461,7 +461,7 @@ ShaderProgram::set_uniform_array2(common::Logger& logger, GLchar const* name,
 }
 
 void
-ShaderProgram::set_uniform_array3(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
                                      std::array<float, 3> const& array)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -483,7 +483,7 @@ ShaderProgram::set_uniform_array3(common::Logger& logger, GLchar const* name,
 }
 
 void
-ShaderProgram::set_uniform_array4(common::Logger& logger, GLchar const* name,
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
                                      std::array<float, 4> const& floats)
 {
   DEBUG_ASSERT_BOUND(*this);
@@ -505,7 +505,7 @@ ShaderProgram::set_uniform_array4(common::Logger& logger, GLchar const* name,
 }
 
 void
-ShaderProgram::set_uniform_float1(common::Logger& logger, GLchar const* name, float const value)
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name, float const value)
 {
   DEBUG_ASSERT_BOUND(*this);
 
@@ -516,8 +516,9 @@ ShaderProgram::set_uniform_float1(common::Logger& logger, GLchar const* name, fl
 }
 
 void
-ShaderProgram::set_uniform_int1(common::Logger& logger, GLchar const* name, int const value)
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name, int const value)
 {
+  DEBUG_ASSERT_BOUND(*this);
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform int at loc '%d' with data '%i' to GPU", loc, value);
@@ -526,7 +527,7 @@ ShaderProgram::set_uniform_int1(common::Logger& logger, GLchar const* name, int 
 }
 
 void
-ShaderProgram::set_uniform_bool(common::Logger& logger, GLchar const* name, bool const value)
+ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name, bool const value)
 {
   DEBUG_ASSERT_BOUND(*this);
 

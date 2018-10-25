@@ -137,7 +137,7 @@ draw_orbital_body(RenderState& rstate, ShaderProgram& sp, EntityID const eid, Tr
   auto const proj_matrix = fstate.projection_matrix();
   auto const mvp_matrix  = proj_matrix * view_model;
   sp.while_bound(logger, [&]() {
-    sp.set_uniform_mat4(logger, "u_mv", mvp_matrix);
+    sp.set_uniform(logger, "u_mv", mvp_matrix);
     // render::set_modelmatrix(logger, mvp_matrix, sp);
   });
 
@@ -292,7 +292,7 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
       static constexpr double SPEED = 0.135;
       auto const              a     = std::sin(ft.since_start_millis() * M_PI * SPEED);
       float const             glow  = glm::lerp(MIN, MAX, std::abs(a));
-      sp.while_bound(logger, [&]() { sp.set_uniform_float1(logger, "u_glow", glow); });
+      sp.while_bound(logger, [&]() { sp.set_uniform(logger, "u_glow", glow); });
     }
 
     // randomize the position slightly
@@ -320,7 +320,7 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     auto  tr = transform;
 
     BIND_UNTIL_END_OF_SCOPE(logger, sp);
-    sp.set_uniform_color(logger, "u_wirecolor", wire_color);
+    sp.set_uniform(logger, "u_wirecolor", wire_color);
 
     // We needed to bind the shader program to set the uniforms above, no reason to pay to bind
     // it again.
@@ -365,7 +365,7 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("2dsilhoutte_uv");
-    sp.while_bound(logger, [&]() { sp.set_uniform_color(logger, "u_color", LOC3::WHITE); });
+    sp.while_bound(logger, [&]() { sp.set_uniform(logger, "u_color", LOC3::WHITE); });
 
     draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };

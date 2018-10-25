@@ -81,14 +81,14 @@ render_water_common(ShaderProgram& sp, RenderState& rstate, DrawState& ds, Level
     auto& dinfo        = draw_handles.lookup_entity(logger, eid);
 
     BIND_UNTIL_END_OF_SCOPE(logger, sp);
-    sp.set_uniform_vec4(logger, "u_clipPlane", ABOVE_VECTOR);
-    sp.set_uniform_float1(logger, "u_time_offset", time_offset);
-    sp.set_uniform_vec2(logger, "u_flowdir", winfo.flow_direction);
+    sp.set_uniform(logger, "u_clipPlane", ABOVE_VECTOR);
+    sp.set_uniform(logger, "u_time_offset", time_offset);
+    sp.set_uniform(logger, "u_flowdir", winfo.flow_direction);
 
     auto& wbuffer = es.ui_state.debug.buffers.water;
-    sp.set_uniform_float1(logger, "u_water.weight_light", wbuffer.weight_light);
-    sp.set_uniform_float1(logger, "u_water.weight_texture", wbuffer.weight_texture);
-    sp.set_uniform_float1(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
+    sp.set_uniform(logger, "u_water.weight_light", wbuffer.weight_light);
+    sp.set_uniform(logger, "u_water.weight_texture", wbuffer.weight_texture);
+    sp.set_uniform(logger, "u_water.weight_mix_effect", wbuffer.weight_mix_effect);
 
     BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
     fn(winfo, tr);
@@ -122,8 +122,8 @@ BasicWaterRenderer::BasicWaterRenderer(common::Logger& logger, TextureInfo& diff
 
   // connect texture units to shader program
   sp_->while_bound(logger, [&]() {
-    sp_->set_uniform_int1(logger, "u_diffuse_sampler", 0);
-    sp_->set_uniform_int1(logger, "u_normal_sampler", 1);
+    sp_->set_uniform(logger, "u_diffuse_sampler", 0);
+    sp_->set_uniform(logger, "u_normal_sampler", 1);
   });
 }
 
@@ -136,8 +136,8 @@ BasicWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManage
   auto& logger = es.logger;
 
   auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
-    sp_->set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
-    sp_->set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
+    sp_->set_uniform(logger, "u_water.mix_color", winfo.mix_color);
+    sp_->set_uniform(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
@@ -175,8 +175,8 @@ MediumWaterRenderer::MediumWaterRenderer(common::Logger& logger, TextureInfo& di
 
   // connect texture units to shader program
   sp_->while_bound(logger, [&]() {
-    sp_->set_uniform_int1(logger, "u_diffuse_sampler", 0);
-    sp_->set_uniform_int1(logger, "u_normal_sampler", 1);
+    sp_->set_uniform(logger, "u_diffuse_sampler", 0);
+    sp_->set_uniform(logger, "u_normal_sampler", 1);
   });
 }
 
@@ -194,8 +194,8 @@ MediumWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelManag
   Material const water_material{};
 
   auto const fn = [&](WaterInfo& winfo, Transform const& transform) {
-    sp_->set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
-    sp_->set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
+    sp_->set_uniform(logger, "u_water.mix_color", winfo.mix_color);
+    sp_->set_uniform(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });
@@ -275,12 +275,12 @@ AdvancedWaterRenderer::AdvancedWaterRenderer(common::Logger& logger, Viewport co
 
   // connect texture units to shader program
   sp_->while_bound(logger, [&]() {
-    sp_->set_uniform_int1(logger, "u_diffuse_sampler", 0);
-    sp_->set_uniform_int1(logger, "u_reflect_sampler", 1);
-    sp_->set_uniform_int1(logger, "u_refract_sampler", 2);
-    sp_->set_uniform_int1(logger, "u_dudv_sampler", 3);
-    sp_->set_uniform_int1(logger, "u_normal_sampler", 4);
-    sp_->set_uniform_int1(logger, "u_depth_sampler", 5);
+    sp_->set_uniform(logger, "u_diffuse_sampler", 0);
+    sp_->set_uniform(logger, "u_reflect_sampler", 1);
+    sp_->set_uniform(logger, "u_refract_sampler", 2);
+    sp_->set_uniform(logger, "u_dudv_sampler", 3);
+    sp_->set_uniform(logger, "u_normal_sampler", 4);
+    sp_->set_uniform(logger, "u_depth_sampler", 5);
   });
 }
 
@@ -308,20 +308,20 @@ AdvancedWaterRenderer::render_water(RenderState& rstate, DrawState& ds, LevelMan
     // Since I don't have a routine that allows the frustum to be changed at runtime if I don't
     // compute it every frame, for now.. compute these every frame
     {
-      sp_->set_uniform_float1(logger, "u_fresnel_reflect_power", wbuffer.fresnel_reflect_power);
-      sp_->set_uniform_float1(logger, "u_depth_divider", wbuffer.depth_divider);
+      sp_->set_uniform(logger, "u_fresnel_reflect_power", wbuffer.fresnel_reflect_power);
+      sp_->set_uniform(logger, "u_depth_divider", wbuffer.depth_divider);
 
       auto const& fr = fs.frustum();
-      sp_->set_uniform_float1(logger, "u_near", fr.near);
-      sp_->set_uniform_float1(logger, "u_far", fr.far);
+      sp_->set_uniform(logger, "u_near", fr.near);
+      sp_->set_uniform(logger, "u_far", fr.far);
     }
 
-    sp_->set_uniform_vec3(logger, "u_camera_position", fs.camera_world_position());
-    sp_->set_uniform_float1(logger, "u_wave_offset", winfo.wave_offset);
-    sp_->set_uniform_float1(logger, "u_wavestrength", winfo.wave_strength);
+    sp_->set_uniform(logger, "u_camera_position", fs.camera_world_position());
+    sp_->set_uniform(logger, "u_wave_offset", winfo.wave_offset);
+    sp_->set_uniform(logger, "u_wavestrength", winfo.wave_strength);
 
-    sp_->set_uniform_color(logger, "u_water.mix_color", winfo.mix_color);
-    sp_->set_uniform_float1(logger, "u_water.mix_intensity", winfo.mix_intensity);
+    sp_->set_uniform(logger, "u_water.mix_color", winfo.mix_color);
+    sp_->set_uniform(logger, "u_water.mix_intensity", winfo.mix_intensity);
 
     glActiveTexture(GL_TEXTURE0);
     ON_SCOPE_EXIT([]() { glActiveTexture(GL_TEXTURE0); });

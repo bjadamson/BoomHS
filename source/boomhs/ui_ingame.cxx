@@ -489,7 +489,7 @@ draw_2dui(RenderState& rstate)
     //);
     auto const blink_color =
         NPC::within_attack_range(player_pos, target_pos) ? LOC4::RED : LOC4::BLUE;
-    spp.while_bound(logger, [&]() { spp.set_uniform_color(logger, "u_blinkcolor", blink_color); });
+    spp.while_bound(logger, [&]() { spp.set_uniform(logger, "u_blinkcolor", blink_color); });
   }
 
   auto const view_frustum        = fstate.frustum();
@@ -556,11 +556,11 @@ draw_inventory_overlay(RenderState& rstate)
 
   auto const pm =
       glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
-  sp.set_uniform_mat4(logger, "u_mv", pm);
+  sp.set_uniform(logger, "u_mv", pm);
 
   auto color = LOC4::GRAY;
   color.set_a(0.40);
-  sp.set_uniform_color(logger, "u_color", color);
+  sp.set_uniform(logger, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
   render::draw_2d(rstate, GL_TRIANGLES, sp, dinfo);
