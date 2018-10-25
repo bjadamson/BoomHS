@@ -279,7 +279,7 @@ draw_pm(common::Logger& logger, Frustum const& frustum, DrawState& ds, ViewportP
   auto const pm = CameraORTHO::compute_pm(AR, frustum, viewport.size(), constants::ZERO, ZOOM);
 
   for (auto& pm_rect : vp_rects.rects) {
-    auto const color = pm_rect.overlapping ? LOC::RED : LOC::LIGHT_SEAGREEN;
+    auto const color = pm_rect.overlapping ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
     draw_rectangle_pm(logger, frustum, *vp_rects.sp, pm_rect, pm, color, GL_TRIANGLES, ds);
   }
 };
@@ -324,7 +324,7 @@ main(int argc, char **argv)
     update(logger, vp_rects, pm);
 
     DrawState ds;
-    OR::clear_screen(LOC::DEEP_SKY_BLUE);
+    OR::clear_screen(LOC4::DEEP_SKY_BLUE);
     draw_pm(logger, frustum, ds, vp_rects);
 
     // Update window with OpenGL rendering

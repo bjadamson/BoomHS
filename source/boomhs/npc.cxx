@@ -69,7 +69,7 @@ void
 NPC::create(EntityRegistry& registry, char const* name, int const level, glm::vec3 const& pos)
 {
   auto eid = registry.create();
-  registry.assign<Color>(eid, LOC::NO_ALPHA);
+  registry.assign<Color>(eid, LOC4::NO_ALPHA);
   registry.assign<Name>(eid, name);
   registry.assign<IsRenderable>(eid);
 

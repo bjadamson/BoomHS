@@ -33,9 +33,9 @@ WorldOriginArrows
 create_axis_arrows(common::Logger& logger, VertexAttribute const& va)
 {
   auto constexpr ORIGIN = constants::ZERO;
-  ArrowTemplate constexpr acx{LOC::RED, ORIGIN, constants::X_UNIT_VECTOR};
-  ArrowTemplate constexpr acy{LOC::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
-  ArrowTemplate constexpr acz{LOC::BLUE, ORIGIN, constants::Z_UNIT_VECTOR};
+  ArrowTemplate constexpr acx{LOC4::RED, ORIGIN, constants::X_UNIT_VECTOR};
+  ArrowTemplate constexpr acy{LOC4::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
+  ArrowTemplate constexpr acz{LOC4::BLUE, ORIGIN, constants::Z_UNIT_VECTOR};
 
   auto const avx = VertexFactory::build(acx);
   auto const avy = VertexFactory::build(acy);
@@ -95,15 +95,15 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
     //
     // eye-forward
     auto const fwd = wo.eye_forward();
-    render::draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::PURPLE);
+    render::draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC4::PURPLE);
 
     // eye-up
     auto const up = wo.eye_up();
-    render::draw_arrow(rstate, pos, pos + up, LOC::YELLOW);
+    render::draw_arrow(rstate, pos, pos + up, LOC4::YELLOW);
 
     // eye-right
     auto const right = wo.eye_right();
-    render::draw_arrow(rstate, pos, pos + right, LOC::ORANGE);
+    render::draw_arrow(rstate, pos, pos + right, LOC4::ORANGE);
   };
 
   if (es.show_player_localspace_vectors) {
@@ -146,21 +146,21 @@ draw_frustum(RenderState& rstate, Frustum const& frustum, glm::mat4 const& model
     v[i].z             = ff.z / ff.w;
   }
 
-  render::draw_line(rstate, v[0], v[1], LOC::BLUE);
-  render::draw_line(rstate, v[1], v[2], LOC::BLUE);
-  render::draw_line(rstate, v[2], v[3], LOC::BLUE);
-  render::draw_line(rstate, v[3], v[0], LOC::BLUE);
+  render::draw_line(rstate, v[0], v[1], LOC4::BLUE);
+  render::draw_line(rstate, v[1], v[2], LOC4::BLUE);
+  render::draw_line(rstate, v[2], v[3], LOC4::BLUE);
+  render::draw_line(rstate, v[3], v[0], LOC4::BLUE);
 
-  render::draw_line(rstate, v[4], v[5], LOC::GREEN);
-  render::draw_line(rstate, v[5], v[6], LOC::GREEN);
-  render::draw_line(rstate, v[6], v[7], LOC::GREEN);
-  render::draw_line(rstate, v[7], v[4], LOC::GREEN);
+  render::draw_line(rstate, v[4], v[5], LOC4::GREEN);
+  render::draw_line(rstate, v[5], v[6], LOC4::GREEN);
+  render::draw_line(rstate, v[6], v[7], LOC4::GREEN);
+  render::draw_line(rstate, v[7], v[4], LOC4::GREEN);
 
   // connecting lines
-  render::draw_line(rstate, v[0], v[4], LOC::RED);
-  render::draw_line(rstate, v[1], v[5], LOC::RED);
-  render::draw_line(rstate, v[2], v[6], LOC::RED);
-  render::draw_line(rstate, v[3], v[7], LOC::RED);
+  render::draw_line(rstate, v[0], v[4], LOC4::RED);
+  render::draw_line(rstate, v[1], v[5], LOC4::RED);
+  render::draw_line(rstate, v[2], v[6], LOC4::RED);
+  render::draw_line(rstate, v[3], v[7], LOC4::RED);
 }
 
 } // namespace

@@ -54,8 +54,8 @@ static constexpr auto ATTENUATION_DISTANCE_STRINGS = "7\0"
 
 struct Light
 {
-  Color diffuse  = LOC::WHITE;
-  Color specular = LOC::BLACK;
+  ColorRGB diffuse  = LOC3::WHITE;
+  ColorRGB specular = LOC3::BLACK;
 };
 
 struct DirectionalLight
@@ -68,12 +68,12 @@ struct DirectionalLight
 
 struct GlobalLight
 {
-  Color ambient;
+  ColorRGB ambient;
 
   // TODO: could there be more than one instance of "directional light"?
   DirectionalLight directional;
 
-  explicit GlobalLight(Color const&, DirectionalLight&&);
+  explicit GlobalLight(ColorRGB const&, DirectionalLight&&);
 };
 
 struct PointLight

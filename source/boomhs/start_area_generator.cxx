@@ -77,8 +77,8 @@ place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& ter
   registry.assign<ShaderName>(eid, "3d_pos_normal_color");
   registry.assign<MeshRenderable>(eid, "at");
 
-  auto& cc = registry.assign<Color>(eid);
-  cc.set(LOC::WHITE);
+  auto& cc = registry.assign<ColorRGBA>(eid);
+  cc.set(LOC4::WHITE);
 
   registry.assign<Material>(eid) = material_table.find("player");
 }

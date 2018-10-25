@@ -396,7 +396,7 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
     auto &dinfo         = cube_tr.draw_info();
     bool const selected = cube_tr.selected;
 
-    auto const& wire_color = selected ? LOC::BLUE : LOC::RED;
+    auto const& wire_color = selected ? LOC4::BLUE : LOC4::RED;
     draw_bbox(logger, pm, vm, sp, tr, dinfo, wire_color, ds);
   }
 }
@@ -733,7 +733,7 @@ allocate_and_draw_line_rect(common::Logger& logger, ScreenSize const& ss, RectIn
   auto builder = RectBuilder{rect};
   builder.line = {};
   auto di      = OG::copy_rectangle(logger, sp.va(), builder.build());
-  draw_rectangle_pm(logger, ss, viewport, sp, di, LOC::LIME_GREEN, GL_LINE_LOOP, ds);
+  draw_rectangle_pm(logger, ss, viewport, sp, di, LOC4::LIME_GREEN, GL_LINE_LOOP, ds);
 }
 
 void
@@ -772,7 +772,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       auto const& viewport = vi.viewport;
       OR::set_viewport_and_scissor(viewport, screen_height);
       for (auto& pm_rect : vi.rects) {
-        auto const color = pm_rect.selected ? LOC::ORANGE : LOC::PURPLE;
+        auto const color = pm_rect.selected ? LOC4::ORANGE : LOC4::PURPLE;
 
         auto const pm = CameraORTHO::compute_pm(AR, frustum, screen_size, constants::ZERO, glm::ivec2{0});
         draw_rectangle_pm(logger, viewport.size(), viewport.rect(), pm_info.sp, pm_rect.di,
@@ -840,13 +840,13 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     PAIR(window_rect.left, window_rect.top),
     viewport_width,
     viewport_height,
-    LOC::WHITE
+    LOC4::WHITE
   };
   auto const rhs_top = Viewport{
     PAIR(viewport_width, window_rect.top),
     viewport_width,
     viewport_height,
-    LOC::GREEN
+    LOC4::GREEN
   };
 
   auto const mid_height = window_rect.top + window_rect.half_height();
@@ -854,13 +854,13 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     PAIR(window_rect.left, mid_height),
     viewport_width,
     viewport_height,
-    LOC::LIGHT_SKY_BLUE
+    LOC4::LIGHT_SKY_BLUE
   };
   auto const rhs_bottom = Viewport{
     PAIR(viewport_width, mid_height),
     viewport_width,
     viewport_height,
-    LOC::LIGHT_GOLDENROD_YELLOW
+    LOC4::LIGHT_GOLDENROD_YELLOW
   };
 
   // pers => perspective

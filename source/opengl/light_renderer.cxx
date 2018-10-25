@@ -84,7 +84,6 @@ set_receiveslight_uniforms(RenderState& rstate, glm::vec3 const& position,
   set_dirlight(logger, sp, global_light);
 
   // ambient
-  LOG_TRACE_SPRINTF("AMBIENT COLOR: %s", global_light.ambient.to_string());
   sp.set_uniform_color_rgb(logger, "u_ambient.color", global_light.ambient);
 
   // specular

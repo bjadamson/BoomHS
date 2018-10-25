@@ -171,28 +171,28 @@ NearbyTargets::color_from_level_difference(int const player_level, int const tar
   }
 
   if (equals) {
-    return LOC::WHITE;
+    return LOC4::WHITE;
   }
   else if (player_gt && (abs_diff <= 2)) {
-    return LOC::BLUE;
+    return LOC4::BLUE;
   }
   else if (player_gt && (abs_diff <= 3)) {
-    return LOC::LIGHT_BLUE;
+    return LOC4::LIGHT_BLUE;
   }
   else if (player_gt && (abs_diff <= 3)) {
-    return LOC::GREEN;
+    return LOC4::GREEN;
   }
   else if (player_gt) {
-    return LOC::GRAY;
+    return LOC4::GRAY;
   }
   else if (player_lt && (abs_diff <= 2)) {
-    return LOC::YELLOW;
+    return LOC4::YELLOW;
   }
   else if (player_lt && (abs_diff <= 3)) {
-    return LOC::ORANGE;
+    return LOC4::ORANGE;
   }
   else if (player_lt) {
-    return LOC::RED;
+    return LOC4::RED;
   }
   std::abort();
 }

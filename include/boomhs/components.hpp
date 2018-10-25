@@ -126,7 +126,7 @@ struct LightFlicker
   float base_speed    = 0.0f;
   float current_speed = 0.0f;
 
-  std::array<Color, 2> colors = {{LOC::NO_ALPHA, LOC::NO_ALPHA}};
+  std::array<ColorRGB, 2> colors = {{LOC3::NO_ALPHA, LOC3::NO_ALPHA}};
 };
 
 struct JunkEntityFromFILE

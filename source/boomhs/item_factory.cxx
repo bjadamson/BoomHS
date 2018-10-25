@@ -102,14 +102,14 @@ ItemFactory::create_torch(EntityRegistry& registry, TextureTable& ttable)
   item.tooltip = "This is a torch";
 
   auto& pointlight         = registry.assign<PointLight>(eid);
-  pointlight.light.diffuse = LOC::YELLOW;
+  pointlight.light.diffuse = LOC3::YELLOW;
 
   auto& flicker         = registry.assign<LightFlicker>(eid);
   flicker.base_speed    = 1.0f;
   flicker.current_speed = flicker.base_speed;
 
-  flicker.colors[0] = LOC::RED;
-  flicker.colors[1] = LOC::YELLOW;
+  flicker.colors[0] = LOC3::RED;
+  flicker.colors[1] = LOC3::YELLOW;
 
   auto& att     = pointlight.attenuation;
   att.constant  = 1.0f;

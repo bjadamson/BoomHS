@@ -14,8 +14,9 @@ Material::Material(glm::vec3 const& amb, glm::vec3 const& diff, glm::vec3 const&
 {
 }
 
-Material::Material(Color const& amb, Color const& diff, Color const& spec, float const shiny)
-    : Material(amb.rgb(), diff.rgb(), spec.rgb(), shiny)
+Material::Material(ColorRGB const& amb, ColorRGB const& diff, ColorRGB const& spec,
+                   float const shiny)
+    : Material(amb.vec3(), diff.vec3(), spec.vec3(), shiny)
 {
 }
 

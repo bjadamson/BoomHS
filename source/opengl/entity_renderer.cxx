@@ -342,10 +342,10 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
 
 #define COMMON_BBOX Transform, AABoundingBox, Selectable
   registry.view<COMMON_BBOX>().each(
-      [&](auto&&... args) { draw_boundingboxes(PAIR(LOC::GREEN, LOC::RED), FORWARD(args)); });
+      [&](auto&&... args) { draw_boundingboxes(PAIR(LOC4::GREEN, LOC4::RED), FORWARD(args)); });
 
   registry.view<COMMON_BBOX, WaterInfo>().each(
-      [&](auto&&... args) { draw_boundingboxes(PAIR(LOC::BLUE, LOC::ORANGE), FORWARD(args)); });
+      [&](auto&&... args) { draw_boundingboxes(PAIR(LOC4::BLUE, LOC4::ORANGE), FORWARD(args)); });
 #undef COMMON_BBOX
 }
 
@@ -365,7 +365,7 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
     auto& sp = sps.ref_sp("2dsilhoutte_uv");
-    sp.while_bound(logger, [&]() { sp.set_uniform_color_rgb(logger, "u_color", LOC::WHITE); });
+    sp.while_bound(logger, [&]() { sp.set_uniform_color_rgb(logger, "u_color", LOC3::WHITE); });
 
     draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
   };

@@ -548,7 +548,7 @@ draw_grid_lines(RenderState& rstate)
     draw(logger, rstate.ds, GL_LINES, sp, dinfo);
   };
 
-  draw_the_terrain_grid(LOC::RED);
+  draw_the_terrain_grid(LOC4::RED);
 }
 
 void

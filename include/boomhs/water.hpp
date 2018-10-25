@@ -33,8 +33,8 @@ struct WaterInfo
   glm::vec2    dimensions;
   unsigned int num_vertexes;
 
-  Color mix_color     = LOC::SLATE_BLUE;
-  float mix_intensity = 0.25f;
+  ColorRGBA mix_color     = LOC4::SLATE_BLUE;
+  float     mix_intensity = 0.25f;
 
   float     wave_offset    = 0.0f;
   float     wave_strength  = 0.01f;

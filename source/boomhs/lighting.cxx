@@ -48,7 +48,7 @@ operator<<(std::ostream& stream, Attenuation const& att)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GlobalLight
-GlobalLight::GlobalLight(Color const& amb, DirectionalLight&& dl)
+GlobalLight::GlobalLight(ColorRGB const& amb, DirectionalLight&& dl)
     : ambient(amb)
     , directional(MOVE(dl))
 {

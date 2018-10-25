@@ -24,7 +24,7 @@ struct Material
 
   //
   // The alpha value for the colors is truncated.
-  Material(Color const&, Color const&, Color const&, float const);
+  Material(ColorRGB const&, ColorRGB const&, ColorRGB const&, float const);
 };
 
 struct NameMaterial

@@ -94,7 +94,7 @@ PerspectiveRenderer::draw_scene(RenderState& rstate, LevelManager& lm, DrawState
 
     auto const& zs          = lm.active();
     auto const& ldata       = zs.level_data;
-    auto const  clear_color = silhouette_black ? LOC::BLACK : ldata.fog.color;
+    auto const  clear_color = silhouette_black ? LOC4::BLACK : ldata.fog.color;
     render::clear_screen(clear_color);
 
     // render scene

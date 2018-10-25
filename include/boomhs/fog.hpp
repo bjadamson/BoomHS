@@ -10,7 +10,7 @@ struct Fog
   float density;
   float gradient;
 
-  Color color = LOC::NO_ALPHA;
+  ColorRGBA color = LOC4::NO_ALPHA;
 
   Fog() = default;
   MOVE_CONSTRUCTIBLE_ONLY(Fog);

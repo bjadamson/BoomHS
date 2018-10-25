@@ -41,7 +41,7 @@ using ScreenCoords = glm::ivec2;
 class Viewport
 {
   int left_, top_, width_, height_;
-  Color bg_color_ = LOC::WHITE;
+  ColorRGBA bg_color_ = LOC4::WHITE;
 
 public:
   constexpr Viewport(int const left_x, int const top_y, int const width, int const height)

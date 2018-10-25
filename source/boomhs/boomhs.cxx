@@ -582,11 +582,11 @@ init_gamestate_inplace(GameState& gs, Camera& camera)
     auto& chat_history = ingame.chat_history;
     auto& chat_state   = ingame.chat_state;
 
-    chat_history.add_channel(0, "General", LOC::WHITE);
-    chat_history.add_channel(1, "Group", LOC::LIGHT_BLUE);
-    chat_history.add_channel(2, "Guild", LOC::LIGHT_GREEN);
-    chat_history.add_channel(3, "Whisper", LOC::MEDIUM_PURPLE);
-    chat_history.add_channel(4, "Area", LOC::INDIAN_RED);
+    chat_history.add_channel(0, "General", LOC4::WHITE);
+    chat_history.add_channel(1, "Group", LOC4::LIGHT_BLUE);
+    chat_history.add_channel(2, "Guild", LOC4::LIGHT_GREEN);
+    chat_history.add_channel(3, "Whisper", LOC4::MEDIUM_PURPLE);
+    chat_history.add_channel(4, "Area", LOC4::INDIAN_RED);
 
     auto const addmsg = [&](ChannelId const channel, auto&& msg) {
       Message m{channel, MOVE(msg)};
@@ -701,7 +701,7 @@ game_loop(Engine& engine, GameState& gs, RNG& rng, Camera& camera, FrameTime con
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     // clear the screen before rending the main menu
-    render::clear_screen(LOC::BLACK);
+    render::clear_screen(LOC4::BLACK);
     render::set_viewport_and_scissor(viewport, fr.height());
 
     auto& skybox_renderer = srs.skybox;

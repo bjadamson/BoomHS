@@ -72,7 +72,7 @@ draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& 
         glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
     sp.set_uniform_mat4(logger, "u_mv", pm);
 
-    auto color = LOC::SANDY_BROWN;
+    auto color = LOC4::SANDY_BROWN;
     sp.set_uniform_color(logger, "u_color", color);
 
     BIND_UNTIL_END_OF_SCOPE(logger, dinfo);

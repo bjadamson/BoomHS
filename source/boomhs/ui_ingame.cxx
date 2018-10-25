@@ -189,7 +189,7 @@ draw_chatwindow_body(EngineState& es, Player& player)
 
   auto const print_chat_message = [&](Message const& m) {
     Color const active_color =
-        Message::is_command_message(m) ? LOC::RED : chat_history.channel_color(active_channel);
+        Message::is_command_message(m) ? LOC4::RED : chat_history.channel_color(active_channel);
 
     ImVec4 const im_color = imgui_cxx::from_color(active_color);
     imgui_cxx::text_wrapped_colored(im_color, "%s:%s", player.name.c_str(), m.contents.c_str());
@@ -488,7 +488,7 @@ draw_2dui(RenderState& rstate)
     // glm::to_string(target_pos)
     //);
     auto const blink_color =
-        NPC::within_attack_range(player_pos, target_pos) ? LOC::RED : LOC::BLUE;
+        NPC::within_attack_range(player_pos, target_pos) ? LOC4::RED : LOC4::BLUE;
     spp.while_bound(logger, [&]() { spp.set_uniform_color(logger, "u_blinkcolor", blink_color); });
   }
 
@@ -558,7 +558,7 @@ draw_inventory_overlay(RenderState& rstate)
       glm::ortho(f.left_float(), f.right_float(), f.bottom_float(), f.top_float(), NEAR, FAR);
   sp.set_uniform_mat4(logger, "u_mv", pm);
 
-  auto color = LOC::GRAY;
+  auto color = LOC4::GRAY;
   color.set_a(0.40);
   sp.set_uniform_color(logger, "u_color", color);
 

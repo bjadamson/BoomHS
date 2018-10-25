@@ -138,8 +138,7 @@ get_color(CppTable const& table, char const* name)
   assert(4 == c.size() || 3 == c.size());
 
   auto const alpha = (3 == c.size()) ? 1.0f : c[3];
-  auto color       = color::make(c[0], c[1], c[2]);
-  color.set_a(alpha);
+  auto color       = color::make_rgba(c[0], c[1], c[2], alpha);
   return std::make_optional(color);
 }
 
@@ -563,25 +562,26 @@ load_entities(common::Logger& logger, CppTable const& level_table, LevelAssets& 
       pl.attenuation = it->value;
 
       auto& light    = pl.light;
-      light.diffuse  = get_color_or_abort(pointlight_o, "diffuse");
-      light.specular = get_color_or_abort(pointlight_o, "specular");
+      // TODO: instead of converting the vec4 to vec3, just read it in as a vec3.
+      light.diffuse  = get_color_or_abort(pointlight_o, "diffuse").rgb();
+      light.specular = get_color_or_abort(pointlight_o, "specular").rgb();
     }
 
     auto& obj_store = assets.obj_store;
     if (common::cstrcmp(name.c_str(), "TreeLowpoly")) {
       auto& obj = obj_store.get(logger, registry.get<MeshRenderable>(eid).name);
       auto& tc  = registry.assign<TreeComponent>(eid, obj);
-      tc.add_color(TreeColorType::Leaf, LOC::GREEN);
-      tc.add_color(TreeColorType::Leaf, LOC::PINK);
-      tc.add_color(TreeColorType::Trunk, LOC::BROWN);
+      tc.add_color(TreeColorType::Leaf, LOC4::GREEN);
+      tc.add_color(TreeColorType::Leaf, LOC4::PINK);
+      tc.add_color(TreeColorType::Trunk, LOC4::BROWN);
     }
     if (common::cstrcmp(name.c_str(), "Tree2")) {
       auto& obj = obj_store.get(logger, registry.get<MeshRenderable>(eid).name);
       auto& tc  = registry.assign<TreeComponent>(eid, obj);
-      tc.add_color(TreeColorType::Leaf, LOC::YELLOW);
-      tc.add_color(TreeColorType::Stem, LOC::RED);
-      tc.add_color(TreeColorType::Stem, LOC::BLUE);
-      tc.add_color(TreeColorType::Trunk, LOC::GREEN);
+      tc.add_color(TreeColorType::Leaf, LOC4::YELLOW);
+      tc.add_color(TreeColorType::Stem, LOC4::RED);
+      tc.add_color(TreeColorType::Stem, LOC4::BLUE);
+      tc.add_color(TreeColorType::Trunk, LOC4::GREEN);
     }
 
     // An object receives light, if it has ALL ambient/diffuse/specular fields
@@ -694,11 +694,11 @@ auto
 load_global_lighting(CppTable const& table)
 {
   auto const global_lighting = get_first_and_only_entry(table, "global-lighting");
-  auto const ambient         = get_color_or_abort(global_lighting, "ambient");
+  auto const ambient         = get_color_or_abort(global_lighting, "ambient").rgb();
 
   auto const directinal_table = get_table_or_abort(global_lighting, "directional");
-  auto const diffuse          = get_color_or_abort(directinal_table, "diffuse");
-  auto const specular         = get_color_or_abort(directinal_table, "specular");
+  auto const diffuse          = get_color_or_abort(directinal_table, "diffuse").rgb();
+  auto const specular         = get_color_or_abort(directinal_table, "specular").rgb();
   auto const direction        = get_vec3_or_abort(directinal_table, "direction");
 
   Light            light{diffuse, specular};
