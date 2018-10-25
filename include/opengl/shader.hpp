@@ -110,74 +110,6 @@ public:
   std::string to_string() const;
 
   GLint get_uniform_location(common::Logger&, GLchar const*);
-
-  void set_uniform(common::Logger&, GLchar const*, glm::mat3 const&);
-  void set_uniform(common::Logger&, GLchar const*, glm::mat4 const&);
-
-  void set_uniform(common::Logger&, GLchar const*, std::array<float, 2> const&);
-  void set_uniform(common::Logger&, GLchar const*, std::array<float, 3> const&);
-  void set_uniform(common::Logger&, GLchar const*, std::array<float, 4> const&);
-
-  void set_uniform(common::Logger& logger, GLchar const* name, glm::vec2 const& v)
-  {
-    auto const arr = common::make_array<float>(v.x, v.y);
-    set_uniform(logger, name, arr);
-  }
-
-  void set_uniform(common::Logger& logger, GLchar const* name, glm::vec3 const& v)
-  {
-    auto const arr = common::make_array<float>(v.x, v.y, v.z);
-    set_uniform(logger, name, arr);
-  }
-
-  void set_uniform(common::Logger& logger, std::string const& name, glm::vec3 const& v)
-  {
-    return set_uniform(logger, name.c_str(), v);
-  }
-
-  void set_uniform(common::Logger& logger, GLchar const* name, glm::vec4 const& v)
-  {
-    auto const arr = common::make_array<float>(v.x, v.y, v.z, v.w);
-    set_uniform(logger, name, arr);
-  }
-
-  void set_uniform(common::Logger& logger, std::string const& name, glm::vec4 const& v)
-  {
-    return set_uniform(logger, name.c_str(), v);
-  }
-
-  void set_uniform(common::Logger& logger, GLchar const* name, boomhs::ColorRGBA const& c)
-  {
-    auto const arr = common::make_array<float>(c.r(), c.g(), c.b(), c.a());
-    set_uniform(logger, name, arr);
-  }
-
-  void set_uniform(common::Logger& logger, std::string const& name, boomhs::ColorRGBA const& c)
-  {
-    return set_uniform(logger, name.c_str(), c);
-  }
-
-  void set_uniform(common::Logger& logger, GLchar const* name, boomhs::ColorRGB const& c)
-  {
-    auto const arr = common::make_array<float>(c.r(), c.g(), c.b());
-    set_uniform(logger, name, arr);
-  }
-
-  void
-  set_uniform(common::Logger& logger, std::string const& name, boomhs::ColorRGB const& c)
-  {
-    return set_uniform(logger, name.c_str(), c);
-  }
-
-  void set_uniform(common::Logger&, GLchar const*, float const);
-
-  void set_uniform(common::Logger& logger, std::string const& name, float const value)
-  {
-    return set_uniform(logger, name.c_str(), value);
-  }
-
-  void set_uniform(common::Logger&, GLchar const*, bool const);
-  void set_uniform(common::Logger&, GLchar const*, int const);
 };
 
 class ShaderPrograms
@@ -240,5 +172,114 @@ make_shader_program(common::Logger&, std::string const&, std::string const&, Ver
 
 std::ostream&
 operator<<(std::ostream&, ShaderProgram const&);
+
+namespace detail
+{
+template <typename F, typename T>
+void
+set_uniform_value(GLint const loc, F const& f, T const& value)
+{
+  //LOG_DEBUG_SPRINTF("sending uniform '%s' loc '%d' with data '%s' to GPU",
+                    //uniform_type, loc, common::stringify(array));
+  f(loc, value);
+}
+
+template <typename F, typename A>
+void
+set_uniform_array(GLint const loc, F const& f, A const& array)
+{
+
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // For the vector (glUniform*v) commands, specifies the number of elements that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
+  // array.
+  GLsizei constexpr COUNT = 1;
+  //LOG_DEBUG_SPRINTF("sending uniform '%s' loc '%d' with data '%s' to GPU",
+                    //uniform_type, loc, common::stringify(array));
+  f(loc, COUNT, array);
+}
+
+template <typename F, typename T>
+void
+set_uniform_matrix(GLint const loc, F const& f, T const& matrix)
+{
+  // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
+  //
+  // count:
+  // For the matrix (glUniformMatrix*) commands, specifies the number of matrices that are to be
+  // modified.
+  // This should be 1 if the targeted uniform variable is not an array of matrices, and 1 or more
+  // if it is an array of matrices.
+  GLsizei constexpr COUNT                = 1;
+  GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+  f(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
+}
+
+} // namespace detail
+
+namespace shader
+{
+
+template <typename U>
+void
+set_uniform(common::Logger& logger, ShaderProgram& sp, GLchar const* name, U const& uniform)
+{
+  auto const loc = sp.get_uniform_location(logger, name);
+  auto const set_value = [&](auto const& f, auto const& value, char const* type_name) {
+    detail::set_uniform_value(loc, f, value);
+  };
+  auto const set_array = [&](auto const& f, auto const array_v, char const* type_name) {
+    detail::set_uniform_array(loc, f, array_v);
+  };
+  auto const set_matrix = [&](auto const& f, auto const& matrix, char const* type_name) {
+    detail::set_uniform_matrix(loc, f, matrix);
+  };
+
+  DEBUG_ASSERT_BOUND(sp);
+
+using UniformType = typename std::remove_reference<typename std::remove_const<U>::type>::type;
+#define MAP_TYPE_TO_FN(TYPE, FN) if constexpr (std::is_same<UniformType, TYPE>::value) { FN();  }
+
+using Array2 = std::array<float, 2>;
+using Array3 = std::array<float, 3>;
+using Array4 = std::array<float, 4>;
+
+// clang-format on
+       MAP_TYPE_TO_FN(int,               [&]() { set_value(glUniform1i,         uniform,                 "int1"); })
+  else MAP_TYPE_TO_FN(bool,              [&]() { set_value(glUniform1i,         uniform,                 "bool1"); })
+  else MAP_TYPE_TO_FN(float,             [&]() { set_value(glUniform1f,         uniform,                 "float"); })
+
+  else MAP_TYPE_TO_FN(boomhs::ColorRGB,  [&]() { set_array(glUniform3fv,        uniform.data(),          "ColorRGB"); })
+  else MAP_TYPE_TO_FN(boomhs::ColorRGBA, [&]() { set_array(glUniform4fv,        uniform.data(),          "ColorRGBA"); })
+  else MAP_TYPE_TO_FN(Array2,            [&]() { set_array(glUniform2fv,        uniform.data(),          "array2"); })
+  else MAP_TYPE_TO_FN(Array3,            [&]() { set_array(glUniform3fv,        uniform.data(),          "array3"); })
+  else MAP_TYPE_TO_FN(Array4,            [&]() { set_array(glUniform4fv,        uniform.data(),          "array4"); })
+
+  else MAP_TYPE_TO_FN(glm::vec2,         [&]() { set_array(glUniform2fv,        glm::value_ptr(uniform), "vec2"); })
+  else MAP_TYPE_TO_FN(glm::vec3,         [&]() { set_array(glUniform3fv,        glm::value_ptr(uniform), "vec3"); })
+  else MAP_TYPE_TO_FN(glm::vec4,         [&]() { set_array(glUniform4fv,        glm::value_ptr(uniform), "vec4"); })
+
+  else MAP_TYPE_TO_FN(glm::mat2,         [&]() { set_matrix(glUniformMatrix2fv, uniform,                 "mat2"); })
+  else MAP_TYPE_TO_FN(glm::mat3,         [&]() { set_matrix(glUniformMatrix3fv, uniform,                 "mat3"); })
+  else MAP_TYPE_TO_FN(glm::mat4,         [&]() { set_matrix(glUniformMatrix4fv, uniform,                 "mat4"); })
+  else {
+    // This code path only gets instantiated by unhandled types.
+    LOG_ERROR("Invalid type of uniform, cannot set.");
+    std::abort();
+  }
+// clang-format off
+#undef MAP_TYPE_TO_FN
+}
+
+template <typename T>
+void
+set_uniform(common::Logger& logger, ShaderProgram& sp, std::string const& name, T const& value)
+{
+  set_uniform(logger, sp, name.c_str(), value);
+}
+
+} // namespace shader
 
 } // namespace opengl

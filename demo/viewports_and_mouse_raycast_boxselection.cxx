@@ -350,7 +350,7 @@ draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, Shad
   auto const model_matrix = tr.model_matrix();
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform(logger, "u_wirecolor", color);
+  shader::set_uniform(logger, sp, "u_wirecolor", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
   auto const camera_matrix = pm * vm;
@@ -421,8 +421,8 @@ draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& v
   auto const pm = CameraORTHO::compute_pm(AR, f, ss, constants::ZERO, ZOOM);
 
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  sp.set_uniform(logger,  "u_mv", pm);
-  sp.set_uniform(logger, "u_color", color);
+  shader::set_uniform(logger, sp, "u_mv", pm);
+  shader::set_uniform(logger,sp, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
   OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());

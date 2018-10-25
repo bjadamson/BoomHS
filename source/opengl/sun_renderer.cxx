@@ -55,7 +55,7 @@ SunshaftRenderer::SunshaftRenderer(common::Logger& logger, Viewport const& view_
   }
 
   // connect texture units to shader program
-  sp_->while_bound(logger, [&]() { sp_->set_uniform(logger, "u_sampler", 0); });
+  sp_->while_bound(logger, [&]() { shader::set_uniform(logger, *sp_, "u_sampler", 0); });
 }
 
 void
@@ -89,7 +89,7 @@ SunshaftRenderer::render(RenderState& rstate, DrawState& ds, LevelManager& lm, C
   auto const model_matrix = transform.model_matrix();
   sp_->while_bound(logger, [&]() {
     render::set_modelmatrix(logger, model_matrix, *sp_);
-    sp_->set_uniform(logger, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
+    shader::set_uniform(logger, *sp_, "u_dirlight.screenspace_pos", directional_light.screenspace_pos);
 
     glActiveTexture(GL_TEXTURE0);
     dinfo.while_bound(logger, [&]() { render::draw_2d(rstate, GL_TRIANGLES, *sp_, ti, dinfo); });

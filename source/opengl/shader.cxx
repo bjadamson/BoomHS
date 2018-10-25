@@ -16,22 +16,6 @@
 namespace
 {
 
-template <typename T>
-std::string
-array_to_string(T const& array)
-{
-  std::string result = "{";
-  FOR(i, array.size())
-  {
-    if (i > 0) {
-      result += ", ";
-    }
-    auto const& v = array[i];
-    result += std::to_string(v);
-  }
-  return result + "}";
-}
-
 using compiled_shader = common::ImplicitelyCastableMovableWrapper<GLuint, decltype(glDeleteShader)>;
 using namespace opengl;
 
@@ -392,6 +376,7 @@ ShaderProgram::get_uniform_location(common::Logger& logger, GLchar const* name)
   return loc;
 }
 
+/*
 void
 ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
                                       glm::mat3 const& matrix)
@@ -454,7 +439,7 @@ ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform array 2fv loc '%d' with data '%s' to GPU", loc,
-                    array_to_string(array));
+                    common::stringify(array));
 
   glUniform2fv(loc, COUNT, array.data());
   LOG_ANY_GL_ERRORS(logger, "set_uniform_array2");
@@ -476,7 +461,7 @@ ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform array 3fv loc '%d' with data '%s' to GPU", loc,
-                    array_to_string(array));
+                    common::stringify(array));
 
   glUniform3fv(loc, COUNT, array.data());
   LOG_ANY_GL_ERRORS(logger, "set_uniform_array3");
@@ -490,7 +475,7 @@ ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name,
 
   auto const loc = get_uniform_location(logger, name);
   LOG_DEBUG_SPRINTF("sending uniform array 4fv loc '%d' with data '%s' to GPU", loc,
-                    array_to_string(floats));
+                    common::stringify(floats));
 
   // https://www.opengl.org/sdk/docs/man/html/glUniform.xhtml
   //
@@ -536,6 +521,7 @@ ShaderProgram::set_uniform(common::Logger& logger, GLchar const* name, bool cons
   glUniform1i(loc, static_cast<int>(value));
   LOG_ANY_GL_ERRORS(logger, "glUniform1i");
 }
+*/
 
 std::string
 ShaderProgram::to_string() const

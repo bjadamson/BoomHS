@@ -323,11 +323,11 @@ generate_piece(common::Logger& logger, glm::vec2 const& pos, TerrainGridConfig c
 
   // These uniforms only need to be set once.
   sp.while_bound(logger, [&]() {
-    sp.set_uniform(logger, "u_bgsampler", 0);
-    sp.set_uniform(logger, "u_rsampler", 1);
-    sp.set_uniform(logger, "u_gsampler", 2);
-    sp.set_uniform(logger, "u_bsampler", 3);
-    sp.set_uniform(logger, "u_blendsampler", 4);
+    shader::set_uniform(logger, sp, "u_bgsampler",    0);
+    shader::set_uniform(logger, sp, "u_rsampler",     1);
+    shader::set_uniform(logger, sp, "u_gsampler",     2);
+    shader::set_uniform(logger, sp, "u_bsampler",     3);
+    shader::set_uniform(logger, sp, "u_blendsampler", 4);
   });
 
   return Terrain{tc, pos, MOVE(di), sp, heightmap.clone()};

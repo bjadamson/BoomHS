@@ -261,8 +261,8 @@ draw_rectangle_pm(common::Logger& logger, Frustum const& frustum, ShaderProgram&
 
   auto const model = pm_rect.transform.model_matrix();
   auto const mv = pm * model;
-  sp.set_uniform(logger,  "u_mv", mv);
-  sp.set_uniform(logger, "u_color", color);
+  shader::set_uniform(logger, sp, "u_mv", mv);
+  shader::set_uniform(logger, sp, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
   OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());

@@ -107,8 +107,8 @@ DefaultTerrainRenderer::render(RenderState& rstate, MaterialTable const& mat_tab
     auto& sp = terrain.shader();
     sp.while_bound(logger, [&]() {
       auto const& config = terrain.config;
-      sp.set_uniform(logger, "u_uvmodifier", config.uv_modifier);
-      sp.set_uniform(logger, "u_clipPlane", cull_plane);
+      shader::set_uniform(logger, sp, "u_uvmodifier", config.uv_modifier);
+      shader::set_uniform(logger, sp, "u_clipPlane", cull_plane);
 
       auto& dinfo = terrain.draw_info();
 

@@ -382,4 +382,21 @@ trim_copy(std::string s)
   return s;
 }
 
+// Convert an array to a string.
+template <typename T>
+std::string
+stringify(T const& array)
+{
+  std::string result = "{";
+  FOR(i, array.size())
+  {
+    if (i > 0) {
+      result += ", ";
+    }
+    auto const& v = array[i];
+    result += std::to_string(v);
+  }
+  return result + "}";
+}
+
 } // namespace common
