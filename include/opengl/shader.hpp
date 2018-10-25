@@ -157,16 +157,16 @@ public:
     return set_uniform_color(logger, name.c_str(), c);
   }
 
-  void set_uniform_color_rgb(common::Logger& logger, GLchar const* name, boomhs::ColorRGB const& c)
+  void set_uniform_color(common::Logger& logger, GLchar const* name, boomhs::ColorRGB const& c)
   {
     auto const arr = common::make_array<float>(c.r(), c.g(), c.b());
     set_uniform_array3(logger, name, arr);
   }
 
   void
-  set_uniform_color_rgb(common::Logger& logger, std::string const& name, boomhs::ColorRGB const& c)
+  set_uniform_color(common::Logger& logger, std::string const& name, boomhs::ColorRGB const& c)
   {
-    return set_uniform_color_rgb(logger, name.c_str(), c);
+    return set_uniform_color(logger, name.c_str(), c);
   }
 
   void set_uniform_float1(common::Logger&, GLchar const*, float const);

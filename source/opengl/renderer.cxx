@@ -228,7 +228,7 @@ draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
     // ASSUMPTION: If the light source has a texture, then DO NOT set u_lightcolor.
     // Instead, assume the image should be rendered unaffected by the lightsource itself.
     auto const diffuse = pointlight.light.diffuse;
-    sp.set_uniform_color_rgb(logger, "u_lightcolor", diffuse);
+    sp.set_uniform_color(logger, "u_lightcolor", diffuse);
   }
 
   if (!sp.is_2d) {
