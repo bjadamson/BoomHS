@@ -19,6 +19,7 @@
 namespace boomhs
 {
 class FrameTime;
+class LevelManager;
 class RNG;
 } // namespace boomhs
 
@@ -187,6 +188,20 @@ public:
   }
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
+};
+
+struct WaterRenderers
+{
+  NOCOPY_MOVE_DEFAULT(WaterRenderers);
+
+  opengl::BasicWaterRenderer    basic;
+  opengl::MediumWaterRenderer   medium;
+  opengl::AdvancedWaterRenderer advanced;
+
+  opengl::SilhouetteWaterRenderer silhouette;
+
+  void
+  render(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&, boomhs::FrameTime const&, bool);
 };
 
 } // namespace opengl

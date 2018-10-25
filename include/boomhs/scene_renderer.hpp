@@ -21,20 +21,6 @@ class LevelManager;
 class RNG;
 struct ZoneState;
 
-struct WaterRenderers
-{
-  NOCOPY_MOVE_DEFAULT(WaterRenderers);
-
-  opengl::BasicWaterRenderer    basic;
-  opengl::MediumWaterRenderer   medium;
-  opengl::AdvancedWaterRenderer advanced;
-
-  opengl::SilhouetteWaterRenderer silhouette;
-
-  void
-  render(opengl::RenderState&, opengl::DrawState&, LevelManager&, Camera&, FrameTime const&, bool);
-};
-
 struct StaticRenderers
 {
   NOCOPY_MOVE_DEFAULT(StaticRenderers);
@@ -49,7 +35,7 @@ struct StaticRenderers
   opengl::SunshaftRenderer sunshaft;
 
   opengl::DebugRenderer debug;
-  WaterRenderers        water;
+  opengl::WaterRenderers        water;
 
   void render(LevelManager&, opengl::RenderState&, Camera&, RNG&, opengl::DrawState&,
               FrameTime const&, bool);

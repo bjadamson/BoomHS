@@ -524,7 +524,7 @@ draw_2dui(RenderState& rstate)
 
     auto const center           = view_frustum.center();
     auto const middle_of_screen = glm::vec2{center.x, center.y};
-    auto&      sp               = sps.ref_sp("2dtexture");
+    auto&      sp               = sps.sp_2dtexture();
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     draw_icon_on_screen(sp, middle_of_screen, size, "target_selectable_cursor");
@@ -539,7 +539,7 @@ draw_inventory_overlay(RenderState& rstate)
   auto& zs     = fstate.zs;
   auto& logger = es.logger;
   auto& sps    = zs.gfx_state.sps;
-  auto& sp     = sps.ref_sp("2dcolor");
+  auto& sp     = sps.sp_2dcolor();
 
   auto const& f      = es.frustum;
   auto const  vp     = Viewport::from_frustum(f);

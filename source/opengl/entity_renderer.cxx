@@ -316,7 +316,7 @@ EntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime const& ft)
     }
     Color const wire_color = sel.selected ? colors.first : colors.second;
 
-    auto& sp = sps.ref_sp("wireframe");
+    auto& sp = sps.sp_wireframe();
     auto  tr = transform;
 
     BIND_UNTIL_END_OF_SCOPE(logger, sp);
@@ -364,7 +364,8 @@ SilhouetteEntityRenderer::render2d_billboard(RenderState& rstate, RNG& rng, Fram
   auto& sps       = gfx_state.sps;
 
   auto const draw_orbital_fn = [&](COMMON_ARGS, auto&&... args) {
-    auto& sp = sps.ref_sp("2dsilhoutte_uv");
+    auto& sp = sps.sp_silhoutte_2d();
+
     sp.while_bound(logger, [&]() { shader::set_uniform(logger, sp, "u_color", LOC3::WHITE); });
 
     draw_orbital_body(rstate, sp, eid, transform, is_r, bbox, FORWARD(args));
@@ -396,7 +397,7 @@ SilhouetteEntityRenderer::render3d(RenderState& rstate, RNG& rng, FrameTime cons
   auto& draw_handles = gfx_state.draw_handles;
 
   auto const draw_common_fn = [&](COMMON_ARGS, auto&&... args) {
-    auto& sp = sps.ref_sp("silhoutte_black");
+    auto& sp = sps.sp_silhoutte_3d();
     if (!sp.is_2d) {
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
 

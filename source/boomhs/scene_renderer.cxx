@@ -58,33 +58,6 @@ namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// WaterRenderers
-void
-WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
-                       FrameTime const& ft, bool const silhouette_black)
-{
-  if (silhouette_black) {
-    silhouette.render_water(rstate, ds, lm, ft);
-  }
-  else {
-    auto const& water_buffer = rstate.fs.es.ui_state.debug.buffers.water;
-    auto const water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
-    if (GameGraphicsMode::Basic == water_type) {
-      basic.render_water(rstate, ds, lm, ft);
-    }
-    else if (GameGraphicsMode::Medium == water_type) {
-      medium.render_water(rstate, ds, lm, ft);
-    }
-    else if (GameGraphicsMode::Advanced == water_type) {
-      advanced.render_water(rstate, ds, lm, ft);
-    }
-    else {
-      std::abort();
-    }
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 // StaticRenderers
 void
 StaticRenderers::render(LevelManager& lm, RenderState& rstate, Camera& camera, RNG& rng,
@@ -181,12 +154,12 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     auto& logger    = es.logger;
     auto& gfx_state = zs.gfx_state;
     auto& sps       = gfx_state.sps;
-    auto& sp        = sps.ref_sp("silhoutte_black");
+    auto& sp        = sps.sp_silhoutte_3d();
     return SilhouetteWaterRenderer{logger, sp};
   };
 
   auto const make_black_terrain_renderer = [](ShaderPrograms& sps) {
-    auto& sp = sps.ref_sp("silhoutte_black");
+    auto& sp = sps.sp_silhoutte_3d();
     return SilhouetteTerrainRenderer{sp};
   };
 
@@ -194,14 +167,14 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     auto& logger      = es.logger;
     auto& gfx_state   = zs.gfx_state;
     auto& sps         = gfx_state.sps;
-    auto& sunshaft_sp = sps.ref_sp("sunshaft");
+    auto& sunshaft_sp = sps.sp_sunshaft();
 
     return SunshaftRenderer{logger, viewport, sunshaft_sp};
   };
 
   auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps,
                                        TextureTable& ttable) {
-    auto&           skybox_sp = sps.ref_sp("skybox");
+    auto&           skybox_sp = sps.sp_skybox();
     glm::vec3 const vmin{-0.5f};
     glm::vec3 const vmax{0.5f};
 

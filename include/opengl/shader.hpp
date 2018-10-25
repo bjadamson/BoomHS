@@ -159,8 +159,29 @@ public:
     LOOKUP_SP(s, begin, end);
     return lookup_sp(s)->second;
   }
-
 #undef LOOKUP_SP
+
+#define DEFINE_LOOKUP_SP_FN(NAME)                                                                  \
+  auto& sp_##NAME() { return ref_sp(#NAME); }                                                      \
+  auto const& sp_##NAME() const { return ref_sp(#NAME); }                                          \
+
+  DEFINE_LOOKUP_SP_FN(2dcolor);
+  DEFINE_LOOKUP_SP_FN(2dtexture);
+  DEFINE_LOOKUP_SP_FN(wireframe);
+
+  DEFINE_LOOKUP_SP_FN(silhoutte_2d);
+  DEFINE_LOOKUP_SP_FN(silhoutte_3d);
+
+  DEFINE_LOOKUP_SP_FN(skybox);
+  DEFINE_LOOKUP_SP_FN(sunshaft);
+  DEFINE_LOOKUP_SP_FN(terrain);
+
+  DEFINE_LOOKUP_SP_FN(water_none);
+  DEFINE_LOOKUP_SP_FN(water_basic);
+  DEFINE_LOOKUP_SP_FN(water_medium);
+  DEFINE_LOOKUP_SP_FN(water_advanced);
+#undef DEFINE_LOOKUP_SP_FN
+
   ShaderProgram const& ref_sp(std::string const& s) const { return ref_sp(s.c_str()); }
 
   ShaderProgram& ref_sp(std::string const& s) { return ref_sp(s.c_str()); }

@@ -459,8 +459,7 @@ add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
   auto& draw_handles = gfx_state.draw_handles;
 
   auto& obj_store                 = ldata.obj_store;
-  auto constexpr WIREFRAME_SHADER = "wireframe";
-  auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
+  auto& va                        = sps.sp_wireframe().va();
 
   for (auto const eid : registry.view<OrbitalBody>()) {
     auto constexpr MIN = glm::vec3{-1.0f};
