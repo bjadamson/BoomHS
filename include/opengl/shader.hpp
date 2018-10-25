@@ -179,8 +179,6 @@ template <typename F, typename T>
 void
 set_uniform_value(GLint const loc, F const& f, T const& value)
 {
-  //LOG_DEBUG_SPRINTF("sending uniform '%s' loc '%d' with data '%s' to GPU",
-                    //uniform_type, loc, common::stringify(array));
   f(loc, value);
 }
 
@@ -196,8 +194,6 @@ set_uniform_array(GLint const loc, F const& f, A const& array)
   // This should be 1 if the targeted uniform variable is not an array, and 1 or more if it is an
   // array.
   GLsizei constexpr COUNT = 1;
-  //LOG_DEBUG_SPRINTF("sending uniform '%s' loc '%d' with data '%s' to GPU",
-                    //uniform_type, loc, common::stringify(array));
   f(loc, COUNT, array);
 }
 
@@ -214,6 +210,7 @@ set_uniform_matrix(GLint const loc, F const& f, T const& matrix)
   // if it is an array of matrices.
   GLsizei constexpr COUNT                = 1;
   GLboolean constexpr TRANSPOSE_MATRICES = GL_FALSE;
+
   f(loc, COUNT, TRANSPOSE_MATRICES, glm::value_ptr(matrix));
 }
 
@@ -222,48 +219,72 @@ set_uniform_matrix(GLint const loc, F const& f, T const& matrix)
 namespace shader
 {
 
-template <typename U>
+// Set a uniform variable for the shader program (argument).
+//
+// This function maps user types to types understood by OpenGL, ie: primitives, array's, and
+// matrices.
+//
+// This mapping from user-type to OpenGL type happens at compile time.
+template <typename U, size_t N>
 void
 set_uniform(common::Logger& logger, ShaderProgram& sp, GLchar const* name, U const& uniform)
 {
-  auto const loc = sp.get_uniform_location(logger, name);
-  auto const set_value = [&](auto const& f, auto const& value, char const* type_name) {
-    detail::set_uniform_value(loc, f, value);
+  DEBUG_ASSERT_BOUND(sp);
+  auto const loc         = sp.get_uniform_location(logger, name);
+  auto const log_uniform = [&](char const* type_name, auto const& data_string) {
+    LOG_DEBUG_SPRINTF("Setting OpenGL Program uniform, name: '%s:%s' location: '%d' data: '%s'",
+                      name,
+                      type_name,
+                      loc,
+                      data_string);
   };
-  auto const set_array = [&](auto const& f, auto const array_v, char const* type_name) {
-    detail::set_uniform_array(loc, f, array_v);
+  auto const set_then_log = [&loc](auto const& f, auto const& value, char const* type_name,
+                               auto const& data_string) {
+    f(loc, value, type_name);
+    log_uniform(type_name, data_string);
+  };
+
+  auto const set_value = [&](auto const& f, auto const& value, char const* type_name) {
+    set_then_log(&detail::set_uniform_value, value, type_name, std::to_string(value));
+  };
+
+  auto const set_array = [&](auto const& f, std::array<U, N> const& array, char const* type_name) {
+    set_then_log(&detail::set_uniform_array, array, type_name, common::stringify(array));
+  };
+  auto const set_vecn = [&](auto const& f, auto const& vecn, char const* type_name) {
+    set_array(f, glm::value_ptr(vecn), type_name);
   };
   auto const set_matrix = [&](auto const& f, auto const& matrix, char const* type_name) {
-    detail::set_uniform_matrix(loc, f, matrix);
+    set_then_log(&detail::set_uniform_matrix, matrix, type_name, glm::to_string(matrix));
   };
 
-  DEBUG_ASSERT_BOUND(sp);
-
-using UniformType = typename std::remove_reference<typename std::remove_const<U>::type>::type;
-#define MAP_TYPE_TO_FN(TYPE, FN) if constexpr (std::is_same<UniformType, TYPE>::value) { FN();  }
+  using UniformType = typename std::remove_reference<typename std::remove_const<U>::type>::type;
+#define TYPE_TO_FN(TYPE, FN) if constexpr (std::is_same<UniformType, TYPE>::value) { [&]() { FN; }(); }
 
 using Array2 = std::array<float, 2>;
 using Array3 = std::array<float, 3>;
 using Array4 = std::array<float, 4>;
+using namespace boomhs;
 
 // clang-format on
-       MAP_TYPE_TO_FN(int,               [&]() { set_value(glUniform1i,         uniform,                 "int1"); })
-  else MAP_TYPE_TO_FN(bool,              [&]() { set_value(glUniform1i,         uniform,                 "bool1"); })
-  else MAP_TYPE_TO_FN(float,             [&]() { set_value(glUniform1f,         uniform,                 "float"); })
+       TYPE_TO_FN(int,       set_value(glUniform1i,         uniform,                 "int1"))
+  else TYPE_TO_FN(bool,      set_value(glUniform1i,         uniform,                 "bool1"))
+  else TYPE_TO_FN(float,     set_value(glUniform1f,         uniform,                 "float"))
 
-  else MAP_TYPE_TO_FN(boomhs::ColorRGB,  [&]() { set_array(glUniform3fv,        uniform.data(),          "ColorRGB"); })
-  else MAP_TYPE_TO_FN(boomhs::ColorRGBA, [&]() { set_array(glUniform4fv,        uniform.data(),          "ColorRGBA"); })
-  else MAP_TYPE_TO_FN(Array2,            [&]() { set_array(glUniform2fv,        uniform.data(),          "array2"); })
-  else MAP_TYPE_TO_FN(Array3,            [&]() { set_array(glUniform3fv,        uniform.data(),          "array3"); })
-  else MAP_TYPE_TO_FN(Array4,            [&]() { set_array(glUniform4fv,        uniform.data(),          "array4"); })
+  else TYPE_TO_FN(ColorRGB,  set_vecn(glUniform3fv,         uniform.vec3(),          "ColorRGB"))
+  else TYPE_TO_FN(ColorRGBA, set_vecn(glUniform4fv,         uniform.vec4(),          "ColorRGBA"))
 
-  else MAP_TYPE_TO_FN(glm::vec2,         [&]() { set_array(glUniform2fv,        glm::value_ptr(uniform), "vec2"); })
-  else MAP_TYPE_TO_FN(glm::vec3,         [&]() { set_array(glUniform3fv,        glm::value_ptr(uniform), "vec3"); })
-  else MAP_TYPE_TO_FN(glm::vec4,         [&]() { set_array(glUniform4fv,        glm::value_ptr(uniform), "vec4"); })
+  else TYPE_TO_FN(Array2,    set_array(glUniform2fv,        uniform.data(),          "array2"))
+  else TYPE_TO_FN(Array3,    set_array(glUniform3fv,        uniform.data(),          "array3"))
+  else TYPE_TO_FN(Array4,    set_array(glUniform4fv,        uniform.data(),          "array4"))
 
-  else MAP_TYPE_TO_FN(glm::mat2,         [&]() { set_matrix(glUniformMatrix2fv, uniform,                 "mat2"); })
-  else MAP_TYPE_TO_FN(glm::mat3,         [&]() { set_matrix(glUniformMatrix3fv, uniform,                 "mat3"); })
-  else MAP_TYPE_TO_FN(glm::mat4,         [&]() { set_matrix(glUniformMatrix4fv, uniform,                 "mat4"); })
+  else TYPE_TO_FN(glm::vec2, set_array(glUniform2fv,        glm::value_ptr(uniform), "vec2"))
+  else TYPE_TO_FN(glm::vec3, set_array(glUniform3fv,        glm::value_ptr(uniform), "vec3"))
+  else TYPE_TO_FN(glm::vec4, set_array(glUniform4fv,        glm::value_ptr(uniform), "vec4"))
+
+  else TYPE_TO_FN(glm::mat2, set_matrix(glUniformMatrix2fv, uniform,                 "mat2"))
+  else TYPE_TO_FN(glm::mat3, set_matrix(glUniformMatrix3fv, uniform,                 "mat3"))
+  else TYPE_TO_FN(glm::mat4, set_matrix(glUniformMatrix4fv, uniform,                 "mat4"))
   else {
     // This code path only gets instantiated by unhandled types.
     LOG_ERROR("Invalid type of uniform, cannot set.");
