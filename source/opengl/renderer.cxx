@@ -99,6 +99,41 @@ DrawState::to_string() const
   return fmt::sprintf("{vertices: %lu, drawcalls: %lu}", num_vertices, num_drawcalls);
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Color2DProgram
+ShaderProgram
+Color2DProgram::make_sp(common::Logger& logger)
+{
+  constexpr auto vert_source = GLSL_SOURCE(R"GLSL(
+in vec3 a_position;
+
+uniform mat4 u_mv;
+uniform vec4 u_color;
+
+out vec4 v_color;
+
+void main()
+{
+  gl_Position = u_mv * vec4(a_position, 1.0);
+  v_color = u_color;
+}
+)GLSL");
+
+  static auto frag_source = GLSL_SOURCE(R"GLSL(
+in vec4 v_color;
+
+out vec4 fragment_color;
+
+void main()
+{
+  fragment_color = v_color;
+}
+)GLSL");
+
+  auto api = AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3};
+  return make_shaderprogram_expect(logger, vert_source, frag_source, MOVE(api));
+}
+
 } // namespace opengl
 
 namespace opengl::render
@@ -366,7 +401,7 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& registry = zs.registry;
 
   auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("3d_pos_color");
+  auto& sp  = sps.ref_sp(logger, "3d_pos_color");
 
   auto const acp     = ArrowTemplate{color, start, head};
   auto const arrow_v = VertexFactory::build(acp);
@@ -393,7 +428,7 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
   auto& registry = zs.registry;
 
   auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("line");
+  auto& sp  = sps.ref_sp(logger, "line");
 
   LineTemplate const lt{start, end};
   auto const         line_v = VertexFactory::build(lt);
@@ -509,7 +544,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 
   auto& sps = zs.gfx_state.sps;
 
-  auto& sp = sps.ref_sp(should_draw_glow ? "billboard" : "target_reticle");
+  auto& sp = sps.ref_sp(logger, should_draw_glow ? "billboard" : "target_reticle");
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   if (should_draw_glow) {
@@ -529,7 +564,7 @@ draw_grid_lines(RenderState& rstate)
 
   auto& logger = es.logger;
   auto& sps    = zs.gfx_state.sps;
-  auto& sp     = sps.ref_sp("3d_pos_color");
+  auto& sp     = sps.ref_sp(logger, "3d_pos_color");
 
   auto const& grid_dimensions       = es.grid_lines.dimensions;
   auto const  draw_the_terrain_grid = [&](auto const& color) {

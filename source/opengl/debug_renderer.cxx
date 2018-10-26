@@ -57,7 +57,7 @@ draw_axis(RenderState& rstate, glm::vec3 const& pos)
 
   auto& logger = es.logger;
 
-  auto& sp           = sps.ref_sp("3d_pos_color");
+  auto& sp           = sps.ref_sp(logger, "3d_pos_color");
   auto  world_arrows = create_axis_arrows(logger, sp.va());
 
   auto const& ldata = zs.level_data;

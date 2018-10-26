@@ -4,6 +4,8 @@
 
 #include <boomhs/color.hpp>
 #include <boomhs/lighting.hpp>
+
+#include <opengl/shader.hpp>
 #include <common/log.hpp>
 
 #include <extlibs/glm.hpp>
@@ -28,7 +30,6 @@ struct ZoneState;
 namespace opengl
 {
 class DrawInfo;
-class ShaderProgram;
 class ShaderPrograms;
 struct TextureInfo;
 
@@ -79,6 +80,19 @@ struct BlendState
   GLboolean enabled;
   GLint     source_alpha, dest_alpha;
   GLint     source_rgb, dest_rgb;
+};
+
+// Stateful Renderers
+class Color2DProgram
+{
+  ShaderProgram sp_;
+
+  static ShaderProgram make_sp(common::Logger&);
+
+public:
+  Color2DProgram(common::Logger& logger) : sp_(make_sp(logger)) {}
+
+  auto& sp() { return sp_; }
 };
 
 } // namespace opengl

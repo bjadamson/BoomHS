@@ -119,7 +119,7 @@ draw_entity_editor(char const* prefix, int const window_flags, EngineState& es, 
                      [&tc](auto const i) { return tc.leaf_color(i).data(); });
 
       auto& sn = registry.get<ShaderName>(eid);
-      auto& va = sps.ref_sp(sn.value).va();
+      auto& va = sps.ref_sp(logger, sn.value).va();
 
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
       Tree::update_colors(logger, va, dinfo, tc);

@@ -515,7 +515,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
             heightmap::load_fromtable(logger, ttable, terrain_config.texture_names.heightmap_path));
 
         terrain_grid.config = tbuffer_gridconfig;
-        auto& sp            = sps.ref_sp(terrain_config.shader_name);
+        auto& sp            = sps.ref_sp(logger, terrain_config.shader_name);
         ldata.terrain =
             terrain::generate_grid(logger, terrain_config, heightmap, sp, ldata.terrain);
       }
@@ -626,7 +626,7 @@ draw_terrain_editor(EngineState& es, LevelManager& lm)
         int const  row              = selected_terrain / terrain_grid.num_rows();
         int const  col              = selected_terrain % terrain_grid.num_cols();
 
-        auto& sp = sps.ref_sp(terrain_config.shader_name);
+        auto& sp = sps.ref_sp(logger, terrain_config.shader_name);
         auto  tp = terrain::generate_piece(logger, glm::vec2{row, col}, grid_config, terrain_config,
                                           heightmap, sp);
 

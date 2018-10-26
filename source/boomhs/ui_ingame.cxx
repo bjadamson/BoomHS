@@ -3,6 +3,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/scene_renderer.hpp>
 #include <boomhs/ui_ingame.hpp>
 #include <boomhs/ui_state.hpp>
 #include <boomhs/zone_state.hpp>
@@ -465,7 +466,7 @@ draw_2dui(RenderState& rstate)
 
   bool const  using_blink_shader = player_attacking && blink_timer.is_blinking();
   auto const& shader_name        = using_blink_shader ? "2d_ui_blinkcolor_icon" : "2dtexture";
-  auto&       spp                = sps.ref_sp(shader_name);
+  auto&       spp                = sps.ref_sp(logger, shader_name);
 
   if (using_blink_shader) {
     auto const& player_transform = player.transform();
@@ -524,7 +525,7 @@ draw_2dui(RenderState& rstate)
 
     auto const center           = view_frustum.center();
     auto const middle_of_screen = glm::vec2{center.x, center.y};
-    auto&      sp               = sps.sp_2dtexture();
+    auto&      sp               = sps.sp_2dtexture(logger);
 
     ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
     draw_icon_on_screen(sp, middle_of_screen, size, "target_selectable_cursor");
@@ -532,14 +533,14 @@ draw_2dui(RenderState& rstate)
 }
 
 void
-draw_inventory_overlay(RenderState& rstate)
+draw_inventory_overlay(RenderState& rstate, StaticRenderers& srs)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
   auto& zs     = fstate.zs;
   auto& logger = es.logger;
   auto& sps    = zs.gfx_state.sps;
-  auto& sp     = sps.sp_2dcolor();
+  auto& sp     = srs.color2d.sp();
 
   auto const& f      = es.frustum;
   auto const  vp     = Viewport::from_frustum(f);
@@ -579,7 +580,7 @@ reset_active_imguiwindow_yscroll_position(int const offset)
 }
 
 void
-draw(FrameState& fs, Camera& camera, DrawState& ds)
+draw(FrameState& fs, Camera& camera, StaticRenderers& srs, DrawState& ds)
 {
   auto& es       = fs.es;
   auto& zs       = fs.zs;
@@ -608,7 +609,7 @@ draw(FrameState& fs, Camera& camera, DrawState& ds)
 
   auto& inventory = player.inventory;
   if (inventory.is_open()) {
-    draw_inventory_overlay(rstate);
+    draw_inventory_overlay(rstate, srs);
     draw_player_inventory(logger, player, registry, ttable);
   }
 }

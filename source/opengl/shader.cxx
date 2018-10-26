@@ -3,6 +3,7 @@
 #include <opengl/debug.hpp>
 #include <opengl/global.hpp>
 #include <opengl/shader.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 #include <boomhs/math.hpp>
 #include <common/algorithm.hpp>
@@ -97,37 +98,6 @@ struct FragmentShaderInfo
   std::string const& filename;
   std::string const& source;
 };
-
-Result<GLuint, std::string>
-compile_sources(common::Logger& logger, VertexShaderInfo const& vertex_shader,
-                FragmentShaderInfo const& fragment_shader)
-{
-  LOG_TRACE_SPRINTF("Compiling shaders vert: %s, frag: %s", vertex_shader.filename,
-                    fragment_shader.filename);
-  auto const vertex_shader_id =
-      TRY_MOVEOUT(compile_shader(logger, GL_VERTEX_SHADER, vertex_shader.source));
-  auto const frag_shader_id =
-      TRY_MOVEOUT(compile_shader(logger, GL_FRAGMENT_SHADER, fragment_shader.source));
-  auto const program_id = TRY_MOVEOUT(create_program());
-
-  auto const& variable_infos = vertex_shader.attribute_infos;
-  FOR(i, variable_infos.size())
-  {
-    auto const& vinfo = variable_infos[i];
-    LOG_DEBUG_FMT("binding program_id: {}, name: {}, index: {}", program_id, vinfo.variable, i);
-    glBindAttribLocation(program_id, i, vinfo.variable.c_str());
-  }
-
-  glAttachShader(program_id, vertex_shader_id);
-  ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
-
-  glAttachShader(program_id, frag_shader_id);
-  ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
-
-  DO_EFFECT(link_program(logger, program_id));
-  LOG_TRACE("finished compiling");
-  return Ok(program_id);
-}
 
 Result<std::vector<AttributeVariableInfo>, std::string>
 from_vertex_shader(std::string const& filename, std::string const& source)
@@ -289,7 +259,34 @@ namespace opengl
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// grogram_factory
+// program_factory
+Result<GLuint, std::string>
+program_factory::from_sources(common::Logger& logger, char const* v, char const* f)
+{
+  auto const vertex_shader_id = TRY_MOVEOUT(compile_shader(logger, GL_VERTEX_SHADER, v));
+  auto const frag_shader_id   = TRY_MOVEOUT(compile_shader(logger, GL_FRAGMENT_SHADER, f));
+  auto const program_id       = TRY_MOVEOUT(create_program());
+
+  auto attribute_variable_info = TRY_MOVEOUT(from_vertex_shader(v, f));
+
+  FOR(i, attribute_variable_info.size())
+  {
+    auto const& vinfo = attribute_variable_info[i];
+    LOG_DEBUG_FMT("binding program_id: {}, name: {}, index: {}", program_id, vinfo.variable, i);
+    glBindAttribLocation(program_id, i, vinfo.variable.c_str());
+  }
+
+  glAttachShader(program_id, vertex_shader_id);
+  ON_SCOPE_EXIT([&]() { glDetachShader(program_id, vertex_shader_id); });
+
+  glAttachShader(program_id, frag_shader_id);
+  ON_SCOPE_EXIT([&]() { glDetachShader(program_id, frag_shader_id); });
+
+  DO_EFFECT(link_program(logger, program_id));
+  LOG_TRACE("finished compiling");
+  return Ok(program_id);
+}
+
 Result<GLuint, std::string>
 program_factory::from_files(common::Logger& logger, VertexShaderFilename const& v,
                             FragmentShaderFilename const& f)
@@ -297,21 +294,24 @@ program_factory::from_files(common::Logger& logger, VertexShaderFilename const& 
   auto const prefix = [](auto const& path) {
     return std::string{"./build-system/bin/shaders/"} + path;
   };
-  auto const vertex_shader_path   = prefix(v.filename);
-  auto const fragment_shader_path = prefix(f.filename);
+  auto const vertex_shader_path   = prefix(v.filename());
+  auto const fragment_shader_path = prefix(f.filename());
 
   // Read the Vertex/Fragment Shader code from ther file
   auto const vertex_shader_source = TRY_MOVEOUT(common::read_file(vertex_shader_path));
 
   auto attribute_variable_info =
       TRY_MOVEOUT(from_vertex_shader(vertex_shader_path, vertex_shader_source));
-  auto const fragment_source = TRY_MOVEOUT(common::read_file(fragment_shader_path));
+  auto const fragment_shader_source = TRY_MOVEOUT(common::read_file(fragment_shader_path));
 
-  VertexShaderInfo const   vertex_shader{vertex_shader_path, vertex_shader_source,
-                                       MOVE(attribute_variable_info)};
-  FragmentShaderInfo const fragment_shader{fragment_shader_path, fragment_source};
+  LOG_TRACE_SPRINTF("Compiling shaders vert: %s, frag: %s", v.filename(), f.filename());
+  return from_sources(logger, vertex_shader_source.c_str(), fragment_shader_source.c_str());
+}
 
-  return compile_sources(logger, vertex_shader, fragment_shader);
+Result<GLuint, std::string>
+program_factory::from_sources(common::Logger& logger, std::string const& a, std::string const& b)
+{
+  return from_sources(logger, a.c_str(), b.c_str());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -386,7 +386,9 @@ ShaderProgram::to_string() const
 #ifdef DEBUG_BUILD
   auto const& v = source_paths_.vertex;
   auto const& f = source_paths_.fragment;
-  return fmt::sprintf("ShaderProgram (vs): '%s' fs: '%s' attributes: %s", v.filename, f.filename,
+  return fmt::sprintf("ShaderProgram (vs): '%s' fs: '%s' attributes: %s",
+                      v.filename(),
+                      f.filename(),
                       attributes);
   // + uniforms);
 #else
@@ -446,19 +448,81 @@ ShaderPrograms::nickname_at_index(size_t const index) const
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Free Functions
 Result<ShaderProgram, std::string>
-make_shader_program(common::Logger& logger, std::string const& vertex_s,
-                    std::string const& fragment_s, VertexAttribute&& va)
+make_shader_program(common::Logger& logger, char const* vs, char const* fs, VertexAttribute&& va)
 {
-  VertexShaderFilename   v{vertex_s};
-  FragmentShaderFilename f{fragment_s};
+  VertexShaderFilename   v{vs};
+  FragmentShaderFilename f{fs};
   auto                   sp = TRY_MOVEOUT(program_factory::from_files(logger, v, f));
   return Ok(ShaderProgram{ProgramHandle{sp}, MOVE(va)
 #ifdef DEBUG_BUILD
                                                  ,
                           PathToShaderSources{MOVE(v), MOVE(f)}
 #endif
-  });
+                          });
 }
+
+Result<ShaderProgram, std::string>
+make_shader_program(common::Logger& logger, std::string const& vs, std::string const& fs,
+                    VertexAttribute&& va)
+{
+  return make_shader_program(logger, vs.c_str(), fs.c_str(), MOVE(va));
+}
+
+Result<ShaderProgram, std::string>
+make_shader_program(common::Logger& logger, char const* vs, char const* fs,
+                    AttributePointerInfo&& api)
+{
+  auto va = make_vertex_attribute(MOVE(api));
+  return make_shaderprogram_fromsources(logger, vs, fs, MOVE(va));
+}
+
+Result<ShaderProgram, std::string>
+make_shader_program(common::Logger& logger, std::string const& vs, std::string const& fs,
+                    AttributePointerInfo&& api)
+{
+  return make_shader_program(logger, vs.c_str(), fs.c_str(), MOVE(api));
+}
+
+ShaderProgram
+make_shaderprogram_expect(common::Logger& logger, char const* vs, char const* fs,
+                          AttributePointerInfo&& api)
+{
+  return make_shader_program(logger, vs, fs, MOVE(api))
+      .expect_moveout(fmt::sprintf("Error loading '%s'/'%s' shader program", vs, fs));
+}
+
+ShaderProgram
+make_shaderprogram_expect(common::Logger& logger, std::string const& vs, std::string const& fs,
+                          AttributePointerInfo&& api)
+{
+  return make_shaderprogram_expect(logger, vs.c_str(), fs.c_str(), MOVE(api));
+}
+
+
+Result<ShaderProgram, std::string>
+make_shaderprogram_fromsources(common::Logger& logger, char const* vs, char const* fs,
+                               VertexAttribute&& va)
+{
+  auto program = TRY_MOVEOUT(program_factory::from_sources(logger, vs, fs));
+
+  VertexShaderFilename     vfname{"SOURCE CODE"};
+  FragmentShaderFilename   ffname{"SOURCE CODE"};
+  return Ok(ShaderProgram{ProgramHandle{program}, MOVE(va)
+#ifdef DEBUG_BUILD
+                                           ,
+                          PathToShaderSources{MOVE(vfname), MOVE(ffname)}
+#endif
+                          });
+}
+
+
+Result<ShaderProgram, std::string>
+make_shaderprogram_fromsources(common::Logger& logger, std::string const& vs, std::string const& fs,
+                               VertexAttribute&& va)
+{
+  return make_shader_program(logger, vs.c_str(), fs.c_str(), MOVE(va));
+}
+
 
 std::ostream&
 operator<<(std::ostream& stream, ShaderProgram const& sp)

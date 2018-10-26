@@ -125,7 +125,7 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
                                             TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
+    auto& sp     = graphics_mode_to_water_shader(logger, GameGraphicsMode::Basic, sps);
     return BasicWaterRenderer{logger, diff, normal, sp};
   };
 
@@ -133,7 +133,7 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
                                              TextureTable& ttable) {
     auto& diff   = *ttable.find("water-diffuse");
     auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
+    auto& sp     = graphics_mode_to_water_shader(logger, GameGraphicsMode::Medium, sps);
     return MediumWaterRenderer{logger, diff, normal, sp};
   };
 
@@ -146,7 +146,7 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     auto& ti        = *ttable.find("water-diffuse");
     auto& dudv      = *ttable.find("water-dudv");
     auto& normal    = *ttable.find("water-normal");
-    auto& sp        = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
+    auto& sp        = graphics_mode_to_water_shader(logger, GameGraphicsMode::Advanced, sps);
     return AdvancedWaterRenderer{logger, viewport, sp, ti, dudv, normal};
   };
 
@@ -154,12 +154,13 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     auto& logger    = es.logger;
     auto& gfx_state = zs.gfx_state;
     auto& sps       = gfx_state.sps;
-    auto& sp        = sps.sp_silhoutte_3d();
+    auto& sp        = sps.sp_silhoutte_3d(logger);
     return SilhouetteWaterRenderer{logger, sp};
   };
 
-  auto const make_black_terrain_renderer = [](ShaderPrograms& sps) {
-    auto& sp = sps.sp_silhoutte_3d();
+  auto const make_black_terrain_renderer = [](EngineState& es, ShaderPrograms& sps) {
+    auto& logger    = es.logger;
+    auto& sp = sps.sp_silhoutte_3d(logger);
     return SilhouetteTerrainRenderer{sp};
   };
 
@@ -167,14 +168,14 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     auto& logger      = es.logger;
     auto& gfx_state   = zs.gfx_state;
     auto& sps         = gfx_state.sps;
-    auto& sunshaft_sp = sps.sp_sunshaft();
+    auto& sunshaft_sp = sps.sp_sunshaft(logger);
 
     return SunshaftRenderer{logger, viewport, sunshaft_sp};
   };
 
   auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps,
                                        TextureTable& ttable) {
-    auto&           skybox_sp = sps.sp_skybox();
+    auto&           skybox_sp = sps.sp_skybox(logger);
     glm::vec3 const vmin{-0.5f};
     glm::vec3 const vmax{0.5f};
 
@@ -184,13 +185,12 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
     auto&      night_ti = *ttable.find("night_skybox");
     return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
   };
-
   auto& logger    = es.logger;
   auto& gfx_state = zs.gfx_state;
   auto& sps       = gfx_state.sps;
   auto& ttable    = gfx_state.texture_table;
   return StaticRenderers{DefaultTerrainRenderer{},
-                         make_black_terrain_renderer(sps),
+                         make_black_terrain_renderer(es, sps),
                          EntityRenderer{},
                          SilhouetteEntityRenderer{},
                          make_skybox_renderer(logger, sps, ttable),
@@ -200,7 +200,8 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
                          WaterRenderers{make_basic_water_renderer(logger, sps, ttable),
                                         make_medium_water_renderer(logger, sps, ttable),
                                         make_advanced_water_renderer(es, zs),
-                                        make_black_water_renderer(es, zs)}};
+                                        make_black_water_renderer(es, zs)},
+                         Color2DProgram{logger}};
 }
 
 } // namespace boomhs

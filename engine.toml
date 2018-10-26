@@ -48,14 +48,6 @@ name     = "water"
 position = { datatype = "float", num = 3 }
 uv       = { datatype = "float", num = 2 }
 
-########### SHADERS #################
-[[shaders]]
-name = "2dcolor"
-vertex = "2dcolor.vert"
-fragment = "2dcolor.frag"
-va = "vertex_only"
-is_2d = true
-
 [[shaders]]
 name = "billboard"
 vertex = "billboard.vert"

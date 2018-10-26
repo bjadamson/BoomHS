@@ -26,19 +26,20 @@ namespace boomhs
 {
 
 ShaderProgram&
-graphics_mode_to_water_shader(GameGraphicsMode const dwo, opengl::ShaderPrograms& sps)
+graphics_mode_to_water_shader(common::Logger& logger, GameGraphicsMode const dwo,
+                              ShaderPrograms& sps)
 {
   ShaderProgram* sp = nullptr;
 
   switch (dwo) {
   case GameGraphicsMode::Basic:
-    sp = &sps.ref_sp("water_basic");
+    sp = &sps.ref_sp(logger, "water_basic");
     break;
   case GameGraphicsMode::Medium:
-    sp = &sps.ref_sp("water_medium");
+    sp = &sps.ref_sp(logger, "water_medium");
     break;
   case GameGraphicsMode::Advanced:
-    sp = &sps.ref_sp("water_advanced");
+    sp = &sps.ref_sp(logger, "water_advanced");
     break;
   default:
     std::abort();

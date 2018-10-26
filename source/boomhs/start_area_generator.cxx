@@ -87,7 +87,7 @@ void
 place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
              TextureTable& ttable, RNG& rng)
 {
-  auto& water_sp = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
+  auto& water_sp = graphics_mode_to_water_shader(logger, GameGraphicsMode::Basic, sps);
 
   auto const place = [&](glm::vec2 const& pos, unsigned int count) {
     auto const eid = registry.create();
@@ -130,7 +130,7 @@ StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry, 
 
   LOG_TRACE("Generating Terrain");
   TerrainConfig const tc;
-  auto&               sp = sps.ref_sp(tc.shader_name);
+  auto&               sp = sps.ref_sp(logger, tc.shader_name);
 
   TerrainGridConfig tgc;
   tgc.num_rows = 2;

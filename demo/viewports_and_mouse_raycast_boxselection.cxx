@@ -331,18 +331,6 @@ make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
   return OG::copy_rectangle(logger, va, buffer);
 }
 
-auto
-make_rectangle_program(common::Logger& logger)
-{
-  std::vector<opengl::AttributePointerInfo> const apis{{
-    AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
-  }};
-
-  auto va = make_vertex_attribute(apis);
-  return make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
-    .expect_moveout("Error loading 2dcolor shader program");
-}
-
 void
 draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, ShaderProgram& sp,
           Transform const& tr, DrawInfo& dinfo, Color const& color, DrawState& ds)
@@ -1015,7 +1003,9 @@ main(int argc, char **argv)
   }
 
   RNG rng;
-  auto rect_sp   = make_rectangle_program(logger);
+  Color2DProgram color2d_program{logger};
+  auto& rect_sp = color2d_program.sp();
+
   auto pm_infos  = make_pminfos(logger, rect_sp, rng, vp_grid);
   auto wire_sp   = make_wireframe_program(logger);
   auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);

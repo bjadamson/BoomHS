@@ -78,7 +78,7 @@ std::ostream&
 operator<<(std::ostream&, VertexAttribute const&);
 
 template <typename ITB, typename ITE>
-auto
+auto constexpr
 make_vertex_attribute(ITB const begin, ITE const end)
 {
   // Requested to many APIs. Increase maximum number (more memory per instance required)
@@ -103,16 +103,23 @@ make_vertex_attribute(std::initializer_list<AttributePointerInfo> apis)
 }
 
 template <size_t N>
-auto
+auto constexpr
 make_vertex_attribute(std::array<AttributePointerInfo, N> const& apis)
 {
-  return make_vertex_attribute(apis.begin(), apis.end());
+  return make_vertex_attribute(apis.cbegin(), apis.cend());
+}
+
+inline auto
+make_vertex_attribute(AttributePointerInfo const& api)
+{
+  std::array<AttributePointerInfo, 1> const apis{{api}};
+  return make_vertex_attribute(apis.cbegin(), apis.cend());
 }
 
 inline auto
 make_vertex_attribute(std::vector<AttributePointerInfo> const& container)
 {
-  return make_vertex_attribute(container.begin(), container.end());
+  return make_vertex_attribute(container.cbegin(), container.cend());
 }
 
 } // namespace opengl

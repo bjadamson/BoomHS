@@ -16,6 +16,7 @@ namespace boomhs
 {
 class Camera;
 struct FrameState;
+class  StaticRenderers;
 
 class ChatBuffer
 {
@@ -92,6 +93,6 @@ void
 reset_active_imguiwindow_yscroll_position(int);
 
 void
-draw(FrameState&, Camera&, opengl::DrawState&);
+draw(FrameState&, Camera&, StaticRenderers&, opengl::DrawState&);
 
 } // namespace boomhs::ui_ingame

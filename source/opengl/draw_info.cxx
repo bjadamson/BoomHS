@@ -269,7 +269,7 @@ DrawHandleManager::add_mesh(common::Logger& logger, ShaderPrograms& sps, ObjStor
                             EntityID const eid, EntityRegistry& registry)
 {
   auto& sn = registry.get<ShaderName>(eid);
-  auto& va = sps.ref_sp(sn.value).va();
+  auto& va = sps.ref_sp(logger, sn.value).va();
 
   auto const& mesh_name = registry.get<MeshRenderable>(eid).name;
   auto const& obj       = obj_store.get(logger, mesh_name);
@@ -289,7 +289,7 @@ DrawHandleManager::add_cube(common::Logger& logger, ShaderPrograms& sps, EntityI
 {
   auto const& cr = registry.get<CubeRenderable>(eid);
   auto&       sn = registry.get<ShaderName>(eid);
-  auto&       va = sps.ref_sp(sn.value).va();
+  auto&       va = sps.ref_sp(logger, sn.value).va();
 
   auto const vertices   = VertexFactory::build_cube(cr.min, cr.max);
   auto       handle     = OG::copy_cube_gpu(logger, vertices, va);

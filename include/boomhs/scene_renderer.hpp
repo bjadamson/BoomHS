@@ -21,6 +21,8 @@ class LevelManager;
 class RNG;
 struct ZoneState;
 
+
+
 struct StaticRenderers
 {
   NOCOPY_MOVE_DEFAULT(StaticRenderers);
@@ -36,6 +38,8 @@ struct StaticRenderers
 
   opengl::DebugRenderer debug;
   opengl::WaterRenderers        water;
+
+  opengl::Color2DProgram color2d;
 
   void render(LevelManager&, opengl::RenderState&, Camera&, RNG&, opengl::DrawState&,
               FrameTime const&, bool);

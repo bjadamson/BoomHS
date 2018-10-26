@@ -25,7 +25,7 @@ AABoundingBox&
 AABoundingBox::add_to_entity(common::Logger& logger, ShaderPrograms& sps, EntityID const eid,
                              EntityRegistry& registry, glm::vec3 const& min, glm::vec3 const& max)
 {
-  auto& va = sps.sp_wireframe().va();
+  auto& va = sps.sp_wireframe(logger).va();
 
   auto const cv    = VertexFactory::build_cube(min, max);
   auto       dinfo = OG::copy_cube_wireframe_gpu(logger, cv, va);

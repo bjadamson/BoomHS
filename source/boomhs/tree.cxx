@@ -196,7 +196,7 @@ Tree::add_toregistry(common::Logger& logger, EntityID const eid, ObjStore& obj_s
                      ShaderPrograms& sps, EntityRegistry& registry)
 {
   auto& sn = registry.get<ShaderName>(eid).value;
-  auto& va = sps.ref_sp(sn).va();
+  auto& va = sps.ref_sp(logger, sn).va();
 
   auto&    mesh = registry.get<MeshRenderable>(eid);
   ObjData& obj  = obj_store.get(logger, mesh.name);

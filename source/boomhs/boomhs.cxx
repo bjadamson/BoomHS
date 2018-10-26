@@ -418,7 +418,7 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& reg
   // copy billboarded textures to GPU
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto& va = sps.ref_sp(sn.value).va();
+        auto& va = sps.ref_sp(logger, sn.value).va();
         auto* ti = texture.texture_info;
         assert(ti);
 
@@ -434,7 +434,7 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& reg
       [&](auto entity, auto& sn, auto& mesh, auto& tree) {
         auto& name = registry.get<MeshRenderable>(entity).name;
 
-        auto&          va    = sps.ref_sp(sn.value).va();
+        auto&          va    = sps.ref_sp(logger, sn.value).va();
         auto const     flags = BufferFlags::from_va(va);
         ObjQuery const query{name, flags};
         auto&          obj = obj_store.get(logger, name);
@@ -459,7 +459,7 @@ add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
   auto& draw_handles = gfx_state.draw_handles;
 
   auto& obj_store                 = ldata.obj_store;
-  auto& va                        = sps.sp_wireframe().va();
+  auto& va                        = sps.sp_wireframe(logger).va();
 
   for (auto const eid : registry.view<OrbitalBody>()) {
     auto constexpr MIN = glm::vec3{-1.0f};
@@ -476,7 +476,7 @@ add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
       auto const data         = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
       auto const buffer       = VertexBuffer::create_interleaved(logger, data, flags);
 
-      auto& sp    = graphics_mode_to_water_shader(es.graphics_settings.mode, sps);
+      auto& sp    = graphics_mode_to_water_shader(logger, es.graphics_settings.mode, sps);
       auto  dinfo = gpu::copy_gpu(logger, sp.va(), buffer);
 
       draw_handles.add_entity(eid, MOVE(dinfo));
@@ -656,7 +656,7 @@ draw_everything(GameState& gs, FrameState& fs, LevelManager& lm, RNG& rng, Camer
       io.DisplaySize = ImVec2{fr.right_float(), fr.bottom_float()};
       auto& ui_state = es.ui_state;
       if (ui_state.draw_ingame_ui) {
-        ui_ingame::draw(fs, camera, ds);
+        ui_ingame::draw(fs, camera, static_renderers, ds);
       }
       if (ui_state.draw_debug_ui) {
 

@@ -44,7 +44,7 @@ draw_lhs(GameState& gs, RenderState& rstate, LevelManager& lm, StaticRenderers& 
 
   auto& gfx_state = zs.gfx_state;
   auto& sps       = zs.gfx_state.sps;
-  auto& sp        = sps.sp_2dcolor();
+  auto& sp        = srs.color2d.sp();
 
   auto const&    frustum = es.frustum;
   auto const     vp      = Viewport::from_frustum(frustum);

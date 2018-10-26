@@ -49,9 +49,10 @@ set(TEST_DIRECTORY ${PROJECT_DIR}/test)
 set(DEMO_DIRECTORY ${PROJECT_DIR}/demo)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
-set(IMGUI_INCLUDE_DIR    "${EXTERNAL_DIR}/imgui/include/imgui")
-set(CPPTOML_INCLUDE_DIR  "${EXTERNAL_DIR}/cpptoml/include")
-set(CMAKE_PREFIX_PATH    "${EXTERNAL_DIR}")
+set(IMGUI_INCLUDE_DIR         "${EXTERNAL_DIR}/imgui/include/imgui")
+set(CPPTOML_INCLUDE_DIR       "${EXTERNAL_DIR}/cpptoml/include")
+set(STATIC_STRING_INCLUDE_DIR "${EXTERNAL_DIR}/static_string/include")
+set(CMAKE_PREFIX_PATH         "${EXTERNAL_DIR}")
 
 set(INCLUDE_DIRECTORY ${PROJECT_DIR}/include)
 set(SOURCES_DIRECTORY ${PROJECT_DIR}/source)
@@ -155,6 +156,7 @@ target_include_directories(PROJECT_SOURCE_CODE PUBLIC
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
   ${SOIL_INCLUDE_DIR}
+  ${STATIC_STRING_INCLUDE_DIR}
   )
 
 ## ## External_LIB

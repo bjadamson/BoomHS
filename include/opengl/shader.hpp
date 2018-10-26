@@ -17,18 +17,20 @@ namespace opengl
 {
 
 #define DEFINE_SHADER_FILENAME_TYPE(NAME)                                                          \
-  struct NAME##ShaderFilename                                                                      \
+  class NAME##ShaderFilename                                                                       \
   {                                                                                                \
-    std::string const filename;                                                                    \
+    std::string filename_;                                                                         \
+  public:                                                                                          \
     explicit NAME##ShaderFilename(std::string const& fn)                                           \
-        : filename(fn)                                                                             \
+        : filename_(fn)                                                                            \
     {                                                                                              \
     }                                                                                              \
     explicit NAME##ShaderFilename(char const* f)                                                   \
-        : filename(f)                                                                              \
+        : filename_(f)                                                                             \
     {                                                                                              \
     }                                                                                              \
-    MOVE_CONSTRUCTIBLE_ONLY(NAME##ShaderFilename)                                                  \
+    auto const& filename() const { return filename_; }                                             \
+    NOCOPY_MOVE_DEFAULT(NAME##ShaderFilename)                                                      \
   }
 
 DEFINE_SHADER_FILENAME_TYPE(Vertex);
@@ -41,6 +43,12 @@ struct program_factory
 
   static Result<GLuint, std::string>
   from_files(common::Logger&, VertexShaderFilename const&, FragmentShaderFilename const&);
+
+  static Result<GLuint, std::string>
+  from_sources(common::Logger&, char const*, char const*);
+
+  static Result<GLuint, std::string>
+  from_sources(common::Logger&, std::string const&, std::string const&);
 };
 
 class ProgramHandle
@@ -49,7 +57,7 @@ class ProgramHandle
 
 public:
   NO_COPY(ProgramHandle);
-  NO_MOVE_ASSIGN(ProgramHandle);
+  MOVE_ASSIGNABLE(ProgramHandle);
 
   explicit ProgramHandle(GLuint const);
   ProgramHandle(ProgramHandle&&);
@@ -78,7 +86,7 @@ class ShaderProgram
   VertexAttribute va_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(ShaderProgram);
+  NOCOPY_MOVE_DEFAULT(ShaderProgram);
   explicit ShaderProgram(ProgramHandle&& ph, VertexAttribute&& va
 #ifdef DEBUG_BUILD
                          ,
@@ -136,36 +144,36 @@ public:
 
   std::optional<std::string> nickname_at_index(size_t) const;
 
-#define LOOKUP_SP(name, begin, end)                                                                \
+#define LOOKUP_SP(logger, name, begin, end)                                                        \
   auto const lookup_sp = [&](char const* s) {                                                      \
+    LOG_TRACE_SPRINTF("Looking up ShaderProgram name: '%s'", name);                                \
     auto const cmp = [&s](auto const& it) { return it.first == s; };                               \
     auto const it  = std::find_if(begin, end, cmp);                                                \
     assert(end != it);                                                                             \
     return it;                                                                                     \
   }
 
-  ShaderProgram const& ref_sp(char const* s) const
+  ShaderProgram const& ref_sp(common::Logger& logger, char const* s) const
   {
     auto begin = shader_programs_.cbegin();
     auto end   = shader_programs_.cend();
-    LOOKUP_SP(s, begin, end);
+    LOOKUP_SP(logger, s, begin, end);
     return lookup_sp(s)->second;
   }
 
-  ShaderProgram& ref_sp(char const* s)
+  ShaderProgram& ref_sp(common::Logger& logger, char const* s)
   {
     auto begin = shader_programs_.begin();
     auto end   = shader_programs_.end();
-    LOOKUP_SP(s, begin, end);
+    LOOKUP_SP(logger, s, begin, end);
     return lookup_sp(s)->second;
   }
 #undef LOOKUP_SP
 
 #define DEFINE_LOOKUP_SP_FN(NAME)                                                                  \
-  auto& sp_##NAME() { return ref_sp(#NAME); }                                                      \
-  auto const& sp_##NAME() const { return ref_sp(#NAME); }                                          \
+  auto& sp_##NAME(common::Logger& logger) { return ref_sp(logger, #NAME); }                        \
+  auto const& sp_##NAME(common::Logger& logger) const { return ref_sp(logger, #NAME); }            \
 
-  DEFINE_LOOKUP_SP_FN(2dcolor);
   DEFINE_LOOKUP_SP_FN(2dtexture);
   DEFINE_LOOKUP_SP_FN(wireframe);
 
@@ -182,15 +190,45 @@ public:
   DEFINE_LOOKUP_SP_FN(water_advanced);
 #undef DEFINE_LOOKUP_SP_FN
 
-  ShaderProgram const& ref_sp(std::string const& s) const { return ref_sp(s.c_str()); }
+  ShaderProgram const& ref_sp(common::Logger& logger, std::string const& s) const
+  {
+    return ref_sp(logger, s.c_str());
+  }
 
-  ShaderProgram& ref_sp(std::string const& s) { return ref_sp(s.c_str()); }
+  ShaderProgram& ref_sp(common::Logger& logger, std::string const& s)
+  {
+    return ref_sp(logger, s.c_str());
+  }
 
   BEGIN_END_FORWARD_FNS(shader_programs_);
 };
 
+
+Result<ShaderProgram, std::string>
+make_shader_program(common::Logger&, char const*, char const*, VertexAttribute&&);
+
 Result<ShaderProgram, std::string>
 make_shader_program(common::Logger&, std::string const&, std::string const&, VertexAttribute&&);
+
+
+Result<ShaderProgram, std::string>
+make_shader_program(common::Logger&, char const*, char const*, AttributePointerInfo&&);
+
+Result<ShaderProgram, std::string>
+make_shader_program(common::Logger&, std::string const&, std::string const&, AttributePointerInfo&&);
+
+ShaderProgram
+make_shaderprogram_expect(common::Logger&, char const*, char const*, AttributePointerInfo&&);
+
+ShaderProgram
+make_shaderprogram_expect(common::Logger&, std::string const&, std::string const&, AttributePointerInfo&&);
+
+
+Result<ShaderProgram, std::string>
+make_shaderprogram_fromsources(common::Logger&, char const*, char const*, VertexAttribute&&);
+
+Result<ShaderProgram, std::string>
+make_shaderprogram_fromsources(common::Logger&, std::string const&, std::string const&, VertexAttribute&&);
 
 std::ostream&
 operator<<(std::ostream&, ShaderProgram const&);

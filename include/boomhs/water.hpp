@@ -23,7 +23,7 @@ namespace boomhs
 class EntityRegistry;
 
 opengl::ShaderProgram&
-graphics_mode_to_water_shader(boomhs::GameGraphicsMode, opengl::ShaderPrograms&);
+graphics_mode_to_water_shader(common::Logger&, boomhs::GameGraphicsMode, opengl::ShaderPrograms&);
 
 struct WaterInfo
 {

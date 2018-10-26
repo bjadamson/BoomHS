@@ -1,4 +1,5 @@
 #pragma once
+#include <common/tuple.hpp>
 #include <common/type_macros.hpp>
 
 #include <array>

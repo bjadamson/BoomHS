@@ -95,18 +95,6 @@ make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
   return OG::copy_rectangle(logger, va, buffer);
 }
 
-auto
-make_rectangle_program(common::Logger& logger)
-{
-  std::vector<opengl::AttributePointerInfo> const apis{{
-    AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
-  }};
-
-  auto va = make_vertex_attribute(apis);
-  return make_shader_program(logger, "2dcolor.vert", "2dcolor.frag", MOVE(va))
-    .expect_moveout("Error loading 2dcolor shader program");
-}
-
 bool
 process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRects& vp_rects,
                 Transform& controlled_tr)
@@ -303,8 +291,10 @@ main(int argc, char **argv)
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
+  Color2DProgram color2d_program{logger};
+  auto& rect_sp = color2d_program.sp();
+
   RNG rng;
-  auto rect_sp  = make_rectangle_program(logger);
   auto vp_rects = make_rects(logger, NUM_RECTS, VIEWPORT, rect_sp, rng);
   assert(!vp_rects.rects.empty());
 
