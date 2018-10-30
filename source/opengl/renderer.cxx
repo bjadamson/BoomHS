@@ -101,8 +101,8 @@ DrawState::to_string() const
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // Color2DProgram
-ShaderProgram
-Color2DProgram::make_sp(common::Logger& logger)
+Color2DProgram
+Color2DProgram::create(common::Logger& logger)
 {
   constexpr auto vert_source = GLSL_SOURCE(R"GLSL(
 in vec3 a_position;
@@ -131,7 +131,34 @@ void main()
 )GLSL");
 
   auto api = AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3};
-  return make_shaderprogram_expect(logger, vert_source, frag_source, MOVE(api));
+  auto sp  =  make_shaderprogram_expect(logger, vert_source, frag_source, MOVE(api));
+  return Color2DProgram{MOVE(sp)};
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////
+// Color2DRect
+Color2DRect::Color2DRect(Color2DProgram&& p, DrawInfo&& dinfo)
+    : program_(MOVE(p))
+    , dinfo_(MOVE(dinfo))
+{
+}
+
+Color2DRect
+Color2DRect::create(common::Logger& logger, RectFloat const& rect, Color2DProgram&& program)
+{
+  auto builder   = RectBuilder{rect};
+  builder.line   = {};
+  auto const& va = program.sp().va();
+  auto dinfo     = OG::copy_rectangle(logger, va, builder.build());
+
+  return Color2DRect{MOVE(program), MOVE(dinfo)};
+}
+
+Color2DRect
+Color2DRect::create(common::Logger& logger, RectFloat const& rect)
+{
+  auto program = Color2DProgram::create(logger);
+  return create(logger, rect, MOVE(program));
 }
 
 } // namespace opengl

@@ -201,7 +201,7 @@ make_static_renderers(EngineState& es, ZoneState& zs, Viewport const& viewport)
                                         make_medium_water_renderer(logger, sps, ttable),
                                         make_advanced_water_renderer(es, zs),
                                         make_black_water_renderer(es, zs)},
-                         Color2DProgram{logger}};
+                         Color2DProgram::create(logger)};
 }
 
 } // namespace boomhs

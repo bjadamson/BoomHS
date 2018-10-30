@@ -20,6 +20,7 @@
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/vertex_attribute.hpp>
+#include <opengl/ui_renderer.hpp>
 
 #include <cstdlib>
 
@@ -390,33 +391,6 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, ScreenSize const& ss, RectInt const& viewport,
-                  ShaderProgram& sp, DrawInfo& dinfo, Color const& color, GLenum const draw_mode,
-                  DrawState& ds)
-{
-  int constexpr NEAR_PM = -1.0;
-  int constexpr FAR_PM  = 1.0f;
-  Frustum const f{
-    viewport.left,
-    viewport.right,
-    viewport.bottom,
-    viewport.top,
-    NEAR_PM,
-    FAR_PM
-  };
-
-  auto constexpr ZOOM = glm::ivec2{0};
-  auto const pm = CameraORTHO::compute_pm(AR, f, ss, constants::ZERO, ZOOM);
-
-  BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  shader::set_uniform(logger, sp, "u_mv", pm);
-  shader::set_uniform(logger,sp, "u_color", color);
-
-  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-  OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());
-}
-
-void
 move_cubes(glm::vec3 const& delta_v, CubeEntities& cube_ents)
 {
   for (auto& cube_tr : cube_ents) {
@@ -715,16 +689,6 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
 }
 
 void
-allocate_and_draw_line_rect(common::Logger& logger, ScreenSize const& ss, RectInt const& viewport,
-                        ShaderProgram& sp, RectFloat const& rect, DrawState& ds)
-{
-  auto builder = RectBuilder{rect};
-  builder.line = {};
-  auto di      = OG::copy_rectangle(logger, sp.va(), builder.build());
-  draw_rectangle_pm(logger, ss, viewport, sp, di, LOC4::LIME_GREEN, GL_LINE_LOOP, ds);
-}
-
-void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
            Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
            glm::ivec2 const& mouse_pos, CubeEntities& cube_ents)
@@ -751,7 +715,9 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       float const maxy = mouse_pos.y;
       RectFloat mouse_rect{minx, miny, maxx, maxy};
 
-      allocate_and_draw_line_rect(logger, screen_size, fs_vp.rect(), sp, mouse_rect, ds);
+      auto color2d_rect = Color2DRect::create(logger, mouse_rect);
+      auto ui_renderer  = UiRenderer::create(logger, color2d_rect.sp(), fs_vp, AR);
+      ui_renderer.draw_color_rect(logger, color2d_rect.di(), LOC4::LIME_GREEN, GL_LINE_LOOP, ds);
     }
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
@@ -761,10 +727,8 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       OR::set_viewport_and_scissor(viewport, screen_height);
       for (auto& pm_rect : vi.rects) {
         auto const color = pm_rect.selected ? LOC4::ORANGE : LOC4::PURPLE;
-
-        auto const pm = CameraORTHO::compute_pm(AR, frustum, screen_size, constants::ZERO, glm::ivec2{0});
-        draw_rectangle_pm(logger, viewport.size(), viewport.rect(), pm_info.sp, pm_rect.di,
-                          color, GL_TRIANGLES, ds);
+        auto ui_renderer = UiRenderer::create(logger, pm_info.sp, viewport, AR);
+        ui_renderer.draw_color_rect(logger, pm_rect.di, color, GL_TRIANGLES, ds);
       }
     }
   };
@@ -1003,7 +967,7 @@ main(int argc, char **argv)
   }
 
   RNG rng;
-  Color2DProgram color2d_program{logger};
+  auto color2d_program = Color2DProgram::create(logger);
   auto& rect_sp = color2d_program.sp();
 
   auto pm_infos  = make_pminfos(logger, rect_sp, rng, vp_grid);

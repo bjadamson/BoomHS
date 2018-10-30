@@ -87,12 +87,27 @@ class Color2DProgram
 {
   ShaderProgram sp_;
 
-  static ShaderProgram make_sp(common::Logger&);
-
 public:
-  Color2DProgram(common::Logger& logger) : sp_(make_sp(logger)) {}
+  Color2DProgram(ShaderProgram&& sp) : sp_(MOVE(sp)) {}
 
   auto& sp() { return sp_; }
+
+  static Color2DProgram create(common::Logger&);
+};
+
+class Color2DRect
+{
+  Color2DProgram program_;
+  DrawInfo dinfo_;
+
+  Color2DRect(Color2DProgram&&, DrawInfo&&);
+public:
+
+  static Color2DRect create(common::Logger&, boomhs::RectFloat const&, Color2DProgram&&);
+  static Color2DRect create(common::Logger&, boomhs::RectFloat const&);
+
+  auto& sp() { return program_.sp(); }
+  auto& di() { return dinfo_; }
 };
 
 } // namespace opengl

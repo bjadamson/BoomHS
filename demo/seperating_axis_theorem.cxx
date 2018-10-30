@@ -20,6 +20,7 @@
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/vertex_attribute.hpp>
+#include <opengl/ui_renderer.hpp>
 
 #include <cstdlib>
 
@@ -146,7 +147,7 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRec
 
     // scaling
     case SDLK_e:
-      scale_ents(VEC3(0.2));
+      scale_ents(+VEC3(0.2));
       break;
     case SDLK_q:
       scale_ents(-VEC3(0.2));
@@ -154,10 +155,10 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRec
 
     // rotation
     case SDLK_KP_2:
-      rotate_ents(1.0f, constants::Z_UNIT_VECTOR);
+      rotate_ents(-1.0f, constants::Z_UNIT_VECTOR);
       break;
     case SDLK_KP_8:
-      rotate_ents(-1.0f, constants::Z_UNIT_VECTOR);
+      rotate_ents(+1.0f, constants::Z_UNIT_VECTOR);
       break;
     default:
       break;
@@ -238,38 +239,18 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
 }
 
 void
-draw_rectangle_pm(common::Logger& logger, Frustum const& frustum, ShaderProgram& sp,
-                  PmRect& pm_rect, glm::mat4 const& pm,
-                  Color const& color, GLenum const draw_mode, DrawState& ds)
-{
-  auto& dinfo = pm_rect.di;
-
-  BIND_UNTIL_END_OF_SCOPE(logger, sp);
-
-
-  auto const model = pm_rect.transform.model_matrix();
-  auto const mv = pm * model;
-  shader::set_uniform(logger, sp, "u_mv", mv);
-  shader::set_uniform(logger, sp, "u_color", color);
-
-  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-  OR::draw_2delements(logger, draw_mode, sp, dinfo.num_indices());
-}
-
-void
-draw_pm(common::Logger& logger, Frustum const& frustum, DrawState& ds, ViewportPmRects& vp_rects)
+draw_pm(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rects, DrawState& ds)
 {
   auto const screen_height = VIEWPORT.height();
 
   auto const& viewport = vp_rects.viewport;
   OR::set_viewport_and_scissor(viewport, screen_height);
 
-  auto constexpr ZOOM = glm::ivec2{0};
-  auto const pm = CameraORTHO::compute_pm(AR, frustum, viewport.size(), constants::ZERO, ZOOM);
-
   for (auto& pm_rect : vp_rects.rects) {
     auto const color = pm_rect.overlapping ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
-    draw_rectangle_pm(logger, frustum, *vp_rects.sp, pm_rect, pm, color, GL_TRIANGLES, ds);
+    auto& di         = pm_rect.di;
+    auto const model = pm_rect.transform.model_matrix();
+    ui_renderer.draw_color_rect(logger, model, di, color, GL_TRIANGLES, ds);
   }
 };
 
@@ -291,7 +272,7 @@ main(int argc, char **argv)
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
-  Color2DProgram color2d_program{logger};
+  auto color2d_program = Color2DProgram::create(logger);
   auto& rect_sp = color2d_program.sp();
 
   RNG rng;
@@ -299,6 +280,7 @@ main(int argc, char **argv)
   assert(!vp_rects.rects.empty());
 
   glm::mat4 const pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  auto ui_renderer = UiRenderer::create(logger, *vp_rects.sp, VIEWPORT, AR);
 
   FrameCounter fcounter;
   SDL_Event event;
@@ -316,7 +298,7 @@ main(int argc, char **argv)
 
     DrawState ds;
     OR::clear_screen(LOC4::DEEP_SKY_BLUE);
-    draw_pm(logger, frustum, ds, vp_rects);
+    draw_pm(logger, ui_renderer, vp_rects, ds);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());
