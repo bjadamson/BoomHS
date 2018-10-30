@@ -82,34 +82,6 @@ struct BlendState
   GLint     source_rgb, dest_rgb;
 };
 
-// Stateful Renderers
-class Color2DProgram
-{
-  ShaderProgram sp_;
-
-public:
-  Color2DProgram(ShaderProgram&& sp) : sp_(MOVE(sp)) {}
-
-  auto& sp() { return sp_; }
-
-  static Color2DProgram create(common::Logger&);
-};
-
-class Color2DRect
-{
-  Color2DProgram program_;
-  DrawInfo dinfo_;
-
-  Color2DRect(Color2DProgram&&, DrawInfo&&);
-public:
-
-  static Color2DRect create(common::Logger&, boomhs::RectFloat const&, Color2DProgram&&);
-  static Color2DRect create(common::Logger&, boomhs::RectFloat const&);
-
-  auto& sp() { return program_.sp(); }
-  auto& di() { return dinfo_; }
-};
-
 } // namespace opengl
 
 #define PUSH_CW_STATE_UNTIL_END_OF_SCOPE()                                                         \

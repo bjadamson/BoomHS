@@ -695,18 +695,19 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 {
   auto const screen_size   = vp_grid.screen_size;
   auto const screen_height = screen_size.height;
-  auto const fs_vp         = vp_grid.fullscreen_viewport();
 
   auto const draw_viewport = [&](DrawState& ds, auto& vi) {
-    OR::set_viewport_and_scissor(vi.viewport, screen_height);
-    OR::clear_screen(vi.viewport.bg_color());
+    auto const& viewport = vi.viewport;
+    OR::set_viewport_and_scissor(viewport, screen_height);
+    OR::clear_screen(viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
   };
   auto const draw_viewport_with_boxselection = [&](DrawState& ds, auto& vi, auto& sp) {
     draw_viewport(ds, vi);
     if (MOUSE_BUTTON_PRESSED) {
-      OR::set_viewport_and_scissor(fs_vp, screen_height);
+      auto const& viewport = vi.viewport;
+      OR::set_viewport_and_scissor(viewport, screen_height);
 
       auto const& click_pos = MOUSE_INFO.click_positions.left_right;
       float const minx = click_pos.x;
@@ -716,8 +717,8 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       RectFloat mouse_rect{minx, miny, maxx, maxy};
 
       auto color2d_rect = Color2DRect::create(logger, mouse_rect);
-      auto ui_renderer  = UiRenderer::create(logger, color2d_rect.sp(), fs_vp, AR);
-      ui_renderer.draw_color_rect(logger, color2d_rect.di(), LOC4::LIME_GREEN, GL_LINE_LOOP, ds);
+      auto ui_renderer  = UiRenderer::create(logger, color2d_rect.sp(), viewport, AR);
+      ui_renderer.draw_line_rect(logger, color2d_rect.di(), LOC4::LIME_GREEN, ds);
     }
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
@@ -728,7 +729,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       for (auto& pm_rect : vi.rects) {
         auto const color = pm_rect.selected ? LOC4::ORANGE : LOC4::PURPLE;
         auto ui_renderer = UiRenderer::create(logger, pm_info.sp, viewport, AR);
-        ui_renderer.draw_color_rect(logger, pm_rect.di, color, GL_TRIANGLES, ds);
+        ui_renderer.draw_color_rect(logger, pm_rect.di, color, ds);
       }
     }
   };

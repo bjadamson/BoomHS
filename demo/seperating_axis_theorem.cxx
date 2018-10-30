@@ -250,7 +250,7 @@ draw_pm(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rec
     auto const color = pm_rect.overlapping ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
     auto& di         = pm_rect.di;
     auto const model = pm_rect.transform.model_matrix();
-    ui_renderer.draw_color_rect(logger, model, di, color, GL_TRIANGLES, ds);
+    ui_renderer.draw_color_rect(logger, model, di, color, ds);
   }
 };
 

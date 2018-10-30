@@ -7,6 +7,8 @@
 #include <opengl/terrain_renderer.hpp>
 #include <opengl/water_renderer.hpp>
 
+#include <opengl/ui_renderer.hpp>
+
 namespace opengl
 {
 struct DrawState;
