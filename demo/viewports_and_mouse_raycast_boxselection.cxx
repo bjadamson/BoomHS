@@ -13,6 +13,8 @@
 #include <common/timer.hpp>
 #include <common/type_macros.hpp>
 
+#include <demo/demo.hpp>
+
 #include <gl_sdl/common.hpp>
 
 #include <opengl/bind.hpp>
@@ -47,6 +49,7 @@
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace common;
+using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
@@ -66,21 +69,32 @@ static auto CAMERA_POS_TOPDOWN   = CameraPosition{0,  1,  0};
 static auto CAMERA_POS_BOTTOP    = CameraPosition{0, -1,  0};
 static auto CAMERA_POS_INTOSCENE = CameraPosition{0,  0,  1};
 
-enum ScreenSector
+struct CameraMatrices
 {
-  LEFT_TOP = 0,
-  RIGHT_TOP,
-  LEFT_BOTTOM,
-  RIGHT_BOTTOM,
-  MAX
+  glm::mat4 pm, vm;
+
+  MOVE_DEFAULT_ONLY(CameraMatrices);
 };
 
-struct MouseCursorInfo
+struct ViewportInfo
 {
-  ScreenSector sector;
-  MouseClickPositions click_positions;
+  Viewport       viewport;
+  ScreenSector   screen_sector;
+  Camera         camera;
+  CameraMatrices matrices = {};
+
+  MOVE_DEFAULT_ONLY(ViewportInfo);
+  auto mouse_offset() const { return viewport.rect().left_top(); }
+
+  void update(ViewSettings const& vs, Frustum const& frustum, RectInt const& window_rect,
+              glm::mat4 const& pers_pm)
+  {
+    matrices.pm = camera.calc_pm(vs, frustum, window_rect.size());
+    matrices.vm = camera.calc_vm(camera.position());
+  }
 };
 
+// global state
 static bool MOUSE_BUTTON_PRESSED        = false;
 static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
 static MouseCursorInfo MOUSE_INFO;
@@ -133,41 +147,18 @@ struct PmDrawInfos
   DEFINE_VECTOR_LIKE_WRAPPER_FNS(infos);
 };
 
-struct CameraMatrices
-{
-  glm::mat4 pm, vm;
-
-  MOVE_DEFAULT_ONLY(CameraMatrices);
-};
-
-struct ViewportInfo
-{
-  Viewport       viewport;
-  ScreenSector   screen_sector;
-  Camera         camera;
-  CameraMatrices matrices = {};
-
-  MOVE_DEFAULT_ONLY(ViewportInfo);
-  auto mouse_offset() const { return viewport.rect().left_top(); }
-
-  void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect,
-              glm::mat4 const& pers_pm)
-  {
-    matrices.pm = camera.calc_pm(VS, frustum, window_rect.size());
-    matrices.vm = camera.calc_vm(camera.position());
-  }
-};
-
 struct ViewportGrid
 {
-  ScreenSize   screen_size;
+  ScreenSize screen_size;
+  glm::ivec2 screensize_ratio;
 
   std::array<ViewportInfo, 4> infos;
 
-  ViewportGrid(ScreenSize const& ss, ViewportInfo&& lt, ViewportInfo&& rt, ViewportInfo&& lb,
-               ViewportInfo&& rb)
-      : infos(common::make_array<ViewportInfo>(MOVE(lt), MOVE(rt), MOVE(lb), MOVE(rb)))
-      , screen_size(ss)
+  ViewportGrid(ScreenSize const& ss, glm::ivec2 const& ratio, ViewportInfo&& lt, ViewportInfo&& rt,
+               ViewportInfo&& lb, ViewportInfo&& rb)
+      : screen_size(ss)
+      , screensize_ratio(ratio)
+      , infos(common::make_array<ViewportInfo>(MOVE(lt), MOVE(rt), MOVE(lb), MOVE(rb)))
   {
   }
 
@@ -259,7 +250,7 @@ struct ViewportGrid
               glm::mat4 const& pers_pm)
   {
     for (auto& vi : infos) {
-      vi.update(AR, frustum, window_rect, pers_pm);
+      vi.update(VS, frustum, window_rect, pers_pm);
     }
   }
 };
@@ -504,43 +495,54 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
   }
 }
 
+// Factory function for creating the RectFloat with points where the user last clicked, and the
+// mouse is currently.
+//
+// pos_init_ss => mouse position (in screen space) where the user last clicked.
+// pos_now_ss  => mouse position (in screen space) where the mouse is currently.
 auto
-make_mouse_rect(glm::ivec2 const& mouse_pos, glm::ivec2 const& delta)
+make_mouse_rect(glm::ivec2 const& pos_init_ss, glm::ivec2 const& pos_now_ss,
+    glm::ivec2 const& viewport_origin)
 {
-  auto const& click_pos = MOUSE_INFO.click_positions.left_right - delta;
+  // screen pos -> viewport pos
+  auto const click_pos   = pos_init_ss - viewport_origin;
+  auto const mouse_start = pos_now_ss - viewport_origin;
 
-  auto const lx = lesser_of(click_pos.x, mouse_pos.x);
-  auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_pos.x));
+  // Create a rectangle using there two points, making sure that it works out if the user clicks
+  // and drags up or down, left or right.
+  auto const lx = lesser_of(click_pos.x, mouse_start.x);
+  auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_start.x));
 
-  auto const ty = lesser_of(click_pos.y, mouse_pos.y);
-  auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_pos.y));
+  auto const ty = lesser_of(click_pos.y, mouse_start.y);
+  auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_start.y));
 
   return RectFloat{VEC2{lx, ty}, VEC2{rx, by}};
 }
 
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, CameraMatrices const& cm,
-                         glm::ivec2 const& mouse_pos, glm::ivec2 const& delta,
-                         CubeEntities& cube_ents)
+                         glm::ivec2 const& mouse_pos_now_ss, glm::ivec2 const& viewport_origin,
+                         ViewportGrid const& vp_grid, CubeEntities& cube_ents)
 {
-  auto const mouse_start = mouse_pos - delta;
-  auto const mouse_rect = make_mouse_rect(mouse_start, delta);
+  auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
+  auto const mouse_rect = make_mouse_rect(click_pos_ss, mouse_pos_now_ss, viewport_origin);
   LOG_ERROR_SPRINTF("mouse rect: %s", mouse_rect.to_string());
 
+  auto const& ratio = vp_grid.screensize_ratio;
   for (auto &cube_ent : cube_ents) {
     auto const& cube = cube_ent.cube();
     auto tr          = cube_ent.transform();
     Cube cr{cube.min, cube.max};
 
     auto xz = cr.xz_rect();
-    xz.left   /= SCREENSIZE_VIEWPORT_RATIO.x;
-    xz.right  /= SCREENSIZE_VIEWPORT_RATIO.x;
+    xz.left   /= ratio.x;
+    xz.right  /= ratio.x;
 
-    xz.top    /= SCREENSIZE_VIEWPORT_RATIO.y;
-    xz.bottom /= SCREENSIZE_VIEWPORT_RATIO.y;
+    xz.top    /= ratio.y;
+    xz.bottom /= ratio.y;
 
-    auto const xm = tr.translation.x / SCREENSIZE_VIEWPORT_RATIO.x;
-    auto const zm = tr.translation.z / SCREENSIZE_VIEWPORT_RATIO.y;
+    auto const xm = tr.translation.x / ratio.x;
+    auto const zm = tr.translation.z / ratio.y;
     xz.move(xm, zm);
 
     //auto const zoom = camera.zoom();
@@ -583,7 +585,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
     {
       if (MOUSE_BUTTON_PRESSED) {
         select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_pos, vi.mouse_offset(),
-                                           cube_ents);
+                                           vp_grid, cube_ents);
       }
     } break;
 
@@ -688,53 +690,6 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
   return cube_ents;
 }
 
-// Render's a rectangle from an initial click location to where the user is currently clicking,
-// within a supplied viewport. Maintains it's own state, but needs to be updated when the mouse
-// is moved.
-//
-// Used for click-and-drag selection operations.
-class MouseRectangleRenderer
-{
-  MouseRectangle mouse_rect_;
-
-  static ProgramAndDrawInfo
-  create_rect(common::Logger& logger, glm::ivec2 const& initial_click_pos,
-              glm::ivec2 const& mouse_pos_now, GLenum const dm)
-  {
-    float const minx = initial_click_pos.x;
-    float const miny = initial_click_pos.y;
-    float const maxx = mouse_pos_now.x;
-    float const maxy = mouse_pos_now.y;
-    RectFloat const mouse_rect{minx, miny, maxx, maxy};
-
-    return ProgramAndDrawInfo::create_rect(logger, mouse_rect, dm);
-  }
-
-public:
-  MouseRectangleRenderer(MouseRectangle&& mrect)
-      : mouse_rect_(MOVE(mrect))
-  {
-  }
-
-  void
-  draw(common::Logger& logger, ViewportInfo const& vi, int const screen_height,
-       Color const& color, DrawState& ds)
-  {
-    auto const& viewport = vi.viewport;
-    OR::set_viewport_and_scissor(viewport, screen_height);
-
-    auto ui_renderer = UiRenderer::create(logger, viewport, AR);
-    ui_renderer.draw_rect(logger, mouse_rect_.dinfo, color, GL_LINE_LOOP, ds);
-  }
-
-  static auto
-  make_rect_under_mouse(common::Logger& logger, glm::ivec2 const& init, glm::ivec2 const& now)
-  {
-    auto mouse_rect = create_rect(logger, init, now, GL_LINE_LOOP);
-    return MouseRectangleRenderer{MOVE(mouse_rect)};
-  }
-};
-
 void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
            Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
@@ -770,20 +725,14 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     return is_ortho && same_grid_as_mouse && MOUSE_BUTTON_PRESSED;
   };
 
-  auto const draw_mouseselect_rect = [&](auto& vi, auto& ds) {
-    auto const& initial_pos = MOUSE_INFO.click_positions.left_right;
-    auto mrr = MouseRectangleRenderer::make_rect_under_mouse(logger, initial_pos, mouse_pos);
-
-    auto const height = vp_grid.screen_size.height;
-    mrr.draw(logger, vi, height, LOC4::LIME_GREEN, ds);
-  };
-
   DrawState ds;
   for (auto const& vi : vp_grid) {
     draw_viewport(vi, ds);
 
     if (figureout_draw_with_mouserect(vi)) {
-      draw_mouseselect_rect(vi, ds);
+      auto const& pos_init = MOUSE_INFO.click_positions.left_right;
+      MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, vi.viewport, AR,
+                                                    ds);
     }
   }
 
@@ -908,7 +857,7 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  pick_camera(rng)};
 
   auto const ss = window_rect.size();
-  return ViewportGrid{ss, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
+  return ViewportGrid{ss, SCREENSIZE_VIEWPORT_RATIO, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
 }
 
 auto

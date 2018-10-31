@@ -13,6 +13,8 @@
 #include <common/timer.hpp>
 #include <common/type_macros.hpp>
 
+#include <demo/demo.hpp>
+
 #include <gl_sdl/common.hpp>
 
 #include <opengl/bind.hpp>
@@ -50,6 +52,7 @@
 using namespace boomhs;
 using namespace boomhs::math;
 using namespace common;
+using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
@@ -62,6 +65,11 @@ static auto constexpr FOV      = glm::radians(110.0f);
 static auto constexpr AR       = AspectRatio{4.0f, 3.0f};
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
+
+// global state
+static bool MOUSE_BUTTON_PRESSED        = false;
+static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
+static MouseCursorInfo MOUSE_INFO;
 
 struct PmRect
 {

@@ -155,13 +155,13 @@ draw(common::Logger&, DrawState&, GLenum, ShaderProgram&, DrawInfo&);
 //////////
 // Direct drawing API
 void
-draw_2delements(common::Logger&, GLenum, ShaderProgram&, GLuint);
+draw_2delements(common::Logger&, GLenum, ShaderProgram&, GLuint, DrawState&);
 
 void
-draw_2delements(common::Logger&, GLenum, ShaderProgram&, TextureInfo&, GLuint);
+draw_2delements(common::Logger&, GLenum, ShaderProgram&, TextureInfo&, GLuint, DrawState&);
 
 void
-draw_elements(common::Logger&, GLenum, ShaderProgram&, GLuint);
+draw_elements(common::Logger&, GLenum, ShaderProgram&, GLuint, DrawState&);
 
 //////////
 

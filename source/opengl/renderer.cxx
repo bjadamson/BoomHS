@@ -318,15 +318,12 @@ draw(common::Logger& logger, DrawState& ds, GLenum const dm, ShaderProgram& sp, 
 
   FOR_DEBUG_ONLY([&]() { assert(sp.is_bound()); });
   FOR_DEBUG_ONLY([&]() { assert(dinfo.is_bound()); });
-  draw_elements(logger, draw_mode, sp, num_indices);
-
-  ds.num_vertices += num_indices;
-  ++ds.num_drawcalls;
+  draw_elements(logger, draw_mode, sp, num_indices, ds);
 }
 
 void
 draw_elements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
-              GLuint const num_indices)
+              GLuint const num_indices, DrawState& ds)
 {
   auto constexpr INDICES_PTR = nullptr;
 
@@ -337,24 +334,27 @@ draw_elements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
   else {
     glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, INDICES_PTR);
   }
+
+  ds.num_vertices += num_indices;
+  ++ds.num_drawcalls;
 }
 
 void
 draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
-                GLuint const num_indices)
+                GLuint const num_indices, DrawState& ds)
 {
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
-  draw_elements(logger, draw_mode, sp, num_indices);
+  draw_elements(logger, draw_mode, sp, num_indices, ds);
 }
 
 void
 draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp, TextureInfo& ti,
-                GLuint const num_indices)
+                GLuint const num_indices, DrawState& ds)
 {
   BIND_UNTIL_END_OF_SCOPE(logger, ti);
-  draw_2delements(logger, draw_mode, sp, ti, num_indices);
+  draw_2delements(logger, draw_mode, sp, ti, num_indices, ds);
 }
 
 void

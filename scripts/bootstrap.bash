@@ -49,6 +49,8 @@ set(TEST_DIRECTORY ${PROJECT_DIR}/test)
 set(DEMO_DIRECTORY ${PROJECT_DIR}/demo)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
+set(DEMO_DIRECTORY_INCLUDE_DIR ${PROJECT_DIR}/demo/include)
+
 set(IMGUI_INCLUDE_DIR         "${EXTERNAL_DIR}/imgui/include/imgui")
 set(CPPTOML_INCLUDE_DIR       "${EXTERNAL_DIR}/cpptoml/include")
 set(STATIC_STRING_INCLUDE_DIR "${EXTERNAL_DIR}/static_string/include")
@@ -250,7 +252,7 @@ target_link_libraries(viewport_mouse_raycast_boxselection
   ${EXTERNAL_LIBS}
   )
 
-target_include_directories(viewport_mouse_raycast_boxselection PUBLIC)
+target_include_directories(viewport_mouse_raycast_boxselection PUBLIC ${DEMO_DIRECTORY_INCLUDE_DIR})
 
 ###################################################################################################
 ## COMPILE -- Seperating Axis Theorem Demo
@@ -264,7 +266,7 @@ target_link_libraries(seperating_axis_theorem
   ${EXTERNAL_LIBS}
   )
 
-target_include_directories(seperating_axis_theorem PUBLIC)
+target_include_directories(seperating_axis_theorem PUBLIC ${DEMO_DIRECTORY_INCLUDE_DIR})
 
 ###################################################################################################
 ## COMPILE -- Memory BUG I want to make sure doesn't show up in future tests.

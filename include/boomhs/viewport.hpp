@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/camera.hpp>
 #include <boomhs/color.hpp>
 #include <boomhs/math.hpp>
 #include <extlibs/fmt.hpp>

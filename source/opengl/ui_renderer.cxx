@@ -14,9 +14,9 @@ using namespace boomhs::math;
 namespace opengl
 {
 
-UiRenderer::UiRenderer(static_shaders::BasicMvWithUniformColor&& color_2dsp, Viewport const& vp,
+UiRenderer::UiRenderer(static_shaders::BasicMvWithUniformColor&& sp2d, Viewport const& vp,
                        AspectRatio const& ar)
-  : color_2dsp_(MOVE(color_2dsp))
+  : sp2d_(MOVE(sp2d))
 {
   resize(vp, ar);
 }
@@ -48,14 +48,14 @@ UiRenderer::draw_rect_impl(common::Logger& logger, ModelViewMatrix const& mv, Dr
   shader::set_uniform(logger, sp, "u_color", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, di);
-  OR::draw_2delements(logger, dm, sp, di.num_indices());
+  OR::draw_2delements(logger, dm, sp, di.num_indices(), ds);
 }
 
 void
 UiRenderer::draw_rect(common::Logger& logger, DrawInfo& di, Color const& color, GLenum const dm, DrawState& ds)
 {
   auto const& mv = pm_;
-  draw_rect_impl(logger, mv, di, color, dm, color_2dsp_.sp(), ds);
+  draw_rect_impl(logger, mv, di, color, dm, sp2d_.sp(), ds);
 }
 
 void
@@ -63,7 +63,7 @@ UiRenderer::draw_rect(common::Logger& logger, ModelMatrix const& mmatrix, DrawIn
                             Color const& color, GLenum const dm, DrawState& ds)
 {
   auto const mv = pm_ * mmatrix;
-  draw_rect_impl(logger, mv, di, color, dm, color_2dsp_.sp(), ds);
+  draw_rect_impl(logger, mv, di, color, dm, sp2d_.sp(), ds);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
