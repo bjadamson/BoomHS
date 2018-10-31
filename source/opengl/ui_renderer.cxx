@@ -14,10 +14,9 @@ using namespace boomhs::math;
 namespace opengl
 {
 
-UiRenderer::UiRenderer(Color2DProgram&& color_2dsp, ShaderProgram& line_loop, Viewport const& vp,
+UiRenderer::UiRenderer(static_shaders::BasicMvWithUniformColor&& color_2dsp, Viewport const& vp,
                        AspectRatio const& ar)
-    : color_2dsp_(MOVE(color_2dsp))
-    , lineloop_sp_(line_loop)
+  : color_2dsp_(MOVE(color_2dsp))
 {
   resize(vp, ar);
 }
@@ -53,37 +52,24 @@ UiRenderer::draw_rect_impl(common::Logger& logger, ModelViewMatrix const& mv, Dr
 }
 
 void
-UiRenderer::draw_color_impl(common::Logger& logger, ModelViewMatrix const& mv, DrawInfo& di,
-                            Color const& color, DrawState& ds)
-{
-  draw_rect_impl(logger, mv, di, color, GL_TRIANGLES, color_2dsp_.sp(), ds);
-}
-
-void
-UiRenderer::draw_color_rect(common::Logger& logger, DrawInfo& di, Color const& color, DrawState& ds)
+UiRenderer::draw_rect(common::Logger& logger, DrawInfo& di, Color const& color, GLenum const dm, DrawState& ds)
 {
   auto const& mv = pm_;
-  draw_color_impl(logger, mv, di, color, ds);
+  draw_rect_impl(logger, mv, di, color, dm, color_2dsp_.sp(), ds);
 }
 
 void
-UiRenderer::draw_color_rect(common::Logger& logger, ModelMatrix const& mmatrix, DrawInfo& di,
-                            Color const& color, DrawState& ds)
+UiRenderer::draw_rect(common::Logger& logger, ModelMatrix const& mmatrix, DrawInfo& di,
+                            Color const& color, GLenum const dm, DrawState& ds)
 {
   auto const mv = pm_ * mmatrix;
-  draw_color_impl(logger, mv, di, color, ds);
-}
-
-void
-UiRenderer::draw_line_rect(common::Logger& logger, DrawInfo& di, Color const& color, DrawState& ds)
-{
-  draw_rect_impl(logger, pm_, di, color, GL_LINE_LOOP, lineloop_sp_, ds);
+  draw_rect_impl(logger, mv, di, color, dm, color_2dsp_.sp(), ds);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Color2DProgram
-Color2DProgram
-Color2DProgram::create(common::Logger& logger)
+// static_shaders::BasicMvWithUniformColor
+static_shaders::BasicMvWithUniformColor
+static_shaders::BasicMvWithUniformColor::create(common::Logger& logger)
 {
   constexpr auto vert_source = GLSL_SOURCE(R"GLSL(
 in vec3 a_position;
@@ -113,33 +99,35 @@ void main()
 
   auto api = AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3};
   auto sp  =  make_shaderprogram_expect(logger, vert_source, frag_source, MOVE(api));
-  return Color2DProgram{MOVE(sp)};
+  return static_shaders::BasicMvWithUniformColor{MOVE(sp)};
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
-// Color2DRect
-Color2DRect::Color2DRect(Color2DProgram&& p, DrawInfo&& dinfo)
-    : program_(MOVE(p))
-    , dinfo_(MOVE(dinfo))
+// ProgramAndDrawInfo
+ProgramAndDrawInfo::ProgramAndDrawInfo(static_shaders::BasicMvWithUniformColor&& p, DrawInfo&& di)
+    : program(MOVE(p))
+    , dinfo(MOVE(di))
 {
 }
 
-Color2DRect
-Color2DRect::create(common::Logger& logger, RectFloat const& rect, Color2DProgram&& program)
+ProgramAndDrawInfo
+ProgramAndDrawInfo::create_rect(common::Logger& logger, RectFloat const& rect,
+                                static_shaders::BasicMvWithUniformColor&& program,
+                                GLenum const dm)
 {
-  auto builder   = RectBuilder{rect};
-  builder.line   = {};
-  auto const& va = program.sp().va();
-  auto dinfo     = OG::copy_rectangle(logger, va, builder.build());
+  auto builder      = RectBuilder{rect};
+  builder.draw_mode = dm;
+  auto const& va    = program.sp().va();
+  auto dinfo        = OG::copy_rectangle(logger, va, builder.build());
 
-  return Color2DRect{MOVE(program), MOVE(dinfo)};
+  return ProgramAndDrawInfo{MOVE(program), MOVE(dinfo)};
 }
 
-Color2DRect
-Color2DRect::create(common::Logger& logger, RectFloat const& rect)
+ProgramAndDrawInfo
+ProgramAndDrawInfo::create_rect(common::Logger& logger, RectFloat const& rect, GLenum const dm)
 {
-  auto program = Color2DProgram::create(logger);
-  return create(logger, rect, MOVE(program));
+  auto program = static_shaders::BasicMvWithUniformColor::create(logger);
+  return create_rect(logger, rect, MOVE(program), dm);
 }
 
 } // namespace opengl

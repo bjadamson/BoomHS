@@ -41,7 +41,7 @@ struct StaticRenderers
   opengl::DebugRenderer debug;
   opengl::WaterRenderers        water;
 
-  opengl::Color2DProgram color2d;
+  opengl::static_shaders::BasicMvWithUniformColor color2d;
 
   void render(LevelManager&, opengl::RenderState&, Camera&, RNG&, opengl::DrawState&,
               FrameTime const&, bool);

@@ -688,6 +688,53 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
   return cube_ents;
 }
 
+// Render's a rectangle from an initial click location to where the user is currently clicking,
+// within a supplied viewport. Maintains it's own state, but needs to be updated when the mouse
+// is moved.
+//
+// Used for click-and-drag selection operations.
+class MouseRectangleRenderer
+{
+  MouseRectangle mouse_rect_;
+
+  static ProgramAndDrawInfo
+  create_rect(common::Logger& logger, glm::ivec2 const& initial_click_pos,
+              glm::ivec2 const& mouse_pos_now, GLenum const dm)
+  {
+    float const minx = initial_click_pos.x;
+    float const miny = initial_click_pos.y;
+    float const maxx = mouse_pos_now.x;
+    float const maxy = mouse_pos_now.y;
+    RectFloat const mouse_rect{minx, miny, maxx, maxy};
+
+    return ProgramAndDrawInfo::create_rect(logger, mouse_rect, dm);
+  }
+
+public:
+  MouseRectangleRenderer(MouseRectangle&& mrect)
+      : mouse_rect_(MOVE(mrect))
+  {
+  }
+
+  void
+  draw(common::Logger& logger, ViewportInfo const& vi, int const screen_height,
+       Color const& color, DrawState& ds)
+  {
+    auto const& viewport = vi.viewport;
+    OR::set_viewport_and_scissor(viewport, screen_height);
+
+    auto ui_renderer = UiRenderer::create(logger, viewport, AR);
+    ui_renderer.draw_rect(logger, mouse_rect_.dinfo, color, GL_LINE_LOOP, ds);
+  }
+
+  static auto
+  make_rect_under_mouse(common::Logger& logger, glm::ivec2 const& init, glm::ivec2 const& now)
+  {
+    auto mouse_rect = create_rect(logger, init, now, GL_LINE_LOOP);
+    return MouseRectangleRenderer{MOVE(mouse_rect)};
+  }
+};
+
 void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
            Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
@@ -696,30 +743,12 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   auto const screen_size   = vp_grid.screen_size;
   auto const screen_height = screen_size.height;
 
-  auto const draw_viewport = [&](DrawState& ds, auto& vi) {
+  auto const draw_viewport = [&](auto& vi, DrawState& ds) {
     auto const& viewport = vi.viewport;
     OR::set_viewport_and_scissor(viewport, screen_height);
     OR::clear_screen(viewport.bg_color());
     auto const& m = vi.matrices;
     draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
-  };
-  auto const draw_viewport_with_boxselection = [&](DrawState& ds, auto& vi, auto& sp) {
-    draw_viewport(ds, vi);
-    if (MOUSE_BUTTON_PRESSED) {
-      auto const& viewport = vi.viewport;
-      OR::set_viewport_and_scissor(viewport, screen_height);
-
-      auto const& click_pos = MOUSE_INFO.click_positions.left_right;
-      float const minx = click_pos.x;
-      float const miny = click_pos.y;
-      float const maxx = mouse_pos.x;
-      float const maxy = mouse_pos.y;
-      RectFloat mouse_rect{minx, miny, maxx, maxy};
-
-      auto color2d_rect = Color2DRect::create(logger, mouse_rect);
-      auto ui_renderer  = UiRenderer::create(logger, color2d_rect.sp(), viewport, AR);
-      ui_renderer.draw_line_rect(logger, color2d_rect.di(), LOC4::LIME_GREEN, ds);
-    }
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
     for (auto& pm_info : pm_infos) {
@@ -728,18 +757,9 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       OR::set_viewport_and_scissor(viewport, screen_height);
       for (auto& pm_rect : vi.rects) {
         auto const color = pm_rect.selected ? LOC4::ORANGE : LOC4::PURPLE;
-        auto ui_renderer = UiRenderer::create(logger, pm_info.sp, viewport, AR);
-        ui_renderer.draw_color_rect(logger, pm_rect.di, color, ds);
+        auto ui_renderer = UiRenderer::create(logger, viewport, AR);
+        ui_renderer.draw_rect(logger, pm_rect.di, color, GL_TRIANGLES, ds);
       }
-    }
-  };
-
-  auto const draw_vi = [&](auto const& vi, DrawState& ds, bool const draw_with_boxselect) {
-    if (draw_with_boxselect) {
-      draw_viewport_with_boxselection(ds, vi, pm_sp);
-    }
-    else {
-      draw_viewport(ds, vi);
     }
   };
 
@@ -747,13 +767,24 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
   auto const figureout_draw_with_mouserect = [&](auto const& vi) {
     bool const is_ortho = CameraMode::Ortho == vi.camera.mode();
     bool const same_grid_as_mouse = (&vi_mousein == &vi);
-    return is_ortho && same_grid_as_mouse;
+    return is_ortho && same_grid_as_mouse && MOUSE_BUTTON_PRESSED;
+  };
+
+  auto const draw_mouseselect_rect = [&](auto& vi, auto& ds) {
+    auto const& initial_pos = MOUSE_INFO.click_positions.left_right;
+    auto mrr = MouseRectangleRenderer::make_rect_under_mouse(logger, initial_pos, mouse_pos);
+
+    auto const height = vp_grid.screen_size.height;
+    mrr.draw(logger, vi, height, LOC4::LIME_GREEN, ds);
   };
 
   DrawState ds;
   for (auto const& vi : vp_grid) {
-    bool const draw_with_boxselect = figureout_draw_with_mouserect(vi);
-    draw_vi(vi, ds, draw_with_boxselect);
+    draw_viewport(vi, ds);
+
+    if (figureout_draw_with_mouserect(vi)) {
+      draw_mouseselect_rect(vi, ds);
+    }
   }
 
   // draw PMS
@@ -955,7 +986,6 @@ main(int argc, char **argv)
   EntityRegistry registry;
   auto const eid = registry.create();
 
-
   auto const     INTOSCENE_FORWARD = -constants::Z_UNIT_VECTOR;
   auto constexpr INTOSCENE_UP      =  constants::Y_UNIT_VECTOR;
   WorldOrientation const wo_intoscene{INTOSCENE_FORWARD,  INTOSCENE_UP};
@@ -968,7 +998,7 @@ main(int argc, char **argv)
   }
 
   RNG rng;
-  auto color2d_program = Color2DProgram::create(logger);
+  auto color2d_program = static_shaders::BasicMvWithUniformColor::create(logger);
   auto& rect_sp = color2d_program.sp();
 
   auto pm_infos  = make_pminfos(logger, rect_sp, rng, vp_grid);

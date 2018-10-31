@@ -2,6 +2,8 @@
 #include <boomhs/color.hpp>
 #include <common/type_macros.hpp>
 
+#include <opengl/types.hpp>
+
 #include <array>
 #include <optional>
 #include <vector>
@@ -82,13 +84,11 @@ struct RectBuilder
   RectFloat rect;
 
   // use one of the following rectangle types.
-  std::optional<RectangleColorArray> color_array;
-  std::optional<Color>               uniform_color;
+  std::optional<RectangleColorArray> color_array   = {};
+  std::optional<Color>               uniform_color = {};
+  std::optional<RectangleUvs>        uvs           = {};
 
-  std::optional<RectangleUvs>        uvs;
-
-  struct LineRectangleMarker {};
-  std::optional<LineRectangleMarker> line;
+  GLenum                             draw_mode     = GL_TRIANGLES;
 
   RectBuilder(RectFloat const&);
 

@@ -250,7 +250,7 @@ draw_pm(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rec
     auto const color = pm_rect.overlapping ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
     auto& di         = pm_rect.di;
     auto const model = pm_rect.transform.model_matrix();
-    ui_renderer.draw_color_rect(logger, model, di, color, ds);
+    ui_renderer.draw_rect(logger, model, di, color, GL_TRIANGLES, ds);
   }
 };
 
@@ -272,7 +272,7 @@ main(int argc, char **argv)
   auto const window_rect = window.view_rect();
   auto const frustum     = Frustum::from_rect_and_nearfar(window_rect, NEAR, FAR);
 
-  auto color2d_program = Color2DProgram::create(logger);
+  auto color2d_program = static_shaders::BasicMvWithUniformColor::create(logger);
   auto& rect_sp = color2d_program.sp();
 
   RNG rng;
@@ -280,7 +280,7 @@ main(int argc, char **argv)
   assert(!vp_rects.rects.empty());
 
   glm::mat4 const pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
-  auto ui_renderer = UiRenderer::create(logger, *vp_rects.sp, VIEWPORT, AR);
+  auto ui_renderer = UiRenderer::create(logger, VIEWPORT, AR);
 
   FrameCounter fcounter;
   SDL_Event event;

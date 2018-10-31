@@ -4,8 +4,9 @@
 #include <boomhs/viewport.hpp>
 #include <common/log.hpp>
 
-// TODO: this header is only included for Color2DProgram
-#include <opengl/renderer.hpp>
+// TODO: this header is only included for static_shaders::BasicMvWithUniformColor
+#include <opengl/draw_info.hpp>
+#include <opengl/shader.hpp>
 #include <opengl/types.hpp>
 
 namespace boomhs
@@ -17,68 +18,66 @@ namespace opengl
 {
 class  DrawInfo;
 struct DrawState;
-class  ShaderProgram;
+//class  ShaderProgram;
 
-// Stateful Renderers
-class Color2DProgram
+namespace static_shaders
+{
+
+class BasicMvWithUniformColor
 {
   ShaderProgram sp_;
 
+  BasicMvWithUniformColor(ShaderProgram&& sp) : sp_(MOVE(sp)) {}
 public:
-  Color2DProgram(ShaderProgram&& sp) : sp_(MOVE(sp)) {}
 
   auto& sp() { return sp_; }
 
-  static Color2DProgram create(common::Logger&);
+  static BasicMvWithUniformColor create(common::Logger&);
 };
 
-class Color2DRect
+} // namespace static_shaders
+
+struct ProgramAndDrawInfo
 {
-  Color2DProgram program_;
-  DrawInfo dinfo_;
+  static_shaders::BasicMvWithUniformColor program;
+  DrawInfo dinfo;
 
-  Color2DRect(Color2DProgram&&, DrawInfo&&);
-public:
+  // ctor
+  ProgramAndDrawInfo(static_shaders::BasicMvWithUniformColor&&, DrawInfo&&);
 
-  static Color2DRect create(common::Logger&, boomhs::RectFloat const&, Color2DProgram&&);
-  static Color2DRect create(common::Logger&, boomhs::RectFloat const&);
-
-  auto& sp() { return program_.sp(); }
-  auto& di() { return dinfo_; }
+  static ProgramAndDrawInfo create_rect(common::Logger&, boomhs::RectFloat const&,
+                                        static_shaders::BasicMvWithUniformColor&&, GLenum);
+  static ProgramAndDrawInfo create_rect(common::Logger&, boomhs::RectFloat const&, GLenum);
 };
+using MouseRectangle = ProgramAndDrawInfo;
 
 class UiRenderer
 {
-  Color2DProgram  color_2dsp_;
-  ShaderProgram&  lineloop_sp_;
+  static_shaders::BasicMvWithUniformColor  color_2dsp_;
 
   glm::mat4       pm_;
 
   void draw_rect_impl(common::Logger&, boomhs::ModelViewMatrix const&, DrawInfo&,
                        boomhs::Color const&, GLenum, ShaderProgram&, DrawState&);
 
-  void draw_color_impl(common::Logger&, boomhs::ModelViewMatrix const&, DrawInfo&,
-                       boomhs::Color const&, DrawState&);
-
-  UiRenderer(Color2DProgram&&, ShaderProgram&, boomhs::Viewport const&, boomhs::AspectRatio const&);
+  UiRenderer(static_shaders::BasicMvWithUniformColor&&, boomhs::Viewport const&,
+             boomhs::AspectRatio const&);
 
   NO_MOVE_OR_COPY(UiRenderer);
 public:
 
   void resize(boomhs::Viewport const&, boomhs::AspectRatio const&);
 
-  void draw_color_rect(common::Logger&, boomhs::ModelMatrix const&, DrawInfo&, boomhs::Color const&,
-                       DrawState&);
-  void draw_color_rect(common::Logger&, DrawInfo&, boomhs::Color const&, DrawState&);
-
-  void draw_line_rect(common::Logger&, DrawInfo&, boomhs::Color const&, DrawState&);
+  void draw_rect(common::Logger&, boomhs::ModelMatrix const&, DrawInfo&, boomhs::Color const&,
+                       GLenum, DrawState&);
+  void draw_rect(common::Logger&, DrawInfo&, boomhs::Color const&, GLenum, DrawState&);
 
   template <typename ...Args>
   static auto
-  create(common::Logger& logger, ShaderProgram& line_loop, Args&&... args)
+  create(common::Logger& logger, Args&&... args)
   {
-    auto color2d_program = Color2DProgram::create(logger);
-    return UiRenderer{MOVE(color2d_program), line_loop, FORWARD(args)};
+    auto program = static_shaders::BasicMvWithUniformColor::create(logger);
+    return UiRenderer{MOVE(program), FORWARD(args)};
   }
 };
 

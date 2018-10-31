@@ -152,7 +152,6 @@ DrawInfo
 copy_rectangle(common::Logger& logger, VertexAttribute const& va,
                RectangleUvVertices const& vertices)
 {
-  // TODO: this is strange.
   auto const& i = VertexFactory::RECTANGLE_DEFAULT_INDICES;
 
   DrawInfo dinfo{vertices.size(), i.size()};

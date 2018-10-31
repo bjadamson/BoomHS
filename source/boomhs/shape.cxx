@@ -42,14 +42,20 @@ make_rectangle(RectBuilder const& builder)
   auto const& color_o  = builder.uniform_color;
   auto const& colors_o = builder.color_array;
   auto const& uvs_o    = builder.uvs;
-  auto const& line_o   = builder.line;
+  auto const draw_mode = builder.draw_mode;
 
-  if (line_o) {
+  if (draw_mode == GL_LINE_LOOP) {
     auto const    lr = make_line_rectangle(builder.rect);
     VerticesArray vertices{lr.cbegin(), lr.cend()};
 
     auto constexpr li = VertexFactory::RECTANGLE_LINE_INDICES;
     return RectBuffer{MOVE(vertices), common::vec_from_array(li)};
+  }
+  else {
+    // TODO: Just haven't tried other modes yet.
+    //
+    // NOTE: Take care after uncommenting and observe.
+    assert(GL_TRIANGLES == draw_mode);
   }
 
   std::vector<float> vertices;
@@ -155,6 +161,7 @@ RectBuffer
 RectBuilder::build() const
 {
   // clang-format off
+  bool const line         = draw_mode == GL_LINE_LOOP;
   bool const uniform_only = (uniform_color && (!color_array   && !uvs           && !line));
   bool const color_only   = (color_array   && (!uniform_color && !uvs           && !line));
   bool const uvs_only     = (uvs           && (!color_array   && !uniform_color && !line));
