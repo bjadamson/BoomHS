@@ -186,6 +186,22 @@ operator<<(std::ostream& os, ColorRGBA const& c)
   return os;
 }
 
+inline bool
+operator==(ColorRGBA const& a, ColorRGBA const& b)
+{
+  return common::and_all(
+      a.r() == b.r(),
+      a.g() == b.g(),
+      a.b() == b.b(),
+      a.a() == b.a());
+}
+
+inline bool
+operator!=(ColorRGBA const& a, ColorRGBA const& b)
+{
+  return !(a == b);
+}
+
 #define COLOR_LIST_MACRO(COLOR_T)                                                                \
   constexpr COLOR_T INDIAN_RED             = {0.804, 0.361, 0.361};                              \
   constexpr COLOR_T LIGHT_CORAL            = {0.941, 0.502, 0.502};                              \

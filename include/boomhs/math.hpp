@@ -22,6 +22,208 @@ using TranslationMatrix = glm::mat4;
 using ScaleMatrix       = glm::mat4;
 using RotationMatrix    = glm::mat4;
 
+} // namespace boomhs
+
+namespace boomhs::math::constants
+{
+auto constexpr ZERO = glm::vec3{0};
+auto constexpr ONE  = glm::vec3{1};
+
+auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
+auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
+auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
+
+auto constexpr PI       = glm::pi<float>();
+auto constexpr TWO_PI   = PI * 2.0f;
+auto constexpr EPSILONF = std::numeric_limits<float>::epsilon();
+
+} // namespace boomhs::math::constants
+
+namespace boomhs::math
+{
+
+enum class EulerAxis
+{
+  X = 0,
+  Y,
+  Z,
+  INVALID
+};
+
+template <typename ...T>
+inline void
+negate(T&&... values)
+{
+  auto const negate_impl = [](auto &v) { v = -v; };
+  (negate_impl(values), ...);
+}
+
+template <typename T>
+inline auto
+squared(T const& value)
+{
+  return value * value;
+}
+
+inline bool
+opposite_signs(int const x, int const y)
+{
+  return ((x ^ y) < 0);
+}
+
+template <typename T>
+T const&
+lesser_of(T const& a, T const& b)
+{
+  return a < b ? a : b;
+}
+
+inline bool
+compare_epsilon(float const a, float const b)
+{
+  return std::fabs(a - b) < constants::EPSILONF;
+}
+
+inline bool
+is_unitv(glm::vec3 const& v)
+{
+  return compare_epsilon(glm::length(v), 1);
+}
+
+inline glm::vec3
+lerp(glm::vec3 const& a, glm::vec3 const& b, float const f)
+{
+  return (a * (1.0 - f)) + (b * f);
+}
+
+inline bool
+allnan(glm::vec3 const& v)
+{
+  return std::isnan(v.x) && std::isnan(v.y) && std::isnan(v.z);
+}
+
+inline bool
+anynan(glm::vec3 const& v)
+{
+  return std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z);
+}
+
+inline int
+pythag_distance(glm::ivec2 const& a, glm::ivec2 const& b)
+{
+  // pythagorean theorem
+  return std::sqrt(squared(b.x - a.x) + squared(b.y - a.y));
+}
+
+// Normalizes "value" from the "from_range" to the "to_range"
+template <typename T, typename P1, typename P2>
+constexpr float
+normalize(T const value, P1 const& from_range, P2 const& to_range)
+{
+  static_assert(std::is_integral<T>::value, "Input must be integral");
+  auto const minimum    = from_range.first;
+  auto const maximum    = from_range.second;
+  auto const floor      = to_range.first;
+  auto const ceil       = to_range.second;
+  auto const normalized = ((ceil - floor) * (value - minimum)) / (maximum - minimum) + floor;
+  return static_cast<float>(normalized);
+}
+
+inline float
+angle_between_vectors(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& origin)
+{
+  glm::vec3 const da = glm::normalize(a - origin);
+  glm::vec3 const db = glm::normalize(b - origin);
+
+  return std::acos(glm::dot(da, db));
+}
+
+inline glm::vec3
+rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
+              RotationMatrix const& rot_matrix)
+{
+  auto const translate     = glm::translate(glm::mat4{}, rot_center);
+  auto const inv_translate = glm::translate(glm::mat4{}, -rot_center);
+
+  // The idea:
+  // 1) Translate the object to the center
+  // 2) Make the rotation
+  // 3) Translate the object back to its original location
+  auto const mm  = translate * rot_matrix * inv_translate;
+  auto const pos = mm * glm::vec4{point_to_rotate, 1.0f};
+  return glm::vec3{pos.x, pos.y, pos.z};
+}
+
+// Original source for algorithm.
+// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
+glm::quat
+rotation_between_vectors(glm::vec3 start, glm::vec3 dest);
+
+// Calculates the cube's dimensions, given a min/max point in 3D.
+//
+// Interpret the glm::vec3 returned like:
+//   x == width
+//   y == height
+//   z == length
+inline glm::vec3
+compute_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
+{
+  auto const w = std::abs(max.x - min.x);
+  auto const h = std::abs(max.y - min.y);
+  auto const l = std::abs(max.z - min.z);
+  return glm::vec3{w, h, l};
+}
+
+inline ModelMatrix
+compute_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
+{
+  auto const tmatrix = glm::translate(glm::mat4{}, translation);
+  auto const rmatrix = glm::toMat4(rotation);
+  auto const smatrix = glm::scale(glm::mat4{}, scale);
+  return tmatrix * rmatrix * smatrix;
+}
+
+inline ModelViewMatrix
+compute_modelview_matrix(ModelMatrix const& model, ViewMatrix const& view)
+{
+  return view * model;
+}
+
+inline ModelViewMatrix
+compute_mvp_matrix(ModelMatrix const& model, ViewMatrix const& view, ProjMatrix const& proj)
+{
+  return proj * view * model;
+}
+
+///////////////////////////////
+// Quaternion to Euler
+//
+// algorithm modified from source:
+// http://bediyap.com/programming/convert-quaternion-to-euler-rotations/
+///////////////////////////////
+enum class RotSeq
+{
+  zyx,
+  zyz,
+  zxy,
+  zxz,
+  yxz,
+  yxy,
+  yzx,
+  yzy,
+  xyz,
+  xyx,
+  xzy,
+  xzx
+};
+glm::vec3
+quat_to_euler(glm::quat const&, RotSeq);
+
+} // namespace boomhs::math
+
+namespace boomhs
+{
+
 template <typename V, size_t N>
 struct PolygonVertices
 {
@@ -210,6 +412,7 @@ struct RectInt : public RectT<glm::ivec2>
 
 #undef DEFINE_RECT_TO_STRING_MEMBER_IMPL
 
+
 struct Cube
 {
   glm::vec3 min, max;
@@ -320,23 +523,59 @@ struct Plane
 
 } // namespace boomhs
 
-namespace boomhs::math::constants
+namespace boomhs::math
 {
-auto constexpr ZERO = glm::vec3{0};
-auto constexpr ONE  = glm::vec3{1};
 
-auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
+// Given two points, compute the "Absolute Value" rectangle.
+//
+// Essentially figures out which points are less-than the others and which points are greater than
+// the others, and assigns then the values which will yield a rectangle.
+//
+// This function's purpose is to create a rectangle out of two points, with the top/left point
+// always being <= to the bottom right point, even if the input points would naturally create a
+// rectangle with the top/left being >= then the bottom/right
+template <typename T>
+auto
+rect_abs_from_twopoints(glm::tvec2<T> const& a, glm::tvec2<T> const& b)
+{
+  auto const lx = math::lesser_of(a.x, b.x);
+  auto const rx = common::other_of_two(lx, PAIR(a.x, b.x));
 
-auto constexpr PI       = glm::pi<float>();
-auto constexpr TWO_PI   = PI * 2.0f;
-auto constexpr EPSILONF = std::numeric_limits<float>::epsilon();
+  auto const ty = math::lesser_of(a.y, b.y);
+  auto const by = common::other_of_two(ty, PAIR(a.y, b.y));
 
-} // namespace boomhs::math::constants
+  return RectFloat{VEC2{lx, ty}, VEC2{rx, by}};
+}
+
+} // namespace boomhs::math
 
 namespace boomhs::math::space_conversions
 {
+
+// Convert a point in "ScreenSpace" to "Viewport" space.
+//
+// "ViewportSpace" defined as an offset from the screen's origin (0, 0) being the top-left, a
+// simple subtraction is required.
+template <typename T>
+inline auto
+screen_to_viewport(glm::tvec2<T> const& point, glm::ivec2 const& origin)
+{
+  return point - origin;
+}
+
+// Convert a rectangle in screen space to viewport space.
+template <typename T>
+inline auto
+screen_to_viewport(T const& rect, glm::ivec2 const& vp_size)
+{
+  auto r = rect;
+  r.left   /= vp_size.x;
+  r.right  /= vp_size.x;
+
+  r.top    /= vp_size.y;
+  r.bottom /= vp_size.y;
+  return r;
+}
 
 inline glm::vec4
 clip_to_eye(glm::vec4 const& clip, ProjMatrix const& pm, float const z)
@@ -387,185 +626,3 @@ screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, ProjMatrix
 }
 
 } // namespace boomhs::math::space_conversions
-
-namespace boomhs::math
-{
-
-enum class EulerAxis
-{
-  X = 0,
-  Y,
-  Z,
-  INVALID
-};
-
-template <typename ...T>
-inline void
-negate(T&&... values)
-{
-  auto const negate_impl = [](auto &v) { v = -v; };
-  (negate_impl(values), ...);
-}
-
-template <typename T>
-inline auto
-squared(T const& value)
-{
-  return value * value;
-}
-
-inline bool
-opposite_signs(int const x, int const y)
-{
-  return ((x ^ y) < 0);
-}
-
-template <typename T>
-T const&
-lesser_of(T const& a, T const& b)
-{
-  return a < b ? a : b;
-}
-
-inline bool
-compare_epsilon(float const a, float const b)
-{
-  return std::fabs(a - b) < constants::EPSILONF;
-}
-
-inline bool
-is_unitv(glm::vec3 const& v)
-{
-  return compare_epsilon(glm::length(v), 1);
-}
-
-inline glm::vec3
-lerp(glm::vec3 const& a, glm::vec3 const& b, float const f)
-{
-  return (a * (1.0 - f)) + (b * f);
-}
-
-inline bool
-allnan(glm::vec3 const& v)
-{
-  return std::isnan(v.x) && std::isnan(v.y) && std::isnan(v.z);
-}
-
-inline bool
-anynan(glm::vec3 const& v)
-{
-  return std::isnan(v.x) || std::isnan(v.y) || std::isnan(v.z);
-}
-
-inline int
-pythag_distance(glm::ivec2 const& a, glm::ivec2 const& b)
-{
-  // pythagorean theorem
-  return std::sqrt(squared(b.x - a.x) + squared(b.y - a.y));
-}
-
-// Normalizes "value" from the "from_range" to the "to_range"
-template <typename T, typename P1, typename P2>
-constexpr float
-normalize(T const value, P1 const& from_range, P2 const& to_range)
-{
-  static_assert(std::is_integral<T>::value, "Input must be integral");
-  auto const minimum    = from_range.first;
-  auto const maximum    = from_range.second;
-  auto const floor      = to_range.first;
-  auto const ceil       = to_range.second;
-  auto const normalized = ((ceil - floor) * (value - minimum)) / (maximum - minimum) + floor;
-  return static_cast<float>(normalized);
-}
-
-inline float
-angle_between_vectors(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& origin)
-{
-  glm::vec3 const da = glm::normalize(a - origin);
-  glm::vec3 const db = glm::normalize(b - origin);
-
-  return std::acos(glm::dot(da, db));
-}
-
-inline glm::vec3
-rotate_around(glm::vec3 const& point_to_rotate, glm::vec3 const& rot_center,
-              RotationMatrix const& rot_matrix)
-{
-  auto const translate     = glm::translate(glm::mat4{}, rot_center);
-  auto const inv_translate = glm::translate(glm::mat4{}, -rot_center);
-
-  // The idea:
-  // 1) Translate the object to the center
-  // 2) Make the rotation
-  // 3) Translate the object back to its original location
-  auto const mm  = translate * rot_matrix * inv_translate;
-  auto const pos = mm * glm::vec4{point_to_rotate, 1.0f};
-  return glm::vec3{pos.x, pos.y, pos.z};
-}
-
-// Original source for algorithm.
-// http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-17-quaternions/
-glm::quat
-rotation_between_vectors(glm::vec3 start, glm::vec3 dest);
-
-// Calculates the cube's dimensions, given a min/max point in 3D.
-//
-// Interpret the glm::vec3 returned like:
-//   x == width
-//   y == height
-//   z == length
-inline glm::vec3
-compute_cube_dimensions(glm::vec3 const& min, glm::vec3 const& max)
-{
-  auto const w = std::abs(max.x - min.x);
-  auto const h = std::abs(max.y - min.y);
-  auto const l = std::abs(max.z - min.z);
-  return glm::vec3{w, h, l};
-}
-
-inline ModelMatrix
-compute_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm::vec3 const& scale)
-{
-  auto const tmatrix = glm::translate(glm::mat4{}, translation);
-  auto const rmatrix = glm::toMat4(rotation);
-  auto const smatrix = glm::scale(glm::mat4{}, scale);
-  return tmatrix * rmatrix * smatrix;
-}
-
-inline ModelViewMatrix
-compute_modelview_matrix(ModelMatrix const& model, ViewMatrix const& view)
-{
-  return view * model;
-}
-
-inline ModelViewMatrix
-compute_mvp_matrix(ModelMatrix const& model, ViewMatrix const& view, ProjMatrix const& proj)
-{
-  return proj * view * model;
-}
-
-///////////////////////////////
-// Quaternion to Euler
-//
-// algorithm modified from source:
-// http://bediyap.com/programming/convert-quaternion-to-euler-rotations/
-///////////////////////////////
-enum class RotSeq
-{
-  zyx,
-  zyz,
-  zxy,
-  zxz,
-  yxz,
-  yxy,
-  yzx,
-  yzy,
-  xyz,
-  xyx,
-  xzy,
-  xzx
-};
-glm::vec3
-quat_to_euler(glm::quat const&, RotSeq);
-
-} // namespace boomhs::math

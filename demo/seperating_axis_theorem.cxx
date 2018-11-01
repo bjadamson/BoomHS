@@ -33,12 +33,17 @@
 // polygon's using the seperating axis theorem.
 //
 // Summary:
-//      Splits the screen into multiple viewports, rendering the same scene of 3dimensional
-//      cubes from multiple camera positions/types (orthographic/perspective).
+//      Renders a number of rectangles onto the screen. Depending on whether the rectangle is
+//      overlapping another rectangle, it's color will be different.
+//
+//      Overlapping rectangles are one color, rectangles which overlap with no other rectangle are
+//      a different color.
 //
 //      + If the user clicks and holds the left mouse button down within a orthographic
 //        viewports a hollow rectangle is drawn from the point where the user clicked the mouse
-//        initially and where the cursor is currently. This is used to test mouse box selection.
+//        initially and where the cursor is currently. Any rectangles within this user-defined
+//        rectangle have their color set to a random color, for the duration of the user holding
+//        down the button.
 //
 // User Input:
 //      The following table indicates how the user may interact with the demo.
@@ -73,12 +78,16 @@ static bool MOUSE_BUTTON_PRESSED        = false;
 static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
 static MouseCursorInfo MOUSE_INFO;
 
+static Color CLICK_COLOR;
+
 struct PmRect
 {
   RectFloat rect;
   DrawInfo  di;
   Transform transform;
   Color     color;
+
+  bool mouse_selected = false;
 
   explicit PmRect(RectFloat const& r, DrawInfo &&d)
       : rect(r)
@@ -192,7 +201,25 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, glm::mat4 const& pm)
       overlap |= collision::overlap(ra, rb, pm);
     }
 
-    a.color = overlap ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
+    a.color = a.mouse_selected ? CLICK_COLOR
+      : (overlap ? LOC4::RED : LOC4::LIGHT_SEAGREEN);
+  }
+}
+
+void
+process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
+    std::vector<PmRect>& rects, glm::mat4 const& mv)
+{
+  if (MOUSE_BUTTON_PRESSED) {
+    auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
+    auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
+
+    auto const mouse_rect = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
+                                                                    VIEWPORT.left_top());
+    for (auto& rect : rects) {
+      RectTransform const rect_tr{rect.rect, rect.transform};
+      rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, mv);
+    }
   }
 }
 
@@ -208,8 +235,13 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
       return true;
     }
   }
+  else if (event.type == SDL_MOUSEMOTION) {
+    process_mousemotion(logger, event.motion, vp_rects.rects, pm);
+  }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
+    CLICK_COLOR = color::random();
+
     if (mouse_button.button == SDL_BUTTON_MIDDLE) {
       MIDDLE_MOUSE_BUTTON_PRESSED = true;
       auto &middle_clickpos = MOUSE_INFO.click_positions.middle;
@@ -231,9 +263,9 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
     else {
       MOUSE_BUTTON_PRESSED = false;
 
-      //for (auto& cube_ent : cube_ents) {
-        //cube_ent.selected = false;
-      //}
+      for (auto& rect : vp_rects.rects) {
+        rect.mouse_selected = false;
+      }
     }
   }
   return event.type == SDL_QUIT;
@@ -290,12 +322,10 @@ draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_
     ui_renderer.draw_rect(logger, model, di, pm_rect.color, GL_TRIANGLES, ds);
   }
 
-
-
   if (MOUSE_BUTTON_PRESSED) {
     auto const mouse_pos = gl_sdl::mouse_coords();
     auto const& pos_init = MOUSE_INFO.click_positions.left_right;
-    MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::PINK,
+    MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::PURPLE,
                                                   viewport, AR, ds);
   }
 };

@@ -487,71 +487,6 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
   }
 }
 
-// Factory function for creating the RectFloat with points where the user last clicked, and the
-// mouse is currently.
-//
-// pos_init_ss => mouse position (in screen space) where the user last clicked.
-// pos_now_ss  => mouse position (in screen space) where the mouse is currently.
-auto
-make_mouse_rect(glm::ivec2 const& pos_init_ss, glm::ivec2 const& pos_now_ss,
-    glm::ivec2 const& viewport_origin)
-{
-  // screen pos -> viewport pos
-  auto const click_pos   = pos_init_ss - viewport_origin;
-  auto const mouse_start = pos_now_ss - viewport_origin;
-
-  // Create a rectangle using there two points, making sure that it works out if the user clicks
-  // and drags up or down, left or right.
-  auto const lx = lesser_of(click_pos.x, mouse_start.x);
-  auto const rx = other_of_two(lx, PAIR(click_pos.x, mouse_start.x));
-
-  auto const ty = lesser_of(click_pos.y, mouse_start.y);
-  auto const by = other_of_two(ty, PAIR(click_pos.y, mouse_start.y));
-
-  return RectFloat{VEC2{lx, ty}, VEC2{rx, by}};
-}
-
-RectFloat
-objectspace_to_worldspace(RectFloat const& rect, glm::ivec2 const& vpgrid_size, Transform const& tr)
-{
-  // Convert the rectangle from screen space to viewport space size from the viewport grid.
-  auto r = rect;
-  r.left   /= vpgrid_size.x;
-  r.right  /= vpgrid_size.x;
-
-  r.top    /= vpgrid_size.y;
-  r.bottom /= vpgrid_size.y;
-
-  // Adjust the rectangle according to the orthographic zoom level.
-  //auto const zoom = camera.zoom();
-  //r.left  += zoom.x;
-  //r.right -= zoom.x;
-
-  //r.top    += zoom.y;
-  //r.bottom -= zoom.y;
-
-  // Translate the rectangle from Object space to world space.
-  auto const xm = tr.translation.x / vpgrid_size.x;
-  auto const zm = tr.translation.z / vpgrid_size.y;
-  r.move(xm, zm);
-  return r;
-}
-
-bool
-rectangles_overlap_within_viewport(RectFloat const& a, RectFloat const& b,
-                                   glm::ivec2 const& vpgrid_size, Transform const& tr,
-                                   ModelViewMatrix const& mv)
-{
-  auto xz = objectspace_to_worldspace(b, vpgrid_size, tr);
-
-  // Combine the transform and rectangle into a single structure.
-  RectTransform const rect_tr{xz, tr};
-
-  // Compute whether the rectangle (converted from the cube) and the rectangle from the user
-  // clicking and dragging are overlapping.
-  return collision::overlap(a, rect_tr, mv);
-}
-
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
                                    glm::ivec2 const& vpgrid_size, CubeEntities& cube_ents,
@@ -565,8 +500,19 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cr.xz_rect();
+    xz = space_conversions::screen_to_viewport(xz, vpgrid_size);
 
-    return rectangles_overlap_within_viewport(mouse_rect, xz, vpgrid_size, tr, mv);
+    // Translate the rectangle from Object space to world space.
+    auto const xm = tr.translation.x / vpgrid_size.x;
+    auto const zm = tr.translation.z / vpgrid_size.y;
+    xz.move(xm, zm);
+
+    // Combine the transform and rectangle into a single structure.
+    RectTransform const rect_tr{xz, tr};
+
+    // Compute whether the rectangle (converted from the cube) and the rectangle from the user
+    // clicking and dragging are overlapping.
+    return collision::overlap(mouse_rect, rect_tr, mv);
   };
 
   for (auto &ce : cube_ents) {
@@ -597,9 +543,8 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
     {
       if (MOUSE_BUTTON_PRESSED) {
         auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
-        auto const mouse_rect = make_mouse_rect(click_pos_ss, mouse_pos, vi.mouse_offset());
-        LOG_ERROR_SPRINTF("mouse rect: %s", mouse_rect.to_string());
-
+        auto const mouse_rect    = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
+                                                               vi.mouse_offset());
         auto const& cm     = vi.matrices;
         auto const mv      = cm.proj * cm.view;
         auto const vp_size = vp_grid.viewport_size;

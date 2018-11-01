@@ -139,6 +139,27 @@ public:
                                                              viewport, ar);
     mrr.draw(logger, color, ds);
   };
+
+  // Factory function for creating the RectFloat with points where the user last clicked, and the
+  // mouse is currently.
+  //
+  // initial => mouse position (in screen space) where the user clicked.
+  // now     => mouse position (in screen space) where the mouse is currently (think
+  // click-and-drag).
+  // viewport_orgin => Origin of the viewport (0, 0) being top-left of the screen.
+  static auto
+  make_mouse_rect(glm::ivec2 const& initial_ss, glm::ivec2 const& now_ss, glm::ivec2 const& vp_origin)
+  {
+    namespace sc = boomhs::math::space_conversions;
+
+    // screen pos -> viewport pos
+    auto const init_vp = sc::screen_to_viewport(initial_ss, vp_origin);
+    auto const now_vp  = sc::screen_to_viewport(now_ss, vp_origin);
+
+    // Create a rectangle using the two points, making sure that it works out if the user clicks
+    // and drags up or down, left or right.
+    return boomhs::math::rect_abs_from_twopoints(init_vp, now_vp);
+  }
 };
 
 } // namespace opengl
