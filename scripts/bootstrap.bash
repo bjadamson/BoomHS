@@ -241,9 +241,9 @@ target_include_directories(BUILD_POSTPROCESSING PUBLIC ${EXTERNAL_INCLUDE_DIRS})
 target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
 
 ###################################################################################################
-## COMPILE -- Raycast/Boxselection && Multiple Viewports Mouse Selection Demo
+## COMPILE -- Multiple Viewports Mouse Selection Demo
 ##
-## Application for developing/testing out raycasting and mouse box selection demo.
+## Application for developing/testing out multiple viewports using raycasting and mouse box selection.
 add_executable(viewport_mouse_raycast_boxselection ${DEMO_DIRECTORY}/viewports_and_mouse_raycast_boxselection.cxx)
 
 target_link_libraries(viewport_mouse_raycast_boxselection

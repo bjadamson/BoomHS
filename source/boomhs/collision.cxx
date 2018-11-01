@@ -209,7 +209,7 @@ overlap_polygon(PolygonVertices<V, N> const& a, PolygonVertices<V, N> const& b)
 
   auto const projected_axis_overlap = [&](auto const& polygon, auto const i0) {
     auto const polygon_vertex_count = polygon.size();
-    int const i1 = (i0 + 1) % polygon_vertex_count;
+    auto const i1 = (i0 + 1) % polygon_vertex_count;
     auto const& p1 = polygon[i0];
     auto const& p2 = polygon[i1];
 
@@ -321,15 +321,15 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 }
 
 bool
-overlap(RectFloat const& a, RectTransform const& rb, ModelViewMatrix const& mv)
+overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj)
 {
   Transform ta;
   RectTransform const ra{a, ta};
-  return overlap(ra, rb, mv);
+  return overlap(ra, rb, proj);
 }
 
 bool
-overlap(RectTransform const& a, RectTransform const& b, ModelViewMatrix const& mv)
+overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj)
 {
   auto const& ra = a.rect;
   auto const& rb = b.rect;
@@ -340,9 +340,9 @@ overlap(RectTransform const& a, RectTransform const& b, ModelViewMatrix const& m
   // Only perform the simple test if both rectangles are not rotated.
   bool const simple_test = !ta.is_rotated() && !tb.is_rotated();
 
-  // Rotate the rectangles using their vertices/transform and mv matrix.
-  auto const a_points = rotated_rectangle_points(ra, mv * ta.model_matrix());
-  auto const b_points = rotated_rectangle_points(rb, mv * tb.model_matrix());
+  // Rotate the rectangles using their vertices/transform and proj matrix.
+  auto const a_points = rotated_rectangle_points(ra, proj * ta.model_matrix());
+  auto const b_points = rotated_rectangle_points(rb, proj * tb.model_matrix());
 
   // There are 4 vertices in a rectangle.
   constexpr auto N = 4;
