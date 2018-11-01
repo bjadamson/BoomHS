@@ -45,12 +45,7 @@ class MouseState
 public:
   MouseState() = default;
 
-  auto coords() const
-  {
-    int x, y;
-    SDL_GetMouseState(&x, &y);
-    return glm::ivec2{x, y};
-  }
+  glm::ivec2 coords() const;
   bool left_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_LEFT); }
   bool right_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_RIGHT); }
   bool middle_pressed() const { return mask() & SDL_BUTTON(SDL_BUTTON_MIDDLE); }

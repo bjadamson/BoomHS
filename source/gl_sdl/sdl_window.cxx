@@ -281,4 +281,12 @@ SDLGlobalContext::make_window(common::Logger& logger, char const* title, bool co
   return OK_MOVE(window);
 }
 
+glm::ivec2
+mouse_coords()
+{
+  int x, y;
+  SDL_GetMouseState(&x, &y);
+  return glm::ivec2{x, y};
+}
+
 } // namespace gl_sdl

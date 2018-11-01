@@ -1,5 +1,6 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/collision.hpp>
+#include <boomhs/color.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/frame_time.hpp>
 #include <boomhs/mouse.hpp>
@@ -15,6 +16,7 @@
 
 #include <demo/demo.hpp>
 
+#include <gl_sdl/sdl_window.hpp>
 #include <gl_sdl/common.hpp>
 
 #include <opengl/bind.hpp>
@@ -274,7 +276,8 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
 }
 
 void
-draw_pm(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rects, DrawState& ds)
+draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rects,
+           DrawState& ds)
 {
   auto const screen_height = VIEWPORT.height();
 
@@ -285,6 +288,15 @@ draw_pm(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rec
     auto& di         = pm_rect.di;
     auto const model = pm_rect.transform.model_matrix();
     ui_renderer.draw_rect(logger, model, di, pm_rect.color, GL_TRIANGLES, ds);
+  }
+
+
+
+  if (MOUSE_BUTTON_PRESSED) {
+    auto const mouse_pos = gl_sdl::mouse_coords();
+    auto const& pos_init = MOUSE_INFO.click_positions.left_right;
+    MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::PINK,
+                                                  viewport, AR, ds);
   }
 };
 
@@ -332,7 +344,7 @@ main(int argc, char **argv)
 
     DrawState ds;
     OR::clear_screen(LOC4::DEEP_SKY_BLUE);
-    draw_pm(logger, ui_renderer, vp_rects, ds);
+    draw_scene(logger, ui_renderer, vp_rects, ds);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());

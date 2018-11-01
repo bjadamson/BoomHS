@@ -86,4 +86,7 @@ public:
   static Result<SDLContext, std::string> create(common::Logger&);
 };
 
+glm::ivec2
+mouse_coords();
+
 } // namespace gl_sdl

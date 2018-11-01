@@ -1,9 +1,12 @@
 #include <boomhs/mouse.hpp>
 #include <common/algorithm.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// CursorManager
 CursorManager::CursorManager()
 {
   for (size_t i = CURSOR_INDEX_BEGIN; i < CURSOR_INDEX_END; ++i) {
@@ -36,6 +39,14 @@ SDL_Cursor*
 CursorManager::active() const
 {
   return cursors[active_];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// MouseState
+glm::ivec2
+MouseState::coords() const
+{
+  return gl_sdl::mouse_coords();
 }
 
 } // namespace boomhs

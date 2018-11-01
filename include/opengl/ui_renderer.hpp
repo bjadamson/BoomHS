@@ -131,12 +131,13 @@ public:
 
   static void
   draw_mouseselect_rect(common::Logger& logger, glm::ivec2 const& pos_init,
-                        glm::ivec2 const& pos_now, boomhs::Viewport const& viewport,
-                        boomhs::AspectRatio const& ar, DrawState& ds)
+                        glm::ivec2 const& pos_now, boomhs::Color const& color,
+                        boomhs::Viewport const& viewport, boomhs::AspectRatio const& ar,
+                        DrawState& ds)
   {
     auto mrr = MouseRectangleRenderer::make_rect_under_mouse(logger, pos_init, pos_now,
                                                              viewport, ar);
-    mrr.draw(logger, LOC4::LIME_GREEN, ds);
+    mrr.draw(logger, color, ds);
   };
 };
 

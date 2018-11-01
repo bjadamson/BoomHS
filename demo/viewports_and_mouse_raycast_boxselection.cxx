@@ -749,8 +749,8 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 
     if (figureout_draw_with_mouserect(vi)) {
       auto const& pos_init = MOUSE_INFO.click_positions.left_right;
-      MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, vi.viewport, AR,
-                                                    ds);
+      MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::LIME_GREEN,
+                                                    vi.viewport, AR, ds);
     }
   }
 
@@ -921,14 +921,6 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng, ViewportGrid c
   return PmDrawInfos{MOVE(pm_infos_vec)};
 }
 
-auto
-get_mousepos()
-{
-  int mouse_x, mouse_y;
-  SDL_GetMouseState(&mouse_x, &mouse_y);
-  return glm::ivec2{mouse_x, mouse_y};
-}
-
 int
 main(int argc, char **argv)
 {
@@ -985,7 +977,7 @@ main(int argc, char **argv)
       quit = process_event(logger, event, vp_grid, cube_ents, pm_infos, ft);
     }
 
-    auto const mouse_pos = get_mousepos();
+    auto const mouse_pos = gl_sdl::mouse_coords();
     update(logger, vp_grid, mouse_pos, cube_ents, frustum, window_rect, pers_pm, ft);
     draw_scene(logger, vp_grid, pm_infos, frustum, wire_sp, rect_sp, mouse_pos, cube_ents);
 
