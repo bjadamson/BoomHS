@@ -6,10 +6,10 @@
 
 namespace boomhs
 {
-class Camera;
-class EngineState;
-class Frustum;
-class ZoneState;
+class  Camera;
+class  EngineState;
+class  Frustum;
+class  ZoneState;
 struct ViewSettings;
 
 enum class CameraMode
@@ -38,11 +38,15 @@ struct CameraModes
   static std::vector<std::string> string_list();
 };
 
+struct CameraMatrices
+{
+  glm::mat4 proj, view;
+};
+
 struct CameraFrameState
 {
   glm::vec3 const camera_world_position;
-  glm::mat4 const projection_matrix;
-  glm::mat4 const view_matrix;
+  CameraMatrices const camera_matrices;
   Frustum const&  frustum;
 
   CameraMode const mode;

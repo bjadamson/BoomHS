@@ -155,10 +155,8 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 
 template <typename V>
 auto
-rotated_rectangle_points(RectT<V> const& rect, Transform const& tr, ModelViewMatrix const& mv)
+rotated_rectangle_points(RectT<V> const& rect, ModelViewMatrix const& mv)
 {
-  auto const mv_matrix = mv * tr.model_matrix();
-
   auto const p0 = rect.p0();
   auto const p1 = rect.p1();
   auto const p2 = rect.p2();
@@ -167,17 +165,20 @@ rotated_rectangle_points(RectT<V> const& rect, Transform const& tr, ModelViewMat
   auto constexpr W = 1;
   auto constexpr Z = 0;
 
-  auto const v4p0 = mv_matrix * VEC4(p0.x, p0.y, Z, W) / W;
-  auto const v4p1 = mv_matrix * VEC4(p1.x, p1.y, Z, W) / W;
-  auto const v4p2 = mv_matrix * VEC4(p2.x, p2.y, Z, W) / W;
-  auto const v4p3 = mv_matrix * VEC4(p3.x, p3.y, Z, W) / W;
+  // Transform the points into eye space
+  auto const v4p0 = mv * VEC4(p0.x, p0.y, Z, W) / W;
+  auto const v4p1 = mv * VEC4(p1.x, p1.y, Z, W) / W;
+  auto const v4p2 = mv * VEC4(p2.x, p2.y, Z, W) / W;
+  auto const v4p3 = mv * VEC4(p3.x, p3.y, Z, W) / W;
 
+  // Discard the extra vertices, rectangles only have two dimensions.
   using VerticesT   = typename RectT<V>::vertex_type;
   auto const v2p0 = VerticesT{v4p0.x, v4p0.y};
   auto const v2p1 = VerticesT{v4p1.x, v4p1.y};
   auto const v2p2 = VerticesT{v4p2.x, v4p2.y};
   auto const v2p3 = VerticesT{v4p3.x, v4p3.y};
 
+  // Combine the rectangles vertices into an array and return.
   using VerticesArray = typename RectT<V>::array_type;
   return VerticesArray{v2p0, v2p1, v2p2, v2p3};
 }
@@ -340,8 +341,8 @@ overlap(RectTransform const& a, RectTransform const& b, ModelViewMatrix const& m
   bool const simple_test = !ta.is_rotated() && !tb.is_rotated();
 
   // Rotate the rectangles using their vertices/transform and mv matrix.
-  auto const a_points = rotated_rectangle_points(ra, ta, mv);
-  auto const b_points = rotated_rectangle_points(rb, tb, mv);
+  auto const a_points = rotated_rectangle_points(ra, mv * ta.model_matrix());
+  auto const b_points = rotated_rectangle_points(rb, mv * tb.model_matrix());
 
   // There are 4 vertices in a rectangle.
   constexpr auto N = 4;

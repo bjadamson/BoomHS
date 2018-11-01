@@ -54,7 +54,7 @@ using namespace gl_sdl;
 using namespace opengl;
 
 static int constexpr NUM_CUBES                   = 100;
-static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_RATIO{2.0f, 2.0};
+static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_SIZE{2.0f, 2.0};
 
 // clang-format off
 static auto constexpr NEAR = 0.001f;
@@ -69,13 +69,6 @@ static auto CAMERA_POS_TOPDOWN   = CameraPosition{0,  1,  0};
 static auto CAMERA_POS_BOTTOP    = CameraPosition{0, -1,  0};
 static auto CAMERA_POS_INTOSCENE = CameraPosition{0,  0,  1};
 
-struct CameraMatrices
-{
-  glm::mat4 pm, vm;
-
-  MOVE_DEFAULT_ONLY(CameraMatrices);
-};
-
 struct ViewportInfo
 {
   Viewport       viewport;
@@ -89,8 +82,7 @@ struct ViewportInfo
   void update(ViewSettings const& vs, Frustum const& frustum, RectInt const& window_rect,
               glm::mat4 const& pers_pm)
   {
-    matrices.pm = camera.calc_pm(vs, frustum, window_rect.size());
-    matrices.vm = camera.calc_vm(camera.position());
+    matrices = camera.calc_cm(vs, frustum, window_rect.size(), camera.position());
   }
 };
 
@@ -150,14 +142,14 @@ struct PmDrawInfos
 struct ViewportGrid
 {
   ScreenSize screen_size;
-  glm::ivec2 screensize_ratio;
+  glm::ivec2 viewport_size;
 
   std::array<ViewportInfo, 4> infos;
 
   ViewportGrid(ScreenSize const& ss, glm::ivec2 const& ratio, ViewportInfo&& lt, ViewportInfo&& rt,
                ViewportInfo&& lb, ViewportInfo&& rb)
       : screen_size(ss)
-      , screensize_ratio(ratio)
+      , viewport_size(ratio)
       , infos(common::make_array<ViewportInfo>(MOVE(lt), MOVE(rt), MOVE(lb), MOVE(rb)))
   {
   }
@@ -324,7 +316,7 @@ make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
 }
 
 void
-draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, ShaderProgram& sp,
+draw_bbox(common::Logger& logger, CameraMatrices const& cm, ShaderProgram& sp,
           Transform const& tr, DrawInfo& dinfo, Color const& color, DrawState& ds)
 {
   auto const model_matrix = tr.model_matrix();
@@ -333,7 +325,7 @@ draw_bbox(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm, Shad
   shader::set_uniform(logger, sp, "u_wirecolor", color);
 
   BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-  auto const camera_matrix = pm * vm;
+  auto const camera_matrix = cm.proj * cm.view;
   render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
   render::draw(logger, ds, GL_LINES, sp, dinfo);
 }
@@ -367,7 +359,7 @@ public:
 using CubeEntities = std::vector<CubeEntity>;
 
 void
-draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
+draw_bboxes(common::Logger& logger, CameraMatrices const& cm,
             CubeEntities& cube_ents, ShaderProgram& sp,
             DrawState& ds)
 {
@@ -377,7 +369,7 @@ draw_bboxes(common::Logger& logger, glm::mat4 const& pm, glm::mat4 const& vm,
     bool const selected = cube_tr.selected;
 
     auto const& wire_color = selected ? LOC4::BLUE : LOC4::RED;
-    draw_bbox(logger, pm, vm, sp, tr, dinfo, wire_color, ds);
+    draw_bbox(logger, cm, sp, tr, dinfo, wire_color, ds);
   }
 }
 
@@ -479,9 +471,9 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
                                     ViewportInfo const& vi, CubeEntities& cube_ents)
 {
   auto const view_rect = vi.viewport.rect();
-  auto const& m        = vi.matrices;
-  auto const& pm       = m.pm;
-  auto const& vm       = m.vm;
+  auto const& cm       = vi.matrices;
+  auto const& pm       = cm.proj;
+  auto const& vm       = cm.view;
 
   auto const& camera_pos = vi.camera.position();
   auto const dir = Raycast::calculate_ray_into_screen(mouse_pos, pm, vm, view_rect);
@@ -519,46 +511,66 @@ make_mouse_rect(glm::ivec2 const& pos_init_ss, glm::ivec2 const& pos_now_ss,
   return RectFloat{VEC2{lx, ty}, VEC2{rx, by}};
 }
 
-void
-select_cubes_under_user_drawn_rect(common::Logger& logger, CameraMatrices const& cm,
-                         glm::ivec2 const& mouse_pos_now_ss, glm::ivec2 const& viewport_origin,
-                         ViewportGrid const& vp_grid, CubeEntities& cube_ents)
+RectFloat
+objectspace_to_worldspace(RectFloat const& rect, glm::ivec2 const& vpgrid_size, Transform const& tr)
 {
-  auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
-  auto const mouse_rect = make_mouse_rect(click_pos_ss, mouse_pos_now_ss, viewport_origin);
-  LOG_ERROR_SPRINTF("mouse rect: %s", mouse_rect.to_string());
+  // Convert the rectangle from screen space to viewport space size from the viewport grid.
+  auto r = rect;
+  r.left   /= vpgrid_size.x;
+  r.right  /= vpgrid_size.x;
 
-  auto const& ratio = vp_grid.screensize_ratio;
-  for (auto &cube_ent : cube_ents) {
-    auto const& cube = cube_ent.cube();
-    auto tr          = cube_ent.transform();
+  r.top    /= vpgrid_size.y;
+  r.bottom /= vpgrid_size.y;
+
+  // Adjust the rectangle according to the orthographic zoom level.
+  //auto const zoom = camera.zoom();
+  //r.left  += zoom.x;
+  //r.right -= zoom.x;
+
+  //r.top    += zoom.y;
+  //r.bottom -= zoom.y;
+
+  // Translate the rectangle from Object space to world space.
+  auto const xm = tr.translation.x / vpgrid_size.x;
+  auto const zm = tr.translation.z / vpgrid_size.y;
+  r.move(xm, zm);
+  return r;
+}
+
+bool
+rectangles_overlap_within_viewport(RectFloat const& a, RectFloat const& b,
+                                   glm::ivec2 const& vpgrid_size, Transform const& tr,
+                                   ModelViewMatrix const& mv)
+{
+  auto xz = objectspace_to_worldspace(b, vpgrid_size, tr);
+
+  // Combine the transform and rectangle into a single structure.
+  RectTransform const rect_tr{xz, tr};
+
+  // Compute whether the rectangle (converted from the cube) and the rectangle from the user
+  // clicking and dragging are overlapping.
+  return collision::overlap(a, rect_tr, mv);
+}
+
+void
+select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
+                                   glm::ivec2 const& vpgrid_size, CubeEntities& cube_ents,
+                                   ModelViewMatrix const& mv)
+{
+  // Determine whether a cube projected onto the XZ plane and another rectangle overlap.
+  auto const cube_mouserect_overlap = [&](auto const& cube_entity) {
+    auto const& cube = cube_entity.cube();
+    auto tr          = cube_entity.transform();
     Cube cr{cube.min, cube.max};
 
+    // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cr.xz_rect();
-    xz.left   /= ratio.x;
-    xz.right  /= ratio.x;
 
-    xz.top    /= ratio.y;
-    xz.bottom /= ratio.y;
+    return rectangles_overlap_within_viewport(mouse_rect, xz, vpgrid_size, tr, mv);
+  };
 
-    auto const xm = tr.translation.x / ratio.x;
-    auto const zm = tr.translation.z / ratio.y;
-    xz.move(xm, zm);
-
-    //auto const zoom = camera.zoom();
-    //xz.left  += zoom.x;
-    //xz.right -= zoom.x;
-
-    //xz.top    += zoom.y;
-    //xz.bottom -= zoom.y;
-
-    RectTransform const rect_tr{xz, tr};
-
-    auto const& pm = cm.pm;
-    auto const& vm = cm.vm;
-    auto const cam_matrix = pm * vm;
-
-    cube_ent.selected = collision::overlap(mouse_rect, rect_tr, cam_matrix);
+  for (auto &ce : cube_ents) {
+    ce.selected = cube_mouserect_overlap(ce);
   }
 }
 
@@ -584,8 +596,14 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
     case CameraMode::Ortho:
     {
       if (MOUSE_BUTTON_PRESSED) {
-        select_cubes_under_user_drawn_rect(logger, vi.matrices, mouse_pos, vi.mouse_offset(),
-                                           vp_grid, cube_ents);
+        auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
+        auto const mouse_rect = make_mouse_rect(click_pos_ss, mouse_pos, vi.mouse_offset());
+        LOG_ERROR_SPRINTF("mouse rect: %s", mouse_rect.to_string());
+
+        auto const& cm     = vi.matrices;
+        auto const mv      = cm.proj * cm.view;
+        auto const vp_size = vp_grid.viewport_size;
+        select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, mv);
       }
     } break;
 
@@ -702,8 +720,8 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     auto const& viewport = vi.viewport;
     OR::set_viewport_and_scissor(viewport, screen_height);
     OR::clear_screen(viewport.bg_color());
-    auto const& m = vi.matrices;
-    draw_bboxes(logger, m.pm, m.vm, cube_ents, wire_sp, ds);
+    auto const& cm = vi.matrices;
+    draw_bboxes(logger, cm, cube_ents, wire_sp, ds);
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
     for (auto& pm_info : pm_infos) {
@@ -766,8 +784,8 @@ update(common::Logger& logger, ViewportGrid& vp_grid, glm::ivec2 const& mouse_po
 auto
 create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
 {
-  int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_RATIO.x;
-  int const viewport_height = window_rect.height() / SCREENSIZE_VIEWPORT_RATIO.y;
+  int const viewport_width  = window_rect.width() / SCREENSIZE_VIEWPORT_SIZE.x;
+  int const viewport_height = window_rect.height() / SCREENSIZE_VIEWPORT_SIZE.y;
 
   auto const lhs_top = Viewport{
     PAIR(window_rect.left, window_rect.top),
@@ -857,7 +875,7 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   ViewportInfo left_bot {lhs_bottom, ScreenSector::LEFT_BOTTOM,  pick_camera(rng)};
 
   auto const ss = window_rect.size();
-  return ViewportGrid{ss, SCREENSIZE_VIEWPORT_RATIO, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
+  return ViewportGrid{ss, SCREENSIZE_VIEWPORT_SIZE, MOVE(left_top), MOVE(right_top), MOVE(left_bot), MOVE(right_bot)};
 }
 
 auto

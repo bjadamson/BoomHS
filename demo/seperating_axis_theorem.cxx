@@ -76,8 +76,7 @@ struct PmRect
   RectFloat rect;
   DrawInfo  di;
   Transform transform;
-
-  bool overlapping = false;
+  Color     color;
 
   explicit PmRect(RectFloat const& r, DrawInfo &&d)
       : rect(r)
@@ -191,7 +190,7 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, glm::mat4 const& pm)
       overlap |= collision::overlap(ra, rb, pm);
     }
 
-    a.overlapping = overlap;
+    a.color = overlap ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
   }
 }
 
@@ -205,6 +204,34 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
     SDL_Keycode const key_pressed = event.key.keysym.sym;
     if (process_keydown(logger, key_pressed, vp_rects, controlled_tr)) {
       return true;
+    }
+  }
+  else if (event.type == SDL_MOUSEBUTTONDOWN) {
+    auto const& mouse_button = event.button;
+    if (mouse_button.button == SDL_BUTTON_MIDDLE) {
+      MIDDLE_MOUSE_BUTTON_PRESSED = true;
+      auto &middle_clickpos = MOUSE_INFO.click_positions.middle;
+      middle_clickpos.x = mouse_button.x;
+      middle_clickpos.y = mouse_button.y;
+    }
+    else {
+      MOUSE_BUTTON_PRESSED = true;
+      auto &leftright_clickpos = MOUSE_INFO.click_positions.left_right;
+      leftright_clickpos.x = mouse_button.x;
+      leftright_clickpos.y = mouse_button.y;
+    }
+  }
+  else if (event.type == SDL_MOUSEBUTTONUP) {
+    auto const& mouse_button = event.button;
+    if (mouse_button.button == SDL_BUTTON_MIDDLE) {
+      MIDDLE_MOUSE_BUTTON_PRESSED = false;
+    }
+    else {
+      MOUSE_BUTTON_PRESSED = false;
+
+      //for (auto& cube_ent : cube_ents) {
+        //cube_ent.selected = false;
+      //}
     }
   }
   return event.type == SDL_QUIT;
@@ -255,10 +282,9 @@ draw_pm(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rec
   OR::set_viewport_and_scissor(viewport, screen_height);
 
   for (auto& pm_rect : vp_rects.rects) {
-    auto const color = pm_rect.overlapping ? LOC4::RED : LOC4::LIGHT_SEAGREEN;
     auto& di         = pm_rect.di;
     auto const model = pm_rect.transform.model_matrix();
-    ui_renderer.draw_rect(logger, model, di, color, GL_TRIANGLES, ds);
+    ui_renderer.draw_rect(logger, model, di, pm_rect.color, GL_TRIANGLES, ds);
   }
 };
 

@@ -127,9 +127,8 @@ public:
   // methods
   CameraFPS& rotate_radians(float, float, FrameTime const&);
 
-  glm::vec3 position() const;
-  glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
-  glm::mat4 calc_vm(glm::vec3 const&) const;
+  glm::vec3      position() const;
+  CameraMatrices calc_cm(ViewSettings const&, Frustum const&, glm::vec3 const&) const;
 
   CLONE_CAMERA_IMPL
 };
@@ -153,11 +152,7 @@ public:
   bool flip_rightv = false;
 
   // methods
-  // Compute the projection-matrix.
-  glm::mat4 calc_pm(AspectRatio const&, Frustum const&, ScreenSize const&) const;
-
-  // Compute the view-matrix.
-  glm::mat4 calc_vm() const;
+  CameraMatrices calc_cm(AspectRatio const&, Frustum const&, ScreenSize const&) const;
 
   auto const& eye_forward() const { return orientation_.forward; }
   auto const& eye_up() const { return orientation_.up; }
@@ -220,8 +215,7 @@ public:
 
   glm::vec3 target_position() const;
 
-  glm::mat4 calc_pm(ViewSettings const&, Frustum const&) const;
-  glm::mat4 calc_vm(glm::vec3 const&) const;
+  CameraMatrices calc_cm(ViewSettings const&, Frustum const&, glm::vec3 const&) const;
 
   CLONE_CAMERA_IMPL
 };
@@ -269,8 +263,7 @@ public:
   Camera& rotate_radians(float, float, FrameTime const&);
   void    set_target(WorldObject&);
 
-  glm::mat4 calc_pm(ViewSettings const&, Frustum const&, ScreenSize const&) const;
-  glm::mat4 calc_vm(glm::vec3 const&) const;
+  CameraMatrices calc_cm(ViewSettings const&, Frustum const&, ScreenSize const&, glm::vec3 const&) const;
 
   void zoom_out(float, FrameTime const&);
   void zoom_in(float, FrameTime const&);

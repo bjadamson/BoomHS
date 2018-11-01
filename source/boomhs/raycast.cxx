@@ -1,9 +1,8 @@
 #include <boomhs/engine.hpp>
+#include <boomhs/frame.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/raycast.hpp>
 #include <boomhs/viewport.hpp>
-
-#include <boomhs/frame.hpp>
 
 using namespace boomhs;
 namespace sconv = boomhs::math::space_conversions;

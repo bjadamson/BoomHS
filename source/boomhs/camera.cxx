@@ -134,20 +134,17 @@ CameraArcball::target_position() const
   return target().get().transform().translation;
 }
 
-glm::mat4
-CameraArcball::calc_pm(ViewSettings const& vp, Frustum const& f) const
+CameraMatrices
+CameraArcball::calc_cm(ViewSettings const& vp, Frustum const& f, glm::vec3 const& pos) const
 {
   auto const ar  = vp.aspect_ratio.compute();
   auto const fov = vp.field_of_view;
+  auto const pm  = glm::perspective(fov, ar, f.near, f.far);
 
-  return glm::perspective(fov, ar, f.near, f.far);
-}
-
-glm::mat4
-CameraArcball::calc_vm(glm::vec3 const& pos) const
-{
   auto const& target_pos = target().get().transform().translation;
-  return glm::lookAt(pos, target_pos, eye_up());
+  auto const vm          = glm::lookAt(pos, target_pos, eye_up());
+
+  return CameraMatrices{pm, vm};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,20 +193,16 @@ CameraFPS::position() const
   return transform().translation;
 }
 
-glm::mat4
-CameraFPS::calc_pm(ViewSettings const& vp, Frustum const& f) const
+CameraMatrices
+CameraFPS::calc_cm(ViewSettings const& vp, Frustum const& f, glm::vec3 const& eye_fwd) const
 {
   auto const ar  = vp.aspect_ratio.compute();
   auto const fov = vp.field_of_view;
-  return glm::perspective(fov, ar, f.near, f.far);
-}
+  auto const pm  = glm::perspective(fov, ar, f.near, f.far);
 
-glm::mat4
-CameraFPS::calc_vm(glm::vec3 const& eye_fwd) const
-{
   auto const pos = transform().translation;
-
-  return glm::lookAt(pos, pos + eye_fwd, eye_up());
+  auto const vm  = glm::lookAt(pos, pos + eye_fwd, eye_up());
+  return CameraMatrices{pm, vm};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -221,11 +214,19 @@ CameraORTHO::CameraORTHO(WorldOrientation const& wo, glm::vec3 const& pos)
 {
 }
 
-glm::mat4
-CameraORTHO::calc_pm(AspectRatio const& ar, Frustum const& f, ScreenSize const& ss) const
+CameraMatrices
+CameraORTHO::calc_cm(AspectRatio const& ar, Frustum const& f, ScreenSize const& ss) const
 {
   auto const& zoom_amount = zoom();
-  return compute_pm(ar, f, ss, position, zoom_amount);
+  auto const pm = compute_pm(ar, f, ss, position, zoom_amount);
+
+  auto const pos     = position;
+  auto const  target = pos + eye_forward();
+  auto const& up     = eye_up();
+
+  auto const vm = compute_vm(pos, target, up, flip_rightv);
+
+  return CameraMatrices{pm, vm};
 }
 
 glm::mat4
@@ -244,16 +245,6 @@ CameraORTHO::compute_pm(AspectRatio const& AR, Frustum const& f, ScreenSize cons
   // clang-format on
 
   return glm::ortho(left, right, bottom, top, f.near, f.far);
-}
-
-glm::mat4
-CameraORTHO::calc_vm() const
-{
-  auto const pos     = position;
-  auto const  target = pos + eye_forward();
-  auto const& up     = eye_up();
-
-  return compute_vm(pos, target, up, flip_rightv);
 }
 
 glm::mat4
@@ -461,42 +452,25 @@ Camera::position() const
   return ZERO;
 }
 
-glm::mat4
-Camera::calc_pm(ViewSettings const& vs, Frustum const& frustum, ScreenSize const& ss) const
+CameraMatrices
+Camera::calc_cm(ViewSettings const& vs, Frustum const& frustum, ScreenSize const& ss,
+                glm::vec3 const& pos) const
 {
   switch (mode()) {
     case CameraMode::FPS:
-      return fps.calc_pm(vs, frustum);
+      return fps.calc_cm(vs, frustum, pos);
     case CameraMode::ThirdPerson:
-      return arcball.calc_pm(vs, frustum);
+      return arcball.calc_cm(vs, frustum, pos);
     case CameraMode::Ortho:
     case CameraMode::Fullscreen_2DUI:
-      return ortho.calc_pm(vs.aspect_ratio, frustum, ss);
+      return ortho.calc_cm(vs.aspect_ratio, frustum, ss);
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;
   }
-  std::abort();
-  return glm::mat4{};
-}
 
-glm::mat4
-Camera::calc_vm(glm::vec3 const& pos) const
-{
-  switch (mode()) {
-    case CameraMode::FPS:
-      return fps.calc_vm(pos);
-    case CameraMode::ThirdPerson:
-      return arcball.calc_vm(pos);
-    case CameraMode::Ortho:
-    case CameraMode::Fullscreen_2DUI:
-      return ortho.calc_vm();
-    case CameraMode::FREE_FLOATING:
-    case CameraMode::MAX:
-      break;
-  }
   std::abort();
-  return glm::mat4{};
+  return CameraMatrices{glm::mat4{}, glm::mat4{}};
 }
 
 #define ZOOM_INOUT_IMPL(METHOD)                                                                    \

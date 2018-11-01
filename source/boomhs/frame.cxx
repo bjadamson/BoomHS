@@ -16,34 +16,31 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
                 glm::vec3 const& camera_world_pos, CameraMode const mode)
 {
   glm::mat4 proj, view;
+  CameraMatrices cm;
 
   auto& target     = camera.get_target();
   auto& target_pos = target.transform().translation;
 
   switch (mode) {
   case CameraMode::Ortho: {
-    proj = camera.ortho.calc_pm(view_settings.aspect_ratio, frustum, DEFAULT_ORTHO_VIEWSIZE);
-    view = camera.ortho.calc_vm();
+    cm = camera.ortho.calc_cm(view_settings.aspect_ratio, frustum, DEFAULT_ORTHO_VIEWSIZE);
   } break;
   case CameraMode::Fullscreen_2DUI: {
     auto const vp = Viewport::from_frustum(frustum);
-    proj          = camera.ortho.calc_pm(view_settings.aspect_ratio, frustum, vp.size());
-    view          = camera.ortho.calc_vm();
+    cm          = camera.ortho.calc_cm(view_settings.aspect_ratio, frustum, vp.size());
   } break;
   case CameraMode::FPS:
-    proj = camera.fps.calc_pm(view_settings, frustum);
-    view = camera.fps.calc_vm(camera.eye_forward());
+    cm = camera.fps.calc_cm(view_settings, frustum, camera.eye_forward());
     break;
   case CameraMode::ThirdPerson:
-    proj = camera.arcball.calc_pm(view_settings, frustum);
-    view = camera.arcball.calc_vm(camera_world_pos);
+    cm = camera.arcball.calc_cm(view_settings, frustum, camera_world_pos);
     break;
   case CameraMode::FREE_FLOATING:
   case CameraMode::MAX:
     std::abort();
     break;
   }
-  CameraFrameState cfs{camera_world_pos, proj, view, frustum, mode};
+  CameraFrameState cfs{camera_world_pos, cm, frustum, mode};
   return FrameState{es, zs, MOVE(cfs)};
 }
 
@@ -119,13 +116,13 @@ FrameState::camera_matrix() const
 glm::mat4 const&
 FrameState::projection_matrix() const
 {
-  return cfs_.projection_matrix;
+  return cfs_.camera_matrices.proj;
 }
 
 glm::mat4 const&
 FrameState::view_matrix() const
 {
-  return cfs_.view_matrix;
+  return cfs_.camera_matrices.view;
 }
 
 CameraMode
