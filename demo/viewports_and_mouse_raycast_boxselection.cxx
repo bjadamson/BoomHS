@@ -478,10 +478,9 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
   auto const cube_mouserect_overlap = [&](auto const& cube_entity) {
     auto const& cube = cube_entity.cube();
     auto tr          = cube_entity.transform();
-    Cube cr{cube.min, cube.max};
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
-    auto xz = cr.xz_rect();
+    auto xz = cube.xz_rect();
     xz = space_conversions::screen_to_viewport(xz, vpgrid_size);
 
     // Translate the rectangle from Object space to world space.

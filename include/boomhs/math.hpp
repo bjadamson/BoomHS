@@ -427,6 +427,9 @@ struct Cube
   glm::vec3 scaled_dimensions(Transform const&) const;
   glm::vec3 scaled_half_widths(Transform const&) const;
 
+  using CubeVertices = std::array<glm::vec3, 8>;
+  CubeVertices scaled_cube_vertices(Transform const&) const;
+
   auto constexpr xz_rect() const { return RectFloat{min.x, min.z, max.x, max.z}; }
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);

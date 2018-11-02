@@ -31,6 +31,8 @@ struct ScreenSize
     return ScreenSize{fr.width(), fr.height()};
   }
 
+  auto constexpr vec2() const { return glm::ivec2{width, height}; }
+
   auto to_string() const
   {
     return fmt::sprintf("{%i, %i}", width, height);

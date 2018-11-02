@@ -99,6 +99,30 @@ Cube::scaled_max(Transform const& tr) const
   return r;
 }
 
+Cube::CubeVertices
+Cube::scaled_cube_vertices(Transform const& tr) const
+{
+  auto const smin = scaled_min(tr);
+  auto const smax = scaled_max(tr);
+
+  auto const dim = scaled_dimensions(tr);
+
+  return Cube::CubeVertices
+  {{
+     glm::vec3{smin.x + 0.0,   smin.y + 0.0,   smin.z + 0.0},    // 0, 0, 0
+     glm::vec3{smin.x + dim.x, smin.y + 0.0,   smin.z + 0.0},    // x, 0, 0
+     glm::vec3{smin.x + 0.0,   smin.y + 0.0,   smin.z + dim.z},  // 0, 0, x
+     glm::vec3{smin.x + dim.x, smin.y + 0.0,   smin.z + dim.z},  // x, 0, x
+
+     glm::vec3{smax.x + 0.0,   smax.y + dim.y, smax.z + 0.0},    // 0, x, 0
+     glm::vec3{smax.x + dim.x, smax.y + dim.y, smax.z + 0.0},    // x, x, 0
+     glm::vec3{smax.x + 0.0,   smax.y + dim.y, smax.z + dim.z},  // 0, x, x
+     glm::vec3{smax.x + dim.x, smax.y + dim.y, smax.z + dim.z}   // x, x, x
+
+   }};
+#undef CUBE_ROW
+}
+
 std::string
 Cube::to_string() const
 {
