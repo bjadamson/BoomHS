@@ -106,14 +106,6 @@ struct ViewportPmRects
   MOVE_DEFAULT_ONLY(ViewportPmRects);
 };
 
-auto
-make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
-                                VertexAttribute const& va)
-{
-  RectBuffer buffer = RectBuilder{rect}.build();
-  return OG::copy_rectangle(logger, va, buffer);
-}
-
 bool
 process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRects& vp_rects,
                 Transform& controlled_tr)
@@ -275,23 +267,19 @@ auto
 make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport, ShaderProgram& sp,
     RNG &rng)
 {
-  auto const make_perspective_rect = [&](glm::ivec2 const& offset) {
-    return RectFloat{-50, -50, 50, 50};
-  };
-
   auto const& va = sp.va();
   auto const make_viewportpm_rects = [&](auto const& r, auto const& viewport) {
     std::vector<PmRect> vector_pms;
 
     FORI(i, num_rects) {
-      auto di = make_perspective_rect_gpuhandle(logger, r, va);
+      auto di = demo::make_perspective_rect_gpuhandle(logger, r, va);
       vector_pms.emplace_back(PmRect{r, MOVE(di)});
     }
 
     return ViewportPmRects{MOVE(vector_pms), viewport, &sp};
   };
 
-  auto const prect = make_perspective_rect(IVEC2{50});
+  auto constexpr prect = RectFloat{-50, -50, 50, 50};
   auto vppm_rects  = make_viewportpm_rects(prect, viewport);
 
   {

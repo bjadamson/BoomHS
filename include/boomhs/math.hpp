@@ -354,7 +354,7 @@ std::string to_string() const                                                   
 
 class RectFloat : public RectT<glm::vec2>
 {
-  float cast(int const v) const { return static_cast<float>(v); }
+  float constexpr cast(int const v) const { return static_cast<float>(v); }
 public:
 
   // ctor

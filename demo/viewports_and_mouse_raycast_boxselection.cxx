@@ -79,8 +79,7 @@ struct ViewportInfo
   MOVE_DEFAULT_ONLY(ViewportInfo);
   auto mouse_offset() const { return viewport.rect().left_top(); }
 
-  void update(ViewSettings const& vs, Frustum const& frustum, RectInt const& window_rect,
-              glm::mat4 const& pers_pm)
+  void update(ViewSettings const& vs, Frustum const& frustum, RectInt const& window_rect)
   {
     matrices = camera.calc_cm(vs, frustum, window_rect.size(), camera.position());
   }
@@ -238,11 +237,10 @@ struct ViewportGrid
   auto center_bottom() const { return right_top().viewport.rect().left_bottom(); }
   // clang-format on
 
-  void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect,
-              glm::mat4 const& pers_pm)
+  void update(AspectRatio const& ar, Frustum const& frustum, RectInt const& window_rect)
   {
     for (auto& vi : infos) {
-      vi.update(VS, frustum, window_rect, pers_pm);
+      vi.update(VS, frustum, window_rect);
     }
   }
 };
@@ -297,22 +295,6 @@ make_bbox(common::Logger& logger, ShaderProgram const& sp, Cube const& cr)
 {
   auto const vertices = VertexFactory::build_cube(cr.min, cr.max);
   return OG::copy_cube_wireframe_gpu(logger, vertices, sp.va());
-}
-
-struct ProgramAndGpuHandle
-{
-  MOVE_CONSTRUCTIBLE_ONLY(ProgramAndGpuHandle);
-
-  ShaderProgram sp;
-  DrawInfo di;
-};
-
-auto
-make_perspective_rect_gpuhandle(common::Logger& logger, RectFloat const& rect,
-                                VertexAttribute const& va)
-{
-  RectBuffer buffer = RectBuilder{rect}.build();
-  return OG::copy_rectangle(logger, va, buffer);
 }
 
 void
@@ -546,9 +528,8 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
         auto const mouse_rect    = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
                                                                vi.mouse_offset());
         auto const& cm     = vi.matrices;
-        auto const mv      = cm.proj * cm.view;
         auto const vp_size = vp_grid.viewport_size;
-        select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, mv);
+        select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, cm.proj);
       }
     } break;
 
@@ -647,8 +628,7 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
     auto cube = make_cube(rng);
     auto tr = gen_tr();
     auto di = make_bbox(logger, sp, cube);
-    CubeEntity pair{MOVE(cube), MOVE(tr), MOVE(di)};
-    cube_ents.emplace_back(MOVE(pair));
+    cube_ents.emplace_back(MOVE(cube), MOVE(tr), MOVE(di));
   }
   return cube_ents;
 }
@@ -706,7 +686,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
 void
 update(common::Logger& logger, ViewportGrid& vp_grid, glm::ivec2 const& mouse_pos,
        CubeEntities& cube_ents, Frustum const& frustum, RectInt const& window_rect,
-       glm::mat4 const& pers_pm, FrameTime const& ft)
+       FrameTime const& ft)
 {
   auto const rect = screen_sector_to_float_rect(MOUSE_INFO.sector, vp_grid);
 
@@ -723,7 +703,7 @@ update(common::Logger& logger, ViewportGrid& vp_grid, glm::ivec2 const& mouse_po
     move_cubes(glm::vec3{dx, 0, dy} * multiplier, cube_ents);
   }
 
-  vp_grid.update(AR, frustum, window_rect, pers_pm);
+  vp_grid.update(AR, frustum, window_rect);
 }
 
 auto
@@ -826,24 +806,12 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
 auto
 make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng, ViewportGrid const& vp_grid)
 {
-  auto const make_perspective_rect = [&](auto const& viewport, glm::ivec2 const& offset) {
-    auto const gen = [&rng](float const val) { return rng.gen_float_range(val, val + 150); };
-
-    auto const center = viewport.center();
-    auto const left   = viewport.left()  + gen(offset.x);
-    auto const right  = viewport.right() - gen(offset.x);
-
-    auto const top    = viewport.top()    + gen(offset.y);
-    auto const bottom = viewport.bottom() - gen(offset.y);
-    return RectFloat{left, top, right, bottom};
-  };
-
   auto const& va = sp.va();
   auto const make_viewportpm_rects = [&](auto const& r, auto const& viewport) {
     std::vector<PmRect> vector_pms;
 
-    auto di = make_perspective_rect_gpuhandle(logger, r, va);
-    vector_pms.emplace_back(PmRect{r, MOVE(di)});
+    auto di = demo::make_perspective_rect_gpuhandle(logger, r, va);
+    vector_pms.emplace_back(r, MOVE(di));
     return ViewportPmRects{MOVE(vector_pms), viewport};
   };
 
@@ -851,7 +819,7 @@ make_pminfos(common::Logger& logger, ShaderProgram& sp, RNG &rng, ViewportGrid c
   std::vector<ViewportPmRects> pms;
   for (auto const& vi : vis_randomized) {
     auto const& viewport = vi->viewport;
-    auto const prect     = make_perspective_rect(viewport, IVEC2{50});
+    auto const prect     = demo::make_perspective_rect(viewport, rng);
 
     auto pm0 = make_viewportpm_rects(prect, viewport);
     pms.emplace_back(MOVE(pm0));
@@ -909,8 +877,6 @@ main(int argc, char **argv)
   auto wire_sp   = make_wireframe_program(logger);
   auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
 
-  glm::mat4 const pers_pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
-
   FrameCounter fcounter;
   SDL_Event event;
   bool quit = false;
@@ -923,7 +889,7 @@ main(int argc, char **argv)
     }
 
     auto const mouse_pos = gl_sdl::mouse_coords();
-    update(logger, vp_grid, mouse_pos, cube_ents, frustum, window_rect, pers_pm, ft);
+    update(logger, vp_grid, mouse_pos, cube_ents, frustum, window_rect, ft);
     draw_scene(logger, vp_grid, pm_infos, frustum, wire_sp, rect_sp, mouse_pos, cube_ents);
 
     // Update window with OpenGL rendering
