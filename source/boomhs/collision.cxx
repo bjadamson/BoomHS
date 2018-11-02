@@ -155,28 +155,29 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 
 template <typename V>
 auto
-rotated_rectangle_points(RectT<V> const& rect, ModelViewMatrix const& mv)
+rotated_rectangle_points(RectT<V> const& rect, ModelMatrix const& model, ProjMatrix const& proj,
+                         ViewMatrix const& view)
 {
-  auto const p0 = rect.p0();
-  auto const p1 = rect.p1();
-  auto const p2 = rect.p2();
-  auto const p3 = rect.p3();
-
-  auto constexpr W = 1;
   auto constexpr Z = 0;
 
+  auto const p0 = glm::vec3{rect.p0(), Z};
+  auto const p1 = glm::vec3{rect.p1(), Z};
+  auto const p2 = glm::vec3{rect.p2(), Z};
+  auto const p3 = glm::vec3{rect.p3(), Z};
+
   // Transform the points into eye space
-  auto const v4p0 = mv * VEC4(p0.x, p0.y, Z, W) / W;
-  auto const v4p1 = mv * VEC4(p1.x, p1.y, Z, W) / W;
-  auto const v4p2 = mv * VEC4(p2.x, p2.y, Z, W) / W;
-  auto const v4p3 = mv * VEC4(p3.x, p3.y, Z, W) / W;
+  namespace sv = space_conversions;
+  auto const v0_eye = sv::object_to_eye(p0, model, view);
+  auto const v1_eye = sv::object_to_eye(p1, model, view);
+  auto const v2_eye = sv::object_to_eye(p2, model, view);
+  auto const v3_eye = sv::object_to_eye(p3, model, view);
 
   // Discard the extra vertices, rectangles only have two dimensions.
-  using VerticesT   = typename RectT<V>::vertex_type;
-  auto const v2p0 = VerticesT{v4p0.x, v4p0.y};
-  auto const v2p1 = VerticesT{v4p1.x, v4p1.y};
-  auto const v2p2 = VerticesT{v4p2.x, v4p2.y};
-  auto const v2p3 = VerticesT{v4p3.x, v4p3.y};
+  using VerticesT = typename RectT<V>::vertex_type;
+  auto const v2p0 = VerticesT{v0_eye.x, v0_eye.y};
+  auto const v2p1 = VerticesT{v1_eye.x, v1_eye.y};
+  auto const v2p2 = VerticesT{v2_eye.x, v2_eye.y};
+  auto const v2p3 = VerticesT{v3_eye.x, v3_eye.y};
 
   // Combine the rectangles vertices into an array and return.
   using VerticesArray = typename RectT<V>::array_type;
@@ -321,15 +322,16 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 }
 
 bool
-overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj)
+overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, ViewMatrix const& view)
 {
   Transform ta;
   RectTransform const ra{a, ta};
-  return overlap(ra, rb, proj);
+  return overlap(ra, rb, proj, view);
 }
 
 bool
-overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj)
+overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj,
+        ViewMatrix const& view)
 {
   auto const& ra = a.rect;
   auto const& rb = b.rect;
@@ -337,12 +339,12 @@ overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj)
   auto const& ta = a.transform;
   auto const& tb = b.transform;
 
-  // Only perform the simple test if both rectangles are not rotated.
+  // Only perform the simple test if both rectangles ARE NOT rotated.
   bool const simple_test = !ta.is_rotated() && !tb.is_rotated();
 
   // Rotate the rectangles using their vertices/transform and proj matrix.
-  auto const a_points = rotated_rectangle_points(ra, proj * ta.model_matrix());
-  auto const b_points = rotated_rectangle_points(rb, proj * tb.model_matrix());
+  auto const a_points = rotated_rectangle_points(ra, ta.model_matrix(), proj, view);
+  auto const b_points = rotated_rectangle_points(rb, tb.model_matrix(), proj, view);
 
   // There are 4 vertices in a rectangle.
   constexpr auto N = 4;

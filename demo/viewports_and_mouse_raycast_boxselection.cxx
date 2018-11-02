@@ -472,7 +472,7 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
                                    glm::ivec2 const& vpgrid_size, CubeEntities& cube_ents,
-                                   ModelViewMatrix const& mv)
+                                   ProjMatrix const& proj, ViewMatrix const& view)
 {
   // Determine whether a cube projected onto the XZ plane and another rectangle overlap.
   auto const cube_mouserect_overlap = [&](auto const& cube_entity) {
@@ -493,7 +493,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
 
     // Compute whether the rectangle (converted from the cube) and the rectangle from the user
     // clicking and dragging are overlapping.
-    return collision::overlap(mouse_rect, rect_tr, mv);
+    return collision::overlap(mouse_rect, rect_tr, proj, view);
   };
 
   for (auto &ce : cube_ents) {
@@ -528,7 +528,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                                                                vi.mouse_offset());
         auto const& cm     = vi.matrices;
         auto const vp_size = vp_grid.viewport_size;
-        select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, cm.proj);
+        select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, cm.proj, cm.view);
       }
     } break;
 

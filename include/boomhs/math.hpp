@@ -555,6 +555,79 @@ rect_abs_from_twopoints(glm::tvec2<T> const& a, glm::tvec2<T> const& b)
 namespace boomhs::math::space_conversions
 {
 
+auto constexpr DEFAULT_W = 1;
+
+// from:
+//   object space
+// to:
+//    world space
+inline glm::vec4
+object_to_world(glm::vec4 const& p, ModelMatrix const& model)
+{
+  return model * p;
+}
+
+inline glm::vec3
+object_to_world(glm::vec3 const& p, ModelMatrix const& model)
+{
+  auto const v4 = glm::vec4{p, DEFAULT_W};
+
+  return object_to_world(v4, model);
+}
+
+// from:
+//   world space
+// to:
+//    eye space
+inline glm::vec4
+world_to_eye(glm::vec4 const& wp, ViewMatrix const& view)
+{
+  return view * wp;
+}
+
+inline glm::vec3
+world_to_eye(glm::vec3 const& wp, ViewMatrix const& view)
+{
+  auto const v4 = glm::vec4{wp, DEFAULT_W};
+  return world_to_eye(v4, view);
+}
+
+// from:
+//   eye space
+// to:
+//    clip space
+inline glm::vec4
+eye_to_clip(glm::vec4 const& eyep, ProjMatrix const& pm)
+{
+  return pm * eyep;
+}
+
+inline glm::vec3
+eye_to_clip(glm::vec3 const& eyep, ProjMatrix const& pm)
+{
+  auto const v4 = glm::vec4{eyep, DEFAULT_W};
+  return eye_to_clip(v4, pm);
+}
+
+// from:
+//   clip space
+// to:
+//    ndc space
+inline glm::vec3
+clip_to_ndc(glm::vec4 const& clip)
+{
+  auto const ndc4 = clip / clip.w;
+  return glm::vec3{ndc4.x, ndc4.y, ndc4.z};
+}
+
+inline glm::vec3
+clip_to_ndc(glm::vec3 const& clip)
+{
+  glm::vec4 const clip4{clip, DEFAULT_W};
+
+  return clip_to_ndc(clip4);
+}
+
 // Convert a point in "ScreenSpace" to "Viewport" space.
 //
 // "ViewportSpace" defined as an offset from the screen's origin (0, 0) being the top-left, a
@@ -626,6 +699,48 @@ screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, ProjMatrix
   glm::vec4 const eye   = clip_to_eye(clip, pm, z);
   glm::vec3 const world = eye_to_world(eye, vm);
   return world;
+}
+
+// from:
+//   object space
+// to:
+//    eye space
+inline glm::vec4
+object_to_eye(glm::vec4 const& p, ViewMatrix const& view, ModelMatrix const& model)
+{
+  auto const wp = object_to_world(p, model);
+  return view * wp;
+  //return world_to_eye(wp, view);
+}
+
+inline glm::vec4
+object_to_eye(glm::vec3 const& p, ViewMatrix const& view, ModelMatrix const& model)
+{
+  auto const v4 = glm::vec4{p, DEFAULT_W};
+  return object_to_eye(v4, view, model);
+}
+
+// from:
+//   object space
+// to:
+//    ndc space
+inline glm::vec3
+object_to_ndc(glm::vec4 const& p, ModelMatrix const& model, ProjMatrix const& proj,
+              ViewMatrix const& view)
+{
+  auto const eye = object_to_eye(p, view, model);
+  auto const clip = eye_to_clip(eye, proj);
+
+  return clip_to_ndc(clip);
+}
+
+inline glm::vec3
+object_to_ndc(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const& proj,
+              ViewMatrix const& view)
+{
+  glm::vec4 const p4{p, DEFAULT_W};
+
+  return object_to_ndc(p4, model, proj, view);
 }
 
 } // namespace boomhs::math::space_conversions

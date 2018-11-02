@@ -177,7 +177,8 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRec
 }
 
 void
-update(common::Logger& logger, ViewportPmRects& vp_rects, glm::mat4 const& pm)
+update(common::Logger& logger, ViewportPmRects& vp_rects, ProjMatrix const& proj,
+       ViewMatrix const& view)
 {
   assert(!vp_rects.rects.empty());
   auto& a = vp_rects.rects.front();
@@ -190,7 +191,7 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, glm::mat4 const& pm)
       RectTransform const ra{a.rect, a.transform};
       RectTransform const rb{b.rect, b.transform};
 
-      overlap |= collision::overlap(ra, rb, pm);
+      overlap |= collision::overlap(ra, rb, proj, view);
     }
 
     a.color = a.mouse_selected ? CLICK_COLOR
@@ -200,7 +201,7 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, glm::mat4 const& pm)
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-    std::vector<PmRect>& rects, glm::mat4 const& mv)
+    std::vector<PmRect>& rects, ProjMatrix const& proj, ViewMatrix const& view)
 {
   if (MOUSE_BUTTON_PRESSED) {
     auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
@@ -210,14 +211,14 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                                                                     VIEWPORT.left_top());
     for (auto& rect : rects) {
       RectTransform const rect_tr{rect.rect, rect.transform};
-      rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, mv);
+      rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view);
     }
   }
 }
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rects,
-              glm::mat4 const& pm, Transform& controlled_tr, FrameTime const& ft)
+              ProjMatrix const& proj, ViewMatrix const& view, Transform& controlled_tr, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
 
@@ -228,7 +229,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, vp_rects.rects, pm);
+    process_mousemotion(logger, event.motion, vp_rects.rects, proj, view);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
@@ -343,7 +344,8 @@ main(int argc, char **argv)
   auto vp_rects = make_rects(logger, NUM_RECTS, VIEWPORT, rect_sp, rng);
   assert(!vp_rects.rects.empty());
 
-  glm::mat4 const pm = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  ProjMatrix const proj = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  ViewMatrix const view{};
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT, AR);
 
   FrameCounter fcounter;
@@ -355,10 +357,10 @@ main(int argc, char **argv)
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       auto& controlled_tr = vp_rects.rects.back().transform;
-      quit = process_event(logger, event, vp_rects, pm, controlled_tr, ft);
+      quit = process_event(logger, event, vp_rects, proj, view, controlled_tr, ft);
     }
 
-    update(logger, vp_rects, pm);
+    update(logger, vp_rects, proj, view);
 
     DrawState ds;
     OR::clear_screen(LOC4::DEEP_SKY_BLUE);
