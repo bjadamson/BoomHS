@@ -219,6 +219,22 @@ enum class RotSeq
 glm::vec3
 quat_to_euler(glm::quat const&, RotSeq);
 
+template <typename T>
+inline constexpr void
+assert_abs_lessthan_equal(T const& v, T const& max)
+{
+  assert(std::abs(v) <= max);
+}
+
+template <typename T>
+inline constexpr void
+assert_abs_lessthan_equal(glm::tvec3<T> const& v, T const& max)
+{
+  assert_abs_lessthan_equal(v.x, max);
+  assert_abs_lessthan_equal(v.y, max);
+  assert_abs_lessthan_equal(v.z, max);
+}
+
 } // namespace boomhs::math
 
 namespace boomhs
@@ -628,7 +644,7 @@ clip_to_ndc(glm::vec3 const& clip)
   return clip_to_ndc(clip4);
 }
 
-// Convert a point in "ScreenSpace" to "Viewport" space.
+// Convert a point in screen/window space to the viewport's space.
 //
 // "ViewportSpace" defined as an offset from the screen's origin (0, 0) being the top-left, a
 // simple subtraction is required.
@@ -639,7 +655,7 @@ screen_to_viewport(glm::tvec2<T> const& point, glm::ivec2 const& origin)
   return point - origin;
 }
 
-// Convert a rectangle in screen space to viewport space.
+// Convert a rectangle in screen/window space to viewport space.
 template <typename T>
 inline auto
 screen_to_viewport(T const& rect, glm::ivec2 const& vp_size)
@@ -670,26 +686,66 @@ eye_to_world(glm::vec4 const& eye, ViewMatrix const& vm)
   return glm::normalize(ray_world);
 }
 
+// from:
+//    ndc
+// to:
+//    screen/window
 inline constexpr glm::vec2
 screen_to_ndc(glm::vec2 const& scoords, RectFloat const& view_rect)
 {
   float const x = ((2.0f * scoords.x) / view_rect.right) - 1.0f;
   float const y = ((2.0f * scoords.y) / view_rect.bottom) - 1.0f;
 
-  auto const assert_fn = [](float const v) {
-    assert(std::abs(v) <= 1.0f);
-  };
-  assert_fn(x);
-  assert_fn(y);
+  assert_abs_lessthan_equal(x, 1.0f);
+  assert_abs_lessthan_equal(y, 1.0f);
   return glm::vec2{x, -y};
 }
 
+//
+// Algorithm modified from:
+// http://www.songho.ca/opengl/gl_transform.html
+inline glm::vec3
+ndc_to_screen(glm::vec3 const& ndc, RectFloat const& view_rect)
+{
+  assert_abs_lessthan_equal(ndc, 1.0f);
+
+  auto const x = ndc.x;
+  auto const y = ndc.y;
+  auto const z = ndc.z;
+
+  auto const size = view_rect.size();
+  auto const w = size.x;
+  auto const h = size.x;
+
+  // TODO: Here I'm making an assumption about the depth buffer range.
+  // If glDepthRange is called, these values will not match and these conversions will be wrong.
+  //
+  // In that case, the depth buffer near/far need to be piped around to all invocations of this
+  // function.
+  auto const n = 0.0f;
+  auto const f = 1.0f;
+
+  auto const screen_x = (w/2)*x       + (x + w/2);
+  auto const screen_y = (h/2)*y       + (y + h/2);
+  auto const screen_z = ((f - n)/2)*z + (f + n)/2;
+
+  return glm::vec3{screen_x, screen_y, screen_z};
+}
+
+// from:
+//    ndc
+// to:
+//    clip
 inline glm::vec4
 ndc_to_clip(glm::vec2 const& ndc, float const z)
 {
   return glm::vec4{ndc.x, ndc.y, z, 1.0f};
 }
 
+// from:
+//    screen/window
+// to:
+//    world
 inline glm::vec3
 screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, ProjMatrix const& pm,
                 ViewMatrix const& vm, float const z)
@@ -709,8 +765,7 @@ inline glm::vec4
 object_to_eye(glm::vec4 const& p, ViewMatrix const& view, ModelMatrix const& model)
 {
   auto const wp = object_to_world(p, model);
-  return view * wp;
-  //return world_to_eye(wp, view);
+  return world_to_eye(wp, view);
 }
 
 inline glm::vec4
