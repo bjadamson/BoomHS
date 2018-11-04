@@ -20,8 +20,8 @@ class TextureTable;
 
 namespace boomhs
 {
-class EngineState;
-class FrameTime;
+struct EngineState;
+class  FrameTime;
 struct ZoneState;
 
 class PlayerHead

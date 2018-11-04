@@ -14,15 +14,15 @@
 
 namespace boomhs
 {
-struct Viewport;
-class EntityRegistry;
-class FrameTime;
-class Frustum;
-class HandleManager;
-class LevelManager;
-class Material;
+class  Viewport;
+class  EntityRegistry;
+class  FrameTime;
+struct Frustum;
+class  HandleManager;
+class  LevelManager;
+struct Material;
 struct EngineState;
-class Player;
+class  Player;
 struct Transform;
 struct ZoneState;
 } // namespace boomhs

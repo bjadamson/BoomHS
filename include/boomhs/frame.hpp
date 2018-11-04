@@ -7,9 +7,9 @@
 namespace boomhs
 {
 class  Camera;
-class  EngineState;
-class  Frustum;
-class  ZoneState;
+struct EngineState;
+struct Frustum;
+struct ZoneState;
 struct ViewSettings;
 
 enum class CameraMode

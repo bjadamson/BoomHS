@@ -6,7 +6,7 @@
 namespace boomhs
 {
 class Camera;
-struct GameState;
+class GameState;
 class FrameTime;
 class Player;
 class SDLControllers;

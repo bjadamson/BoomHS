@@ -18,8 +18,8 @@ struct ShaderName;
 
 namespace opengl
 {
-struct ShaderPrograms;
-class TextureInfo;
+class ShaderPrograms;
+struct TextureInfo;
 struct VertexBuffer;
 class VertexAttribute;
 struct GridVerticesIndices;

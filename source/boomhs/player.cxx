@@ -195,8 +195,8 @@ static auto const HOW_OFTEN_GCD_RESETS_MS = TimeConversions::seconds_to_millis(1
 // Player
 Player::Player(common::Logger& logger, EntityID const eid, EntityRegistry& r, ShaderPrograms& sps,
                WorldOrientation const& world_orientation)
-    : registry_(&r)
-    , eid_(eid)
+    : eid_(eid)
+    , registry_(&r)
     , wo_(eid, r, world_orientation)
     , head_(PlayerHead::create(logger, *registry_, sps, world_orientation))
 {

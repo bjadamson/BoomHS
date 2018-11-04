@@ -10,10 +10,10 @@
 
 namespace boomhs
 {
-class EntityRegistry;
-class FrameTime;
-class MaterialTable;
-class Terrain;
+class  EntityRegistry;
+class  FrameTime;
+struct MaterialTable;
+class  Terrain;
 } // namespace boomhs
 
 namespace opengl

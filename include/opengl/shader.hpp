@@ -80,10 +80,11 @@ struct PathToShaderSources
 class ShaderProgram
 {
   ProgramHandle program_;
+  VertexAttribute va_;
+
 #ifdef DEBUG_BUILD
   PathToShaderSources source_paths_;
 #endif
-  VertexAttribute va_;
 
 public:
   NOCOPY_MOVE_DEFAULT(ShaderProgram);

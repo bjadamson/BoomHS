@@ -12,10 +12,10 @@
 
 namespace opengl
 {
-class DrawInfo;
-class TextureInfo;
-class TextureTable;
-class ShaderPrograms;
+class  DrawInfo;
+class  ShaderPrograms;
+struct TextureInfo;
+class  TextureTable;
 } // namespace opengl
 
 namespace boomhs

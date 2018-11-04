@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -ex
-source "scripts/common.bash"
+source "scripts/common-build.bash"
 
 # Allow core dumps
 ulimit -c unlimited

@@ -18,8 +18,8 @@ class LevelManager;
 
 namespace opengl
 {
-class DrawState;
-class RenderState;
+struct DrawState;
+struct RenderState;
 
 struct SunshaftBuffers
 {
@@ -34,8 +34,8 @@ struct SunshaftBuffers
 
 class SunshaftRenderer
 {
-  opengl::ShaderProgram* sp_;
   SunshaftBuffers        buffers_;
+  opengl::ShaderProgram* sp_;
 
 public:
   NOCOPY_MOVE_DEFAULT(SunshaftRenderer);

@@ -1,9 +1,11 @@
 #pragma once
-#include <random>
-
 #include <boomhs/math.hpp>
 #include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
+
+#include <chrono>
+#include <random>
+#include <type_traits>
 
 namespace boomhs
 {
@@ -28,8 +30,18 @@ class RNG
   auto gen_range(T const low, T const high)
   {
     assert(low <= high);
-    std::uniform_int_distribution<T> distribution{low, high};
-    return distribution(this->generator_);
+    if constexpr (std::is_integral<T>::value) {
+      std::uniform_int_distribution<T> distribution{low, high};
+      return distribution(this->generator_);
+    }
+    else if constexpr (std::is_floating_point<T>::value) {
+      std::uniform_real_distribution<T> distribution{low, high};
+      return distribution(this->generator_);
+    }
+    else {
+      // unsupported
+      std::abort();
+    }
   }
 
   // Generate an array of integers within the range [low, high].
@@ -39,7 +51,7 @@ class RNG
     // Construct a function to pass to make_array_from that captures the "this" pointer of the RNG
     // instance. This will allow the function 'fn' to be callable without passing the "this"
     // pointer explicitely to make_array_from.
-    auto const fn = [this](auto&&... args) { return gen_range(FORWARD(args)); };
+    auto const fn = [&](auto&&... args) { return gen_range(FORWARD(args)); };
     return common::make_array_from<N>(fn, low, high);
   }
 

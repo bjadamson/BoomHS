@@ -26,7 +26,7 @@ struct ScreenSize
   }
 
   // static fns
-  static constexpr ScreenSize from_frustum(Frustum const& fr)
+  static ScreenSize from_frustum(Frustum const& fr)
   {
     return ScreenSize{fr.width(), fr.height()};
   }
@@ -132,7 +132,7 @@ public:
   }
 
   // static fns
-  static constexpr Viewport from_frustum(Frustum const& f)
+  static Viewport from_frustum(Frustum const& f)
   {
     // Converting the Frustum to a Viewport discards the NEAR and FAR values, while truncating the
     // following values from floats to integers.

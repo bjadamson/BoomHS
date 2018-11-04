@@ -13,10 +13,10 @@ to_cartesian(SphericalCoordinates const& coords)
   float const theta  = coords.theta;
   float const phi    = coords.phi;
 
-  float const sin_phi = std::sinf(phi);
-  float const x       = radius * sin_phi * std::sinf(theta);
-  float const y       = radius * cosf(phi);
-  float const z       = radius * sin_phi * std::cosf(theta);
+  float const sin_phi = std::sin(phi);
+  float const x       = radius * sin_phi * std::sin(theta);
+  float const y       = radius * cos(phi);
+  float const z       = radius * sin_phi * std::cos(theta);
 
   // Convert spherical coordinates into Cartesian coordinates
   // float const x = sin(phi) * cos(theta) * radius;

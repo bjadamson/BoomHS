@@ -14,7 +14,7 @@ class RNG;
 
 namespace opengl
 {
-class RenderState;
+struct RenderState;
 
 class DebugRenderer
 {

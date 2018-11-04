@@ -6,7 +6,7 @@ namespace boomhs
 {
 
 // Interleave the vertices and the UVs of the Rectangles together.
-constexpr RectangleUvVertices
+inline RectangleUvVertices
 vertex_interleave(VertexFactory::RectangleVertices const& v, RectangleUvs const& uv)
 {
   return common::concat(

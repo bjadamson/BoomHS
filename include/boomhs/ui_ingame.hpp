@@ -9,14 +9,14 @@
 
 namespace opengl
 {
-class DrawState;
+struct DrawState;
 } // namespace opengl
 
 namespace boomhs
 {
-class Camera;
-struct FrameState;
-class  StaticRenderers;
+class  Camera;
+class  FrameState;
+struct StaticRenderers;
 
 class ChatBuffer
 {

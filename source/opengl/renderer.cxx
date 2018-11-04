@@ -354,7 +354,7 @@ draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& s
                 GLuint const num_indices, DrawState& ds)
 {
   BIND_UNTIL_END_OF_SCOPE(logger, ti);
-  draw_2delements(logger, draw_mode, sp, ti, num_indices, ds);
+  draw_2delements(logger, draw_mode, sp, num_indices, ds);
 }
 
 void

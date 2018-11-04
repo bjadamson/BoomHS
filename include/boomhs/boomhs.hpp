@@ -12,11 +12,11 @@ struct RenderState;
 
 namespace boomhs
 {
-class FrameTime;
-class Camera;
-class Engine;
-class RNG;
-class WorldOrientation;
+class  FrameTime;
+class  Camera;
+struct Engine;
+class  RNG;
+struct WorldOrientation;
 
 Result<GameState, std::string>
 create_gamestate(Engine&, EngineState&, WorldOrientation const&, Camera&, RNG&);

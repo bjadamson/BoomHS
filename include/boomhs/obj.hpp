@@ -33,9 +33,6 @@ class ObjData
   COPY_DEFAULT(ObjData);
 
 public:
-  using ObjVertices = ObjVertices;
-  using ObjIndices  = ObjIndices;
-
   unsigned int num_vertexes;
   ObjVertices  vertices;
   ObjVertices  colors;

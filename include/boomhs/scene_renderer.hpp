@@ -12,7 +12,7 @@
 namespace opengl
 {
 struct DrawState;
-class RenderState;
+struct RenderState;
 } // namespace opengl
 
 namespace boomhs

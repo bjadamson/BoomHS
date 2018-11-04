@@ -1,6 +1,8 @@
 #pragma once
 #include <common/result.hpp>
 #include <common/type_macros.hpp>
+
+#include <chrono>
 #include <string>
 
 namespace common

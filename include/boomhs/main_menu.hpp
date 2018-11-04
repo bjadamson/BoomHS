@@ -14,15 +14,15 @@ class SDLWindow;
 
 namespace boomhs
 {
-class Camera;
-struct Viewport;
+class  Camera;
+class  Viewport;
 struct EngineState;
-class FrameTime;
-struct GameState;
-struct LevelManager;
-class PlayerBehavior;
-class SDLEventProcessArgs;
-class WaterAudioSystem;
+class  FrameTime;
+class  GameState;
+class  LevelManager;
+struct PlayerBehavior;
+struct SDLEventProcessArgs;
+struct WaterAudioSystem;
 
 struct MainMenuState
 {

@@ -8,6 +8,9 @@ echo "Configuring project ..."
 source "scripts/helper_load_userargs.bash"
 
 echo "DEBUG/RELEASE: $DEBUG_OR_RELEASE"
+echo "Compiler: $COMPILER"
+echo "cxxstdlibrary: $CXX_STD_LIBRARY"
+echo "compiler specific flags: $COMPILER_SPECIFIC_FLAGS"
 
 printf "Static Analysis: (ON|OFF): "
 if [ -z "$STATIC_ANALYSIS_FLAGS" ]; then
@@ -113,7 +116,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 
 ## Configure the "release" compiler settings
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17 -stdlib=STDLIB_PLACEHOLDER")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17")
 
 
 
@@ -125,7 +128,7 @@ set(MY_EXTRA_COMPILER_FLAGS "                                                   
     -fno-omit-frame-pointer")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}                                                \
     STATIC_ANALYSIS_FLAGS_PLACEHOLDER                                                              \
-    -MJ                                                                                            \
+    ${COMPILER_SPECIFIC_FLAGS}                                                                     \
     -Wall                                                                                          \
     -Wextra                                                                                        \
     -g -O0                                                                                         \
@@ -225,6 +228,7 @@ set(EXTERNAL_LIBS
 
 set(SYSTEM_LIBS
   stdc++
+  m
   audio
   pthread
   openal
@@ -238,7 +242,7 @@ set(SYSTEM_LIBS
 ## your behalf when starting the main executable.
 add_executable(BUILD_POSTPROCESSING ${TOOLS_DIRECTORY}/build_postprocessing.cxx)
 target_include_directories(BUILD_POSTPROCESSING PUBLIC ${EXTERNAL_INCLUDE_DIRS})
-target_link_libraries(     BUILD_POSTPROCESSING stdc++ c++experimental)
+target_link_libraries(     BUILD_POSTPROCESSING stdc++ stdc++fs)
 
 ###################################################################################################
 ## COMPILE -- Multiple Viewports Mouse Selection Demo
@@ -318,13 +322,15 @@ EOF
 cd ${BUILD}
 echo $(pwd)
 conan install --build missing                                                                      \
-  -s compiler=clang                                                                                \
+  -s compiler=${COMPILER}                                                                          \
   -s arch=x86_64                                                                                   \
-  -s compiler.version=8.0                                                                          \
+  -s compiler.version=${COMPILER_VERSION}                                                          \
   -s compiler.libcxx=${CXX_STD_LIBRARY}                                                            \
-  -s build_type=${DEBUG_OR_RELEASE} .
+  -s build_type=${DEBUG_OR_RELEASE}                                                                \
+  .
 
 cmake ..  -G "${BUILD_SYSTEM}"                                                                     \
+  -DCMAKE_CXX_COMPILER=${COMPILER}                                                                 \
   -DCMAKE_BUILD_TYPE=${DEBUG_OR_RELEASE}                                                           \
   -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 cd ..

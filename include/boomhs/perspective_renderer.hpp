@@ -3,16 +3,16 @@
 namespace opengl
 {
 struct DrawState;
-class RenderState;
+struct RenderState;
 } // namespace opengl
 
 namespace boomhs
 {
-class Camera;
-class FrameTime;
-class LevelManager;
-class RNG;
-class StaticRenderers;
+class  Camera;
+class  FrameTime;
+class  LevelManager;
+class  RNG;
+struct StaticRenderers;
 
 struct PerspectiveRenderer
 {

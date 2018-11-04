@@ -72,10 +72,11 @@ esac
 
 # We need python to get started
 apt-get install python-setuptools python-dev build-essential
-apt-get install python-pip
+apt-get install python3-pip3
 
 # Use pip to install conan (c++ library/package manager)
-pip install conan
+echo "If this next command fails. Try creating a new shell instance and re-running."
+pip3 install conan
 
 # Tell conan about the "bincrafters" remote (where from we get out dependencies)
 conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan

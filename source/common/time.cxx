@@ -1,4 +1,5 @@
 #include <common/time.hpp>
+#include <assert.h>
 
 using namespace common;
 

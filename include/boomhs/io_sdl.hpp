@@ -4,7 +4,7 @@ namespace boomhs
 {
 class Camera;
 class FrameTime;
-struct GameState;
+class GameState;
 class SDLControllers;
 
 struct SDLReadDevicesArgs

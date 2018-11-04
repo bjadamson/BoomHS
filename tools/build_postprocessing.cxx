@@ -7,10 +7,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <experimental/filesystem>
+#include <filesystem>
 #include <boost/algorithm/string/predicate.hpp>
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 using OptionalString = std::optional<std::string>;
 
 namespace

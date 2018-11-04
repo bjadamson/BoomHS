@@ -288,20 +288,20 @@ struct RectT
   auto constexpr right_top() const { return V{right, top}; }
   auto constexpr right_bottom() const { return V{right, bottom}; }
 
-  auto width() const { return std::abs(right - left); }
-  auto height() const { return std::abs(bottom - top); }
-  auto size() const { return V{width(), height()}; }
+  auto constexpr width() const { return std::abs(right - left); }
+  auto constexpr height() const { return std::abs(bottom - top); }
+  auto constexpr size() const { return V{width(), height()}; }
 
-  auto half_size() const { return size() / 2; }
-  auto half_width() const { return width() / 2; }
-  auto half_height() const { return height() / 2; }
+  auto constexpr half_size() const { return size() / 2; }
+  auto constexpr half_width() const { return width() / 2; }
+  auto constexpr half_height() const { return height() / 2; }
 
-  auto center() const { return left_top() + half_size(); }
-  auto center_left() const { return V{left, center().y}; }
-  auto center_right() const { return V{right, center().y}; }
+  auto constexpr center() const { return left_top() + half_size(); }
+  auto constexpr center_left() const { return V{left, center().y}; }
+  auto constexpr center_right() const { return V{right, center().y}; }
 
-  auto center_top() const { return V{center().x, top}; }
-  auto center_bottom() const { return V{center().x, bottom}; }
+  auto constexpr center_top() const { return V{center().x, top}; }
+  auto constexpr center_bottom() const { return V{center().x, bottom}; }
 
   void move(value_type const& x, value_type const& y)
   {
@@ -408,7 +408,7 @@ struct RectInt : public RectT<glm::ivec2>
   {
   }
 
-  auto
+  auto constexpr
   float_rect() const { return RectFloat{left, top, right, bottom}; }
 
   static RectInt
@@ -480,7 +480,7 @@ struct Frustum
     assert(right > left);
     return std::abs(right - left);
   }
-  auto depth() const
+  auto constexpr depth() const
   {
     assert(far > near);
     return std::abs(far - near);
