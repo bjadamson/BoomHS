@@ -9,6 +9,9 @@
 #include <limits>
 #include <string>
 
+// TODO
+#include <iostream>
+
 namespace boomhs
 {
 struct Transform;
@@ -691,10 +694,10 @@ eye_to_world(glm::vec4 const& eye, ViewMatrix const& vm)
 // to:
 //    screen/window
 inline constexpr glm::vec2
-screen_to_ndc(glm::vec2 const& scoords, RectFloat const& view_rect)
+screen_to_ndc(glm::vec2 const& scoords, RectFloat const& viewport)
 {
-  float const x = ((2.0f * scoords.x) / view_rect.right) - 1.0f;
-  float const y = ((2.0f * scoords.y) / view_rect.bottom) - 1.0f;
+  float const x = ((2.0f * scoords.x) / viewport.right) - 1.0f;
+  float const y = ((2.0f * scoords.y) / viewport.bottom) - 1.0f;
 
   assert_abs_lessthan_equal(x, 1.0f);
   assert_abs_lessthan_equal(y, 1.0f);
@@ -705,17 +708,17 @@ screen_to_ndc(glm::vec2 const& scoords, RectFloat const& view_rect)
 // Algorithm modified from:
 // http://www.songho.ca/opengl/gl_transform.html
 inline glm::vec3
-ndc_to_screen(glm::vec3 const& ndc, RectFloat const& view_rect)
+ndc_to_screen(glm::vec3 const& ndc, RectFloat const& viewport)
 {
-  assert_abs_lessthan_equal(ndc, 1.0f);
+  //assert_abs_lessthan_equal(ndc, 1.0f);
 
   auto const x = ndc.x;
   auto const y = ndc.y;
   auto const z = ndc.z;
 
-  auto const size = view_rect.size();
+  auto const size = viewport.size();
   auto const w = size.x;
-  auto const h = size.x;
+  auto const h = size.y;
 
   // TODO: Here I'm making an assumption about the depth buffer range.
   // If glDepthRange is called, these values will not match and these conversions will be wrong.
@@ -747,10 +750,10 @@ ndc_to_clip(glm::vec2 const& ndc, float const z)
 // to:
 //    world
 inline glm::vec3
-screen_to_world(glm::vec2 const& scoords, RectFloat const& view_rect, ProjMatrix const& pm,
+screen_to_world(glm::vec2 const& scoords, RectFloat const& viewport, ProjMatrix const& pm,
                 ViewMatrix const& vm, float const z)
 {
-  glm::vec2 const ndc   = screen_to_ndc(scoords, view_rect);
+  glm::vec2 const ndc   = screen_to_ndc(scoords, viewport);
   glm::vec4 const clip  = ndc_to_clip(ndc, z);
   glm::vec4 const eye   = clip_to_eye(clip, pm, z);
   glm::vec3 const world = eye_to_world(eye, vm);
@@ -796,6 +799,27 @@ object_to_ndc(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const& pr
   glm::vec4 const p4{p, DEFAULT_W};
 
   return object_to_ndc(p4, model, proj, view);
+}
+
+// from:
+//   object space
+// to:
+//    screen/window space
+inline glm::vec3
+object_to_screen(glm::vec4 const& p, ModelMatrix const& model, ProjMatrix const& proj,
+                 ViewMatrix const& view, RectFloat const& viewport)
+{
+  auto const ndc = object_to_ndc(p, model, proj, view);
+  return ndc_to_screen(ndc, viewport);
+}
+
+inline glm::vec3
+object_to_screen(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const& proj,
+                 ViewMatrix const& view, RectFloat const& viewport)
+{
+  glm::vec4 const p4{p, DEFAULT_W};
+
+  return object_to_screen(p4, model, proj, view, viewport);
 }
 
 } // namespace boomhs::math::space_conversions

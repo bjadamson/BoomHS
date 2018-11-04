@@ -53,7 +53,7 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES                   = 100;
+static int constexpr NUM_CUBES                   = 1;
 static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_SIZE{2.0f, 2.0};
 
 // clang-format off
@@ -481,19 +481,50 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cube.xz_rect();
-    xz = space_conversions::screen_to_viewport(xz, vpgrid_size);
+    //xz = space_conversions::screen_to_viewport(xz, vpgrid_size);
 
     // Translate the rectangle from Object space to world space.
-    auto const xm = tr.translation.x / vpgrid_size.x;
-    auto const zm = tr.translation.z / vpgrid_size.y;
-    xz.move(xm, zm);
+    //auto const xm = tr.translation.x / vpgrid_size.x;
+    //auto const zm = tr.translation.z / vpgrid_size.y;
+    //xz.move(xm, zm);
+
+    auto const model = tr.model_matrix();
+    RectFloat const vp{0, 0, 1024, 768};
+
+    auto const cxx4l = [](auto const& p) { return glm::vec3{p.x, 0.0f, p.y}; };
+
+    auto const lt_cube = cxx4l(xz.left_top());
+    auto const rb_cube = cxx4l(xz.right_bottom());
+
+    namespace sc = space_conversions;
+    auto const lt_cube_ss = sc::object_to_screen(lt_cube, model, proj, view, vp);
+    auto const rb_cube_ss = sc::object_to_screen(rb_cube, model, proj, view, vp);
+    LOG_ERROR_SPRINTF("lt_cube_ss: %s, rb_cube_ss: %s",
+                      glm::to_string(lt_cube_ss),
+                      glm::to_string(rb_cube_ss));
+
+    auto const lt_mouse = cxx4l(mouse_rect.left_top());
+    auto const rb_mouse = cxx4l(mouse_rect.right_bottom());
+
+    auto const lt_mouse_ss = sc::object_to_screen(lt_mouse, model, proj, view, vp);
+    auto const rb_mouse_ss = sc::object_to_screen(rb_mouse, model, proj, view, vp);
+
+    LOG_ERROR_SPRINTF("lt_mouse_ss: %s, rb_mouse_ss: %s",
+                      glm::to_string(lt_mouse_ss),
+                      glm::to_string(rb_mouse_ss));
+    LOG_ERROR_SPRINTF("mouse (object space??): %s", mouse_rect.to_string());
+
+    LOG_ERROR("");
+    xz = RectFloat{lt_cube_ss.x, lt_cube_ss.z, rb_cube_ss.x, rb_cube_ss.z};
+    return collision::overlap_axis_aligned(xz, mouse_rect);
 
     // Combine the transform and rectangle into a single structure.
-    RectTransform const rect_tr{xz, tr};
+    //RectTransform const rect_tr{xz, tr};
+
 
     // Compute whether the rectangle (converted from the cube) and the rectangle from the user
     // clicking and dragging are overlapping.
-    return collision::overlap(mouse_rect, rect_tr, proj, view);
+    //return collision::overlap(mouse_rect, rect_tr, proj, view);
   };
 
   for (auto &ce : cube_ents) {
@@ -608,9 +639,10 @@ make_cube(RNG& rng)
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
   auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
-  glm::vec3 const min{MIN, MIN, MIN};
-  glm::vec3 const max{gen(), gen(), gen()};
+  //glm::vec3 const min{MIN, MIN, MIN};
+  //glm::vec3 const max{gen(), gen(), gen()};
 
+  glm::vec3 const min{-25}, max{25};
   return Cube{min, max};
 }
 
@@ -620,7 +652,7 @@ gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram co
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
   auto const gen_low_x = [&gen, &ss]() { return gen(0, ss.width); };
   auto const gen_low_z = [&gen, &ss]() { return gen(0, ss.height); };
-  auto const gen_tr = [&]() { return glm::vec3{gen_low_x(), 0, gen_low_z()}; };
+  auto const gen_tr = [&]() { return glm::vec3{50, 0, 50}; };//glm::vec3{gen_low_x(), 0, gen_low_z()}; };
 
   CubeEntities cube_ents;
   FOR(i, NUM_CUBES) {
@@ -792,7 +824,7 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   };
 
   RNG rng;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     pick_camera(rng)};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     ortho_td.clone()};
   ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, pick_camera(rng)};
 
   ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    pick_camera(rng)};
