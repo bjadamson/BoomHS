@@ -1,13 +1,17 @@
 # BoomHS
-An online roleplaying game. This project is in active development.
+A sandbox online roleplaying game focusing on emergent gameplay as a core gameplay mechanic. This
+project is in active development.
+
+Players can either play by themselves (in a fully offline mode), or log onto the public servers for
+an online adventure.
 
 ## Table of contents
-
   + [Project Information](#project-information)
-    * [World Story](#world-story)
-    * [World Design](#world-design)
-  + [Design Decisions](#design-decisions)
-  + [Screenshots](https://github.com/bjadamson/BoomHS/tree/release/screenshots)
+    + [Gameplay](#gameplay)
+    + [World Design](#world-design)
+    + [World Story](#world-story)
+    + [Design Decisions](#design-decisions)
+    + [Screenshots](https://github.com/bjadamson/BoomHS/tree/release/screenshots)
 
   + [Getting Started](#getting-started)
     * [Install Dependencies](#install-dependencies)
@@ -17,8 +21,6 @@ An online roleplaying game. This project is in active development.
     * [Run the Project](#run-the-project)
     * [Other Information](#other-information)
     * [Hints](#hints)
-
-![Alt text](/screenshots/33.png?raw=true "06/24/2018")
 
 ## Project Information
 
@@ -43,7 +45,9 @@ the end can make the decision to help blow up the sun, sacraficing themself. If 
 makes the decision to help the wizard destroy the sun, they themselves cannot move forward. Other
 player's may still escape, they will just have to do it more quickly or something. TBD
 
-## World Design (pie in the sky)
+![Alt text](/screenshots/33.png?raw=true "06/24/2018")
+
+## World Design
   + Online sandbox environment.
     * Open World -- no loading zones (but zones as areas are OK).
     * Player-driven emergent behavior is an explicit goal. Players should playing the game the way
@@ -67,7 +71,6 @@ player's may still escape, they will just have to do it more quickly or somethin
     * Players have risk/reward when deciding where to put a base.
       - Territory control will be in flux, player aggression (from any side) will cause the
         territory lines to change.
-    
   + Hardcore mode available (accompanying online ladder should accompany this).
   + World should feel large.
     * Travel should take time. Travel can be automatic (ie: riding an npc-driven boat between
