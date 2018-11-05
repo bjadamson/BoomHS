@@ -215,10 +215,10 @@ CameraORTHO::CameraORTHO(WorldOrientation const& wo, glm::vec3 const& pos)
 }
 
 CameraMatrices
-CameraORTHO::calc_cm(AspectRatio const& ar, Frustum const& f, ScreenSize const& ss) const
+CameraORTHO::calc_cm(Frustum const& f, ScreenSize const& ss) const
 {
   auto const& zoom_amount = zoom();
-  auto const pm = compute_pm(ar, f, ss, position, zoom_amount);
+  auto const pm = compute_pm(f, ss, position, zoom_amount);
 
   auto const pos     = position;
   auto const  target = pos + eye_forward();
@@ -230,8 +230,8 @@ CameraORTHO::calc_cm(AspectRatio const& ar, Frustum const& f, ScreenSize const& 
 }
 
 glm::mat4
-CameraORTHO::compute_pm(AspectRatio const& AR, Frustum const& f, ScreenSize const& ss,
-    CameraPosition const& position, glm::ivec2 const& zoom)
+CameraORTHO::compute_pm(Frustum const& f, ScreenSize const& ss, CameraPosition const& position,
+                        glm::ivec2 const& zoom)
 {
   auto const& view_width  = ss.width;
   auto const& view_height = ss.height;
@@ -463,7 +463,7 @@ Camera::calc_cm(ViewSettings const& vs, Frustum const& frustum, ScreenSize const
       return arcball.calc_cm(vs, frustum, pos);
     case CameraMode::Ortho:
     case CameraMode::Fullscreen_2DUI:
-      return ortho.calc_cm(vs.aspect_ratio, frustum, ss);
+      return ortho.calc_cm(frustum, ss);
     case CameraMode::FREE_FLOATING:
     case CameraMode::MAX:
       break;

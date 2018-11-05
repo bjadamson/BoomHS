@@ -14,15 +14,14 @@ using namespace boomhs::math;
 namespace opengl
 {
 
-UiRenderer::UiRenderer(static_shaders::BasicMvWithUniformColor&& sp2d, Viewport const& vp,
-                       AspectRatio const& ar)
+UiRenderer::UiRenderer(static_shaders::BasicMvWithUniformColor&& sp2d, Viewport const& vp)
   : sp2d_(MOVE(sp2d))
 {
-  resize(vp, ar);
+  resize(vp);
 }
 
 void
-UiRenderer::resize(Viewport const& vp, AspectRatio const& ar)
+UiRenderer::resize(Viewport const& vp)
 {
   int constexpr NEAR_PM = -1.0;
   int constexpr FAR_PM  = 1.0f;
@@ -36,7 +35,7 @@ UiRenderer::resize(Viewport const& vp, AspectRatio const& ar)
   };
 
   auto constexpr ZOOM = glm::ivec2{0};
-  pm_ = CameraORTHO::compute_pm(ar, fr, vp.size(), constants::ZERO, ZOOM);
+  pm_ = CameraORTHO::compute_pm(fr, vp.size(), constants::ZERO, ZOOM);
 }
 
 void

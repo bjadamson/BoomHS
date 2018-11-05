@@ -514,7 +514,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
       OR::set_viewport_and_scissor(viewport, screen_height);
       for (auto& pm_rect : vi.rects) {
         auto const color = pm_rect.selected ? LOC4::ORANGE : LOC4::PURPLE;
-        auto ui_renderer = UiRenderer::create(logger, viewport, AR);
+        auto ui_renderer = UiRenderer::create(logger, viewport);
         ui_renderer.draw_rect(logger, pm_rect.di, color, GL_TRIANGLES, ds);
       }
     }
@@ -534,7 +534,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     if (figureout_draw_with_mouserect(vi)) {
       auto const& pos_init = MOUSE_INFO.click_positions.left_right;
       MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::LIME_GREEN,
-                                                    vi.viewport, AR, ds);
+                                                    vi.viewport, ds);
     }
   }
 

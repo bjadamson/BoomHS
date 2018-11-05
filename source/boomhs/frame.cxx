@@ -23,11 +23,11 @@ make_framestate(EngineState& es, ZoneState& zs, Camera const& camera,
 
   switch (mode) {
   case CameraMode::Ortho: {
-    cm = camera.ortho.calc_cm(view_settings.aspect_ratio, frustum, DEFAULT_ORTHO_VIEWSIZE);
+    cm = camera.ortho.calc_cm(frustum, DEFAULT_ORTHO_VIEWSIZE);
   } break;
   case CameraMode::Fullscreen_2DUI: {
     auto const vp = Viewport::from_frustum(frustum);
-    cm          = camera.ortho.calc_cm(view_settings.aspect_ratio, frustum, vp.size());
+    cm          = camera.ortho.calc_cm(frustum, vp.size());
   } break;
   case CameraMode::FPS:
     cm = camera.fps.calc_cm(view_settings, frustum, camera.eye_forward());

@@ -10,11 +10,6 @@
 #include <opengl/shader.hpp>
 #include <opengl/types.hpp>
 
-namespace boomhs
-{
-class AspectRatio;
-} // namespace boomhs
-
 namespace opengl
 {
 class  DrawInfo;
@@ -61,13 +56,12 @@ class UiRenderer
   void draw_rect_impl(common::Logger&, boomhs::ModelViewMatrix const&, DrawInfo&,
                        boomhs::Color const&, GLenum, ShaderProgram&, DrawState&);
 
-  UiRenderer(static_shaders::BasicMvWithUniformColor&&, boomhs::Viewport const&,
-             boomhs::AspectRatio const&);
+  UiRenderer(static_shaders::BasicMvWithUniformColor&&, boomhs::Viewport const&);
 
   NO_MOVE_OR_COPY(UiRenderer);
 public:
 
-  void resize(boomhs::Viewport const&, boomhs::AspectRatio const&);
+  void resize(boomhs::Viewport const&);
 
   void draw_rect(common::Logger&, boomhs::ModelMatrix const&, DrawInfo&, boomhs::Color const&,
                        GLenum, DrawState&);
@@ -108,10 +102,9 @@ class MouseRectangleRenderer
   }
 
 public:
-  MouseRectangleRenderer(common::Logger& logger, MouseRectangle&& mrect, boomhs::Viewport const& viewport,
-                         boomhs::AspectRatio const& ar)
+  MouseRectangleRenderer(common::Logger& logger, MouseRectangle&& mrect, boomhs::Viewport const& viewport)
       : mouse_rect_(MOVE(mrect))
-      , ui_renderer_(UiRenderer::create(logger, viewport, ar))
+      , ui_renderer_(UiRenderer::create(logger, viewport))
   {
   }
 
@@ -123,20 +116,19 @@ public:
 
   static auto
   make_rect_under_mouse(common::Logger& logger, glm::ivec2 const& init, glm::ivec2 const& now,
-                         boomhs::Viewport const& viewport, boomhs::AspectRatio const& ar)
+                         boomhs::Viewport const& viewport)
   {
     auto mouse_rect = create_rect(logger, init, now, GL_LINE_LOOP);
-    return MouseRectangleRenderer{logger, MOVE(mouse_rect), viewport, ar};
+    return MouseRectangleRenderer{logger, MOVE(mouse_rect), viewport};
   }
 
   static void
   draw_mouseselect_rect(common::Logger& logger, glm::ivec2 const& pos_init,
                         glm::ivec2 const& pos_now, boomhs::Color const& color,
-                        boomhs::Viewport const& viewport, boomhs::AspectRatio const& ar,
-                        DrawState& ds)
+                        boomhs::Viewport const& viewport, DrawState& ds)
   {
     auto mrr = MouseRectangleRenderer::make_rect_under_mouse(logger, pos_init, pos_now,
-                                                             viewport, ar);
+                                                             viewport);
     mrr.draw(logger, color, ds);
   };
 

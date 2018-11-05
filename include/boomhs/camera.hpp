@@ -152,7 +152,7 @@ public:
   bool flip_rightv = false;
 
   // methods
-  CameraMatrices calc_cm(AspectRatio const&, Frustum const&, ScreenSize const&) const;
+  CameraMatrices calc_cm(Frustum const&, ScreenSize const&) const;
 
   auto const& eye_forward() const { return orientation_.forward; }
   auto const& eye_up() const { return orientation_.up; }
@@ -164,8 +164,8 @@ public:
   auto const& zoom() const { return zoom_; }
 
   // Compute the projection-matrix.
-  static glm::mat4 compute_pm(AspectRatio const&, Frustum const&, ScreenSize const&,
-                              CameraPosition const&, glm::ivec2 const&);
+  static glm::mat4 compute_pm(Frustum const&, ScreenSize const&, CameraPosition const&,
+                              glm::ivec2 const&);
 
   // Compute the view-matrix.
   static glm::mat4 compute_vm(CameraPosition const&, CameraCenter const&, CameraUp const&, bool);

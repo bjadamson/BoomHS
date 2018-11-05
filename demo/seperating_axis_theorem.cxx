@@ -68,8 +68,6 @@ static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
-static auto constexpr FOV      = glm::radians(110.0f);
-static auto constexpr AR       = AspectRatio{4.0f, 3.0f};
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
 
@@ -320,7 +318,7 @@ draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_
     auto const mouse_pos = gl_sdl::mouse_coords();
     auto const& pos_init = MOUSE_INFO.click_positions.left_right;
     MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::PURPLE,
-                                                  viewport, AR, ds);
+                                                  viewport, ds);
   }
 
   demo::draw_bboxes(logger, cm, cube_ents, wire_sp, ds);
@@ -355,9 +353,10 @@ main(int argc, char **argv)
   auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng);
   auto wire_sp   = demo::make_wireframe_program(logger);
 
-  ProjMatrix const proj = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
+  ProjMatrix const proj = glm::ortho(frustum.left, frustum.right, frustum.bottom, frustum.top, NEAR,
+                                     FAR);
   ViewMatrix const view{};
-  auto ui_renderer = UiRenderer::create(logger, VIEWPORT, AR);
+  auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 
   FrameCounter fcounter;
   SDL_Event event;
