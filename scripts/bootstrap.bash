@@ -42,7 +42,6 @@ cmake_minimum_required(VERSION 3.4.3)
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
-
 ###################################################################################################
 ## Setup variables to different paths; used while issung the build commands further below.
 set(PROJECT_DIR ${CMAKE_CURRENT_SOURCE_DIR})
@@ -53,6 +52,7 @@ set(DEMO_DIRECTORY ${PROJECT_DIR}/demo)
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 
 set(DEMO_DIRECTORY_INCLUDE_DIR ${PROJECT_DIR}/demo/include)
+set(DEMO_DIRECTORY_SOURCE_DIR  ${PROJECT_DIR}/demo/source)
 
 set(IMGUI_INCLUDE_DIR         "${EXTERNAL_DIR}/imgui/include/imgui")
 set(CPPTOML_INCLUDE_DIR       "${EXTERNAL_DIR}/cpptoml/include")
@@ -63,7 +63,7 @@ set(INCLUDE_DIRECTORY ${PROJECT_DIR}/include)
 set(SOURCES_DIRECTORY ${PROJECT_DIR}/source)
 
 set(BOOMHS_INCLUDES ${INCLUDE_DIRECTORY}/**/*.hpp)
-set(BOOMHS_INCLUDES ${SOURCES_DIRECTORY}/**/*.cxx)
+set(BOOMHS_SOURCES  ${SOURCES_DIRECTORY}/**/*.cxx)
 set(BOOMHS_CODE     ${BOOMHS_INCLUDES} ${BOOMHS_SOURCES})
 
 ## BFD_LIB and STACKTRACE_LIB are both needed for linux backtraces.
@@ -82,19 +82,14 @@ file(GLOB_RECURSE EXTERNAL_SOURCES
         ${EXTERNAL_DIR}/tinyobj/*.cxx
         ${EXTERNAL_DIR}/fastnoise/*.cxx)
 
-file(GLOB         MAIN_SOURCE_FILE ${PROJECT_DIR}/source/main.cxx)
-file(GLOB_RECURSE SUBDIR_SOURCE_FILES ${PROJECT_DIR}/source/**/*.cxx )
+file(GLOB         MAIN_SOURCE_FILE         ${PROJECT_DIR}/source/main.cxx)
+file(GLOB_RECURSE SUBDIR_SOURCE_FILES      ${PROJECT_DIR}/source/**/*.cxx)
+file(GLOB         DEMO_COMMON_SOURCE_FILES ${PROJECT_DIR}/demo/source/*.cxx)
 
 set(SUBDIR_AND_EXTERNAL_SOURCE_FILES ${EXTERNAL_SOURCES}                 ${SUBDIR_SOURCE_FILES})
+set(DEMO_AND_EXTERNAL_SOURCE_FILES   ${EXTERNAL_SOURCES}                 ${DEMO_COMMON_SOURCE_FILES})
 set(ALL_SOURCE_FILES                 ${SUBDIR_AND_EXTERNAL_SOURCE_FILES} ${MAIN_SOURCE_FILE})
 set(ALL_HEADER_FILES                 ${PROJECT_DIR}/include/**/*.hpp     ${EXTERNAL_DIR}/**/*.hpp)
-
-## file(GLOB MAIN_SOURCE      ${PROJECT_DIR}/source/main.cxx)
-## file(GLOB BOOMHS_SOURCES   ${PROJECT_DIR}/source/boomhs/*.cxx)
-## file(GLOB OPENGL_SOURCES   ${PROJECT_DIR}/source/opengl/*.cxx)
-## file(GLOB COMMON_SOURCES   ${PROJECT_DIR}/source/common/*.cxx)
-## file(GLOB GL_SDL_SOURCES   ${PROJECT_DIR}/source/gl_sdl/*.cxx)
-
 
 ###################################################################################################
 ## Manage External Dependencies
@@ -117,8 +112,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED on)
 ## Configure the "release" compiler settings
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -v -std=c++17")
-
-
 
 ## Compiler Flags
 set(MY_EXTRA_COMPILER_FLAGS "                                                                      \
@@ -150,7 +143,21 @@ pkg_search_module(SDL2 REQUIRED sdl2)
 ## Static Libraries
 ###################################################################################################
 
-add_library(PROJECT_SOURCE_CODE STATIC ${SUBDIR_AND_EXTERNAL_SOURCE_FILES})
+add_library(PROJECT_SOURCE_CODE     STATIC ${SUBDIR_AND_EXTERNAL_SOURCE_FILES})
+add_library(DEMO_COMMON_SOURCE_CODE STATIC ${DEMO_AND_EXTERNAL_SOURCE_FILES})
+
+target_include_directories(DEMO_COMMON_SOURCE_CODE PUBLIC
+  ${DEMO_DIRECTORY_INCLUDE_DIR}
+  ${EXTERNAL_INCLUDE_DIRS}
+  ${GLEW_INCLUDE_DIRS}
+  ${IMGUI_INCLUDE_DIR}
+  ${OPENGL_INDLUDE_DIRS}
+  ${SDL2_INCLUDE_DIRS}
+  ${SDL2IMAGE_INCLUDE_DIRS}
+  ${SOIL_INCLUDE_DIR}
+  ${STATIC_STRING_INCLUDE_DIR}
+  )
+
 target_include_directories(PROJECT_SOURCE_CODE PUBLIC
   ${EXTERNAL_INCLUDE_DIRS}
   ${CPPTOML_INCLUDE_DIR}
@@ -163,42 +170,6 @@ target_include_directories(PROJECT_SOURCE_CODE PUBLIC
   ${SOIL_INCLUDE_DIR}
   ${STATIC_STRING_INCLUDE_DIR}
   )
-
-## ## External_LIB
-## add_library(External_LIB STATIC ${EXTERNAL_SOURCES})
-## target_include_directories(External_LIB PUBLIC
-  ## ${EXTERNAL_INCLUDE_DIRS}
-  ## ${IMGUI_INCLUDE_DIR}
-  ## ${SDL2_INCLUDE_DIRS}
-  ## )
-
-## COMMON_LIB
-## add_library(COMMON_LIB   STATIC ${COMMON_SOURCES})
-## target_include_directories(COMMON_LIB PUBLIC
-  ## ${EXTERNAL_INCLUDE_DIRS}
-  ## )
-
-## BoomHS_LIB
-## add_library(BoomHS_LIB STATIC ${BOOMHS_SOURCES})
-## target_include_directories(BoomHS_LIB PUBLIC
-  ## ${EXTERNAL_INCLUDE_DIRS}
-  ## ${SDL2_INCLUDE_DIRS}
-  ## )
-
-## Opengl_LIB
-## add_library(Opengl_LIB STATIC ${OPENGL_SOURCES})
-## target_include_directories(Opengl_LIB PUBLIC
-  ## ${EXTERNAL_INCLUDE_DIRS}
-  ## ${OPENGL_INDLUDE_DIRS}
-  ## )
-
-## GL_SSTACKTRACE_LIB
-## add_library(GL_SSTACKTRACE_LIB STATIC ${GL_SDL_SOURCES})
-## target_include_directories(GL_SSTACKTRACE_LIB PUBLIC
-  ## ${EXTERNAL_INCLUDE_DIRS}
-  ## ## ${SDL2_INCLUDE_DIRS}
-  ## ${OPENGL_INDLUDE_DIRS}
-  ## )
 
 ###################################################################################################
 ## Specify which static libraries depend on each-other (for the linker's sake).
@@ -225,7 +196,6 @@ set(EXTERNAL_LIBS
   ${SOIL_LIBRARIES}
   ${ZLIB_LIBRARIES}
   )
-
 set(SYSTEM_LIBS
   stdc++
   m
@@ -251,6 +221,7 @@ target_link_libraries(     BUILD_POSTPROCESSING stdc++ stdc++fs)
 add_executable(viewport_mouse_raycast_boxselection ${DEMO_DIRECTORY}/viewports_and_mouse_raycast_boxselection.cxx)
 
 target_link_libraries(viewport_mouse_raycast_boxselection
+  DEMO_COMMON_SOURCE_CODE
   PROJECT_SOURCE_CODE
   ${SYSTEM_LIBS}
   ${EXTERNAL_LIBS}
@@ -265,6 +236,7 @@ target_include_directories(viewport_mouse_raycast_boxselection PUBLIC ${DEMO_DIR
 add_executable(seperating_axis_theorem ${DEMO_DIRECTORY}/seperating_axis_theorem.cxx)
 
 target_link_libraries(seperating_axis_theorem
+  DEMO_COMMON_SOURCE_CODE
   PROJECT_SOURCE_CODE
   ${SYSTEM_LIBS}
   ${EXTERNAL_LIBS}
@@ -280,6 +252,7 @@ target_include_directories(seperating_axis_theorem PUBLIC ${DEMO_DIRECTORY_INCLU
 add_executable(debug-membug ${TEST_DIRECTORY}/debug-membug.cxx)
 
 target_link_libraries(debug-membug
+  DEMO_COMMON_SOURCE_CODE
   PROJECT_SOURCE_CODE
   ${SYSTEM_LIBS}
   ${EXTERNAL_LIBS}

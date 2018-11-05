@@ -13,7 +13,7 @@
 #include <common/timer.hpp>
 #include <common/type_macros.hpp>
 
-#include <demo/demo.hpp>
+#include <demo/common.hpp>
 
 #include <gl_sdl/common.hpp>
 
@@ -278,83 +278,6 @@ screen_sector_to_float_rect(ScreenSector const ss, ViewportGrid const& vp_grid)
   return vi.viewport.rect_float();
 }
 
-auto
-make_wireframe_program(common::Logger& logger)
-{
-  std::vector<opengl::AttributePointerInfo> const apis{{
-    AttributePointerInfo{0, GL_FLOAT, AttributeType::POSITION, 3}
-  }};
-
-  auto va = make_vertex_attribute(apis);
-  return make_shader_program(logger, "wireframe.vert", "wireframe.frag", MOVE(va))
-    .expect_moveout("Error loading wireframe shader program");
-}
-
-auto
-make_bbox(common::Logger& logger, ShaderProgram const& sp, Cube const& cr)
-{
-  auto const vertices = VertexFactory::build_cube(cr.min, cr.max);
-  return OG::copy_cube_wireframe_gpu(logger, vertices, sp.va());
-}
-
-void
-draw_bbox(common::Logger& logger, CameraMatrices const& cm, ShaderProgram& sp,
-          Transform const& tr, DrawInfo& dinfo, Color const& color, DrawState& ds)
-{
-  auto const model_matrix = tr.model_matrix();
-
-  BIND_UNTIL_END_OF_SCOPE(logger, sp);
-  shader::set_uniform(logger, sp, "u_wirecolor", color);
-
-  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
-  auto const camera_matrix = cm.proj * cm.view;
-  render::set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-  render::draw(logger, ds, GL_LINES, sp, dinfo);
-}
-
-class CubeEntity
-{
-  Cube cube_;
-  Transform tr_;
-  DrawInfo di_;
-public:
-  MOVE_DEFAULT_ONLY(CubeEntity);
-
-  CubeEntity(Cube&& cube, Transform&& tr, DrawInfo&& di)
-      : cube_(MOVE(cube))
-      , tr_(MOVE(tr))
-      , di_(MOVE(di))
-  {
-  }
-
-  bool selected = false;
-
-  auto const& cube() const { return cube_; }
-  auto& cube() { return cube_; }
-
-  auto const& transform() const { return tr_; }
-  auto& transform() { return tr_; }
-
-  auto const& draw_info() const { return di_; }
-  auto& draw_info() { return di_; }
-};
-using CubeEntities = std::vector<CubeEntity>;
-
-void
-draw_bboxes(common::Logger& logger, CameraMatrices const& cm,
-            CubeEntities& cube_ents, ShaderProgram& sp,
-            DrawState& ds)
-{
-  for (auto &cube_tr : cube_ents) {
-    auto const& tr      = cube_tr.transform();
-    auto &dinfo         = cube_tr.draw_info();
-    bool const selected = cube_tr.selected;
-
-    auto const& wire_color = selected ? LOC4::BLUE : LOC4::RED;
-    draw_bbox(logger, cm, sp, tr, dinfo, wire_color, ds);
-  }
-}
-
 void
 move_cubes(glm::vec3 const& delta_v, CubeEntities& cube_ents)
 {
@@ -470,38 +393,6 @@ cast_rays_through_cubes_into_screen(common::Logger& logger, glm::vec2 const& mou
 }
 
 void
-select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
-                                   glm::ivec2 const& vpgrid_size, CubeEntities& cube_ents,
-                                   ProjMatrix const& proj, ViewMatrix const& view)
-{
-  // Determine whether a cube projected onto the XZ plane and another rectangle overlap.
-  auto const cube_mouserect_overlap = [&](auto const& cube_entity) {
-    auto const& cube = cube_entity.cube();
-    auto tr          = cube_entity.transform();
-
-    // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
-    auto xz = cube.xz_rect();
-    xz = space_conversions::screen_to_viewport(xz, vpgrid_size);
-
-    // Translate the rectangle from Object space to world space.
-    auto const xm = tr.translation.x / vpgrid_size.x;
-    auto const zm = tr.translation.z / vpgrid_size.y;
-    xz.move(xm, zm);
-
-    // Combine the transform and rectangle into a single structure.
-    RectTransform const rect_tr{xz, tr};
-
-    // Compute whether the rectangle (converted from the cube) and the rectangle from the user
-    // clicking and dragging are overlapping.
-    return collision::overlap(mouse_rect, rect_tr, proj, view);
-  };
-
-  for (auto &ce : cube_ents) {
-    ce.selected = cube_mouserect_overlap(ce);
-  }
-}
-
-void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
                     ViewportGrid const& vp_grid, PmDrawInfos& pmdis,
                     CubeEntities& cube_ents)
@@ -601,37 +492,6 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportGrid& vp_grid,
   return event.type == SDL_QUIT;
 }
 
-auto
-make_cube(RNG& rng)
-{
-  float constexpr MIN = -100, MAX = 100;
-  static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
-
-  auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
-  glm::vec3 const min{MIN, MIN, MIN};
-  glm::vec3 const max{gen(), gen(), gen()};
-
-  return Cube{min, max};
-}
-
-auto
-gen_cube_entities(common::Logger& logger, ScreenSize const& ss, ShaderProgram const& sp, RNG &rng)
-{
-  auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
-  auto const gen_low_x = [&gen, &ss]() { return gen(0, ss.width); };
-  auto const gen_low_z = [&gen, &ss]() { return gen(0, ss.height); };
-  auto const gen_tr = [&]() { return glm::vec3{gen_low_x(), 0, gen_low_z()}; };
-
-  CubeEntities cube_ents;
-  FOR(i, NUM_CUBES) {
-    auto cube = make_cube(rng);
-    auto tr = gen_tr();
-    auto di = make_bbox(logger, sp, cube);
-    cube_ents.emplace_back(MOVE(cube), MOVE(tr), MOVE(di));
-  }
-  return cube_ents;
-}
-
 void
 draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_infos,
            Frustum const& frustum, ShaderProgram& wire_sp, ShaderProgram& pm_sp,
@@ -645,7 +505,7 @@ draw_scene(common::Logger& logger, ViewportGrid const& vp_grid, PmDrawInfos& pm_
     OR::set_viewport_and_scissor(viewport, screen_height);
     OR::clear_screen(viewport.bg_color());
     auto const& cm = vi.matrices;
-    draw_bboxes(logger, cm, cube_ents, wire_sp, ds);
+    demo::draw_bboxes(logger, cm, cube_ents, wire_sp, ds);
   };
   auto const draw_pms = [&](auto& ds, auto& pm_infos) {
     for (auto& pm_info : pm_infos) {
@@ -792,7 +652,7 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
   };
 
   RNG rng;
-  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     pick_camera(rng)};
+  ViewportInfo left_top {lhs_top,    ScreenSector::LEFT_TOP,     ortho_td.clone()};
   ViewportInfo right_bot{rhs_bottom, ScreenSector::RIGHT_BOTTOM, pick_camera(rng)};
 
   ViewportInfo right_top{rhs_top,    ScreenSector::RIGHT_TOP,    pick_camera(rng)};
@@ -873,8 +733,8 @@ main(int argc, char **argv)
   auto& rect_sp = color2d_program.sp();
 
   auto pm_infos  = make_pminfos(logger, rect_sp, rng, vp_grid);
-  auto wire_sp   = make_wireframe_program(logger);
-  auto cube_ents = gen_cube_entities(logger, window_rect.size(), wire_sp, rng);
+  auto wire_sp   = demo::make_wireframe_program(logger);
+  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), wire_sp, rng);
 
   FrameCounter fcounter;
   SDL_Event event;

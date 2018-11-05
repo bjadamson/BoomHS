@@ -14,7 +14,7 @@
 #include <common/timer.hpp>
 #include <common/type_macros.hpp>
 
-#include <demo/demo.hpp>
+#include <demo/common.hpp>
 
 #include <gl_sdl/sdl_window.hpp>
 #include <gl_sdl/common.hpp>
@@ -177,8 +177,8 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRec
 }
 
 void
-update(common::Logger& logger, ViewportPmRects& vp_rects, ProjMatrix const& proj,
-       ViewMatrix const& view)
+update(common::Logger& logger, ViewportPmRects& vp_rects, CubeEntities& cube_ents,
+       ProjMatrix const& proj, ViewMatrix const& view)
 {
   assert(!vp_rects.rects.empty());
   auto& a = vp_rects.rects.front();
@@ -201,7 +201,8 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, ProjMatrix const& proj
 
 void
 process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
-    std::vector<PmRect>& rects, ProjMatrix const& proj, ViewMatrix const& view)
+    std::vector<PmRect>& rects, CubeEntities& cube_ents, ProjMatrix const& proj,
+    ViewMatrix const& view)
 {
   if (MOUSE_BUTTON_PRESSED) {
     auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
@@ -213,12 +214,16 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
       RectTransform const rect_tr{rect.rect, rect.transform};
       rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view);
     }
+
+    auto const vp_size = glm::ivec2{1, 1};
+    select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, proj, view);
   }
 }
 
 bool
 process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rects,
-              ProjMatrix const& proj, ViewMatrix const& view, Transform& controlled_tr, FrameTime const& ft)
+              CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
+              Transform& controlled_tr, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
 
@@ -229,7 +234,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
     }
   }
   else if (event.type == SDL_MOUSEMOTION) {
-    process_mousemotion(logger, event.motion, vp_rects.rects, proj, view);
+    process_mousemotion(logger, event.motion, vp_rects.rects, cube_ents, proj, view);
   }
   else if (event.type == SDL_MOUSEBUTTONDOWN) {
     auto const& mouse_button = event.button;
@@ -298,7 +303,7 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
 
 void
 draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rects,
-           DrawState& ds)
+           CubeEntities& cube_ents, ShaderProgram& wire_sp, CameraMatrices const& cm, DrawState& ds)
 {
   auto const screen_height = VIEWPORT.height();
 
@@ -317,6 +322,8 @@ draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_
     MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::PURPLE,
                                                   viewport, AR, ds);
   }
+
+  demo::draw_bboxes(logger, cm, cube_ents, wire_sp, ds);
 };
 
 int
@@ -344,6 +351,10 @@ main(int argc, char **argv)
   auto vp_rects = make_rects(logger, NUM_RECTS, VIEWPORT, rect_sp, rng);
   assert(!vp_rects.rects.empty());
 
+  auto constexpr NUM_CUBES = 100;
+  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng);
+  auto wire_sp   = demo::make_wireframe_program(logger);
+
   ProjMatrix const proj = glm::perspective(FOV, AR.compute(), frustum.near, frustum.far);
   ViewMatrix const view{};
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT, AR);
@@ -357,14 +368,16 @@ main(int argc, char **argv)
     auto const ft = FrameTime::from_timer(timer);
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
       auto& controlled_tr = vp_rects.rects.back().transform;
-      quit = process_event(logger, event, vp_rects, proj, view, controlled_tr, ft);
+      quit = process_event(logger, event, vp_rects, cube_ents, proj, view, controlled_tr, ft);
     }
 
-    update(logger, vp_rects, proj, view);
+    update(logger, vp_rects, cube_ents, proj, view);
 
     DrawState ds;
     OR::clear_screen(LOC4::DEEP_SKY_BLUE);
-    draw_scene(logger, ui_renderer, vp_rects, ds);
+
+    CameraMatrices const cm{proj, view};
+    draw_scene(logger, ui_renderer, vp_rects, cube_ents, wire_sp, cm, ds);
 
     // Update window with OpenGL rendering
     SDL_GL_SwapWindow(window.raw());
