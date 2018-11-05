@@ -49,17 +49,24 @@ player's may still escape, they will just have to do it more quickly or somethin
 
 ## World Design
   + Online sandbox environment.
-    * Open World -- no loading zones (but zones as areas are OK).
+    * Open World -- no loading zones (but zones as areas are part of the game).
     * Player-driven emergent behavior is an explicit goal. Players should playing the game the way
-    they want too.
+    they want too. This also allows the developer to get out of the way of content creation.
     * Gameplay is group (small and large) centeric. Solo possible but with disadvantages over
       players who choose to group with others.
-  + World PvP is core to gameplay.
+  + World PvP is core to gameplay, everywhere PvP is allowed.
+    * PvE within these zones gives increased experience. PvP within these zones also gives
+      increased experience (due to the increased danger from the world PvP).
     * There are N factions/races/??? that have differing alliances at any time (player decided).
     * Pre-arranged battles that players can "queue-up for" shall not exist in the game.
   + Territory can be conquered.
     * NPC groups (factions) can take control of territory.
     * Players can take control of territory.
+  + On a PvE server, world PvE is core to gameplay. Zones within territory owned by your faction
+    are safe for you (the player) to run around in. The player may choose to engage in PvP with
+    players of enemy factions, in which they become marked flagged for PvP for 15 wall-time
+    minutes. On a PvE server, in zones neighboring other factions world PvP is enabled and the game
+    functions as-if on a PvP enabled server.
 
   + Players can build t
       - Raidable by other players.
