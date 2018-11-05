@@ -353,8 +353,16 @@ main(int argc, char **argv)
   auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng);
   auto wire_sp   = demo::make_wireframe_program(logger);
 
-  ProjMatrix const proj = glm::ortho(frustum.left, frustum.right, frustum.bottom, frustum.top, NEAR,
-                                     FAR);
+  ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, glm::ivec2{0});
+
+  ViewMatrix vm = glm::lookAtRH(glm::vec3{0, 1, 0}, constants::ZERO, constants::Y_UNIT_VECTOR);
+  {
+    auto& sx = vm[0][0];
+    auto& sy = vm[1][0];
+    auto& sz = vm[2][0];
+    math::negate(sx, sy, sz);
+  }
+
   ViewMatrix const view{};
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 

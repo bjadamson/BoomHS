@@ -141,7 +141,7 @@ make_cube(RNG& rng)
   glm::vec3 const min{MIN, MIN, MIN};
   glm::vec3 const max{gen(), gen(), gen()};
 
-  //glm::vec3 const min{-25}, max{25};
+  //glm::vec3 const min{0}, max{600, 0, 600};
   return Cube{min, max};
 }
 
@@ -152,7 +152,7 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, ScreenSize con
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
   auto const gen_low_x = [&gen, &ss]() { return gen(0, ss.width); };
   auto const gen_low_z = [&gen, &ss]() { return gen(0, ss.height); };
-  auto const gen_tr = [&]() { return glm::vec3{50, 0, 50}; };
+  auto const gen_tr = [&]() { return glm::vec3{0, 0, 0}; };
   //glm::vec3{gen_low_x(), 0, gen_low_z()}; };
 
   CubeEntities cube_ents;
