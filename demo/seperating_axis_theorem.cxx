@@ -63,7 +63,9 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
+static int constexpr NUM_CUBES = 100;
 static int constexpr NUM_RECTS = 40;
+
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
@@ -290,8 +292,10 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
     glm::quat const q = glm::angleAxis(glm::radians(45.0f), constants::Z_UNIT_VECTOR);
     auto const rmatrix = glm::toMat4(q);
 
+    auto const& MIN = constants::ZERO;
+    auto const max = VEC3{WIDTH, HEIGHT, 0};
     for (auto& rect : vppm_rects.rects) {
-      rect.transform.translation = glm::vec3{rng.gen_3dposition(VEC3{0}, VEC3{WIDTH, HEIGHT, 0})};
+      rect.transform.translation = rng.gen_3dposition(MIN, max);
       rect.transform.rotation = rmatrix;
     }
   }
@@ -349,21 +353,13 @@ main(int argc, char **argv)
   auto vp_rects = make_rects(logger, NUM_RECTS, VIEWPORT, rect_sp, rng);
   assert(!vp_rects.rects.empty());
 
-  auto constexpr NUM_CUBES = 100;
-  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng);
+  bool constexpr IS_2D = true;
+  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng, IS_2D);
   auto wire_sp   = demo::make_wireframe_program(logger);
 
   ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, glm::ivec2{0});
-
-  ViewMatrix vm = glm::lookAtRH(glm::vec3{0, 1, 0}, constants::ZERO, constants::Y_UNIT_VECTOR);
-  {
-    auto& sx = vm[0][0];
-    auto& sy = vm[1][0];
-    auto& sz = vm[2][0];
-    math::negate(sx, sy, sz);
-  }
-
   ViewMatrix const view{};
+
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 
   FrameCounter fcounter;

@@ -734,7 +734,10 @@ main(int argc, char **argv)
 
   auto pm_infos  = make_pminfos(logger, rect_sp, rng, vp_grid);
   auto wire_sp   = demo::make_wireframe_program(logger);
-  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), wire_sp, rng);
+
+  bool constexpr IS_2D = false;
+  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), wire_sp, rng,
+                                           IS_2D);
 
   FrameCounter fcounter;
   SDL_Event event;

@@ -114,7 +114,7 @@ draw_bboxes(common::Logger& logger, CameraMatrices const& cm,
     auto &dinfo         = cube_tr.draw_info();
     bool const selected = cube_tr.selected;
 
-    auto const& wire_color = selected ? LOC4::BLUE : LOC4::RED;
+    auto const& wire_color = selected ? LOC4::CORNLOWER_BLUE : LOC4::DARKRED;
     draw_bbox(logger, cm, sp, tr, dinfo, wire_color, ds);
   }
 }
@@ -132,32 +132,43 @@ make_wireframe_program(common::Logger& logger)
 }
 
 Cube
-make_cube(RNG& rng)
+make_cube(RNG& rng, bool const is_2d)
 {
   float constexpr MIN = -100, MAX = 100;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
   auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
-  glm::vec3 const min{MIN, MIN, MIN};
-  glm::vec3 const max{gen(), gen(), gen()};
 
-  //glm::vec3 const min{0}, max{600, 0, 600};
+  glm::vec3 min, max;
+  if (is_2d) {
+    min = glm::vec3{MIN, MIN, 0};
+    max = glm::vec3{gen(), gen(), 0};
+  }
+  else {
+    min = glm::vec3{MIN, MIN, MIN};
+    max = glm::vec3{gen(), gen(), gen()};
+  }
   return Cube{min, max};
 }
 
 CubeEntities
 gen_cube_entities(common::Logger& logger, size_t const num_cubes, ScreenSize const& ss,
-                  ShaderProgram const& sp, RNG &rng)
+                  ShaderProgram const& sp, RNG &rng, bool const is_2d)
 {
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
-  auto const gen_low_x = [&gen, &ss]() { return gen(0, ss.width); };
-  auto const gen_low_z = [&gen, &ss]() { return gen(0, ss.height); };
-  auto const gen_tr = [&]() { return glm::vec3{0, 0, 0}; };
-  //glm::vec3{gen_low_x(), 0, gen_low_z()}; };
+  auto const gen_between_0_and = [&gen](auto const& max) { return gen(0, max); };
+  auto const gen_tr = [&]() { 
+    auto const x = gen_between_0_and(ss.width);
+    auto const y = gen_between_0_and(ss.height);
+
+    return is_2d
+      ? glm::vec3{x, y, 0}
+      : glm::vec3{x, 0, gen_between_0_and(ss.width)};
+  };
 
   CubeEntities cube_ents;
   FOR(i, num_cubes) {
-    auto cube = demo::make_cube(rng);
+    auto cube = demo::make_cube(rng, is_2d);
     auto tr = gen_tr();
     auto di = make_bbox(logger, sp, cube);
     cube_ents.emplace_back(MOVE(cube), MOVE(tr), MOVE(di));
