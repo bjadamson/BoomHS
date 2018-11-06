@@ -99,7 +99,7 @@ using CubeEntities = std::vector<CubeEntity>;
 void
 select_cubes_under_user_drawn_rect(common::Logger&, boomhs::RectFloat const&,
                                    glm::ivec2 const&, CubeEntities&, boomhs::ProjMatrix const&,
-                                   boomhs::ViewMatrix const&);
+                                   boomhs::ViewMatrix const&, boomhs::Viewport const&);
 
 
 

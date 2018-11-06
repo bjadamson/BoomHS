@@ -450,6 +450,7 @@ struct Cube
   CubeVertices scaled_cube_vertices(Transform const&) const;
 
   auto constexpr xz_rect() const { return RectFloat{min.x, min.z, max.x, max.z}; }
+  auto constexpr xy_rect() const { return RectFloat{min.x, min.y, max.x, max.y}; }
 
   explicit Cube(glm::vec3 const&, glm::vec3 const&);
 
@@ -616,16 +617,16 @@ world_to_eye(glm::vec3 const& wp, ViewMatrix const& view)
 // to:
 //    clip space
 inline glm::vec4
-eye_to_clip(glm::vec4 const& eyep, ProjMatrix const& pm)
+eye_to_clip(glm::vec4 const& eyep, ProjMatrix const& proj)
 {
-  return pm * eyep;
+  return proj * eyep;
 }
 
 inline glm::vec3
-eye_to_clip(glm::vec3 const& eyep, ProjMatrix const& pm)
+eye_to_clip(glm::vec3 const& eyep, ProjMatrix const& proj)
 {
   auto const v4 = glm::vec4{eyep, DEFAULT_W};
-  return eye_to_clip(v4, pm);
+  return eye_to_clip(v4, proj);
 }
 
 // from:
@@ -707,32 +708,15 @@ screen_to_ndc(glm::vec2 const& scoords, RectFloat const& viewport)
 //
 // Algorithm modified from:
 // http://www.songho.ca/opengl/gl_transform.html
-inline glm::vec3
+inline glm::vec2
 ndc_to_screen(glm::vec3 const& ndc, RectFloat const& viewport)
 {
-  //assert_abs_lessthan_equal(ndc, 1.0f);
-
-  auto const x = ndc.x;
-  auto const y = ndc.y;
-  auto const z = ndc.z;
-
-  auto const size = viewport.size();
-  auto const w = size.x;
-  auto const h = size.y;
-
-  // TODO: Here I'm making an assumption about the depth buffer range.
-  // If glDepthRange is called, these values will not match and these conversions will be wrong.
-  //
-  // In that case, the depth buffer near/far need to be piped around to all invocations of this
-  // function.
-  auto const n = 0.0f;
-  auto const f = 1.0f;
-
-  auto const screen_x = (w/2)*x       + (x + w/2);
-  auto const screen_y = (h/2)*y       + (y + h/2);
-  auto const screen_z = ((f - n)/2)*z + (f + n)/2;
-
-  return glm::vec3{screen_x, screen_y, screen_z};
+  auto const origin    = viewport.left_top();
+  auto const view_rect = viewport.size();
+  return glm::vec2{
+    (((ndc.x + 1 ) / 2) * view_rect.x) + origin.x,
+    ((((1 - ndc.y) / 2) * view_rect.y) + origin.y)
+  };
 }
 
 // from:
@@ -805,15 +789,19 @@ object_to_ndc(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const& pr
 //   object space
 // to:
 //    screen/window space
-inline glm::vec3
+inline glm::vec2
 object_to_screen(glm::vec4 const& p, ModelMatrix const& model, ProjMatrix const& proj,
                  ViewMatrix const& view, RectFloat const& viewport)
 {
-  auto const ndc = object_to_ndc(p, model, proj, view);
+  // TODO: This function is a hack it's implemementation first steps not being what I expect I
+  // should try and understand what's going on ASAP.
+  auto const mvp  = proj * view;
+  auto const clip = mvp * p;
+  auto const ndc  = clip_to_ndc(clip);
   return ndc_to_screen(ndc, viewport);
 }
 
-inline glm::vec3
+inline glm::vec2
 object_to_screen(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const& proj,
                  ViewMatrix const& view, RectFloat const& viewport)
 {

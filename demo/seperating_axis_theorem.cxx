@@ -63,12 +63,14 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES = 100;
-static int constexpr NUM_RECTS = 40;
+static int constexpr NUM_CUBES = 1;
+static int constexpr NUM_RECTS = 1;
 
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
-static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
+
+static auto constexpr VIEWPORT          = Viewport{0, 0, WIDTH, HEIGHT};
+static auto const     VPGRID_DIMENSIONS = glm::ivec2{1, 1};
 
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
@@ -108,7 +110,7 @@ struct ViewportPmRects
 
 bool
 process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRects& vp_rects,
-                Transform& controlled_tr)
+                Transform& controlled_tr, CubeEntities& cube_ents)
 {
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
   assert(keystate);
@@ -118,6 +120,9 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRec
     if (shift_down) {
       for (auto& rect : vp_rects.rects) {
         fn(rect.transform);
+      }
+      for (auto& cube : cube_ents) {
+        fn(cube.transform());
       }
     }
     else {
@@ -186,7 +191,7 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, CubeEntities& cube_ent
   for (auto& a : vp_rects.rects) {
     bool overlap = false;
     for (auto& b : vp_rects.rects) {
-      if (&a == &b || overlap) continue;
+      if (overlap || &a == &b) continue;
 
       RectTransform const ra{a.rect, a.transform};
       RectTransform const rb{b.rect, b.transform};
@@ -196,6 +201,17 @@ update(common::Logger& logger, ViewportPmRects& vp_rects, CubeEntities& cube_ent
 
     a.color = a.mouse_selected ? CLICK_COLOR
       : (overlap ? LOC4::RED : LOC4::LIGHT_SEAGREEN);
+  }
+}
+
+void
+select_pmrects_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
+                                     std::vector<PmRect>& rects, ProjMatrix const& proj,
+                                     ViewMatrix const& view)
+{
+  for (auto& rect : rects) {
+    RectTransform const rect_tr{rect.rect, rect.transform};
+    rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view);
   }
 }
 
@@ -210,13 +226,11 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
     auto const mouse_rect = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
                                                                     VIEWPORT.left_top());
-    for (auto& rect : rects) {
-      RectTransform const rect_tr{rect.rect, rect.transform};
-      rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view);
-    }
 
-    auto const vp_size = glm::ivec2{1, 1};
-    select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, proj, view);
+    select_pmrects_under_user_drawn_rect(logger, mouse_rect, rects, proj, view);
+
+    demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, VPGRID_DIMENSIONS, cube_ents, proj,
+                                             view, VIEWPORT);
   }
 }
 
@@ -229,7 +243,7 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
-    if (process_keydown(logger, key_pressed, vp_rects, controlled_tr)) {
+    if (process_keydown(logger, key_pressed, vp_rects, controlled_tr, cube_ents)) {
       return true;
     }
   }
@@ -289,14 +303,11 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
   auto vppm_rects  = make_viewportpm_rects(prect, viewport);
 
   {
-    glm::quat const q = glm::angleAxis(glm::radians(45.0f), constants::Z_UNIT_VECTOR);
-    auto const rmatrix = glm::toMat4(q);
-
     auto const& MIN = constants::ZERO;
     auto const max = VEC3{WIDTH, HEIGHT, 0};
     for (auto& rect : vppm_rects.rects) {
-      rect.transform.translation = rng.gen_3dposition(MIN, max);
-      rect.transform.rotation = rmatrix;
+      rect.transform.translation = glm::vec3{100, 100, 0};//rng.gen_3dposition(MIN, max);
+      rect.transform.rotate_degrees(5.0f, constants::Z_UNIT_VECTOR);
     }
   }
 
@@ -354,10 +365,12 @@ main(int argc, char **argv)
   assert(!vp_rects.rects.empty());
 
   bool constexpr IS_2D = true;
-  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng, IS_2D);
+  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng,
+                                           IS_2D);
   auto wire_sp   = demo::make_wireframe_program(logger);
 
-  ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, glm::ivec2{0});
+  ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO,
+                                                  glm::ivec2{0});
   ViewMatrix const view{};
 
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);

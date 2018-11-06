@@ -26,7 +26,8 @@ namespace demo
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
                                    glm::ivec2 const& vpgrid_size, CubeEntities& cube_ents,
-                                   ProjMatrix const& proj, ViewMatrix const& view)
+                                   ProjMatrix const& proj, ViewMatrix const& view,
+                                   Viewport const& viewport)
 {
   namespace sc = math::space_conversions;
 
@@ -36,51 +37,28 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     auto tr          = cube_entity.transform();
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
-    auto xz = cube.xz_rect();
+    auto xz = cube.xy_rect();
     xz = sc::screen_to_viewport(xz, vpgrid_size);
 
-    // Translate the rectangle from Object space to world space.
-    auto const xm = tr.translation.x / vpgrid_size.x;
-    auto const zm = tr.translation.z / vpgrid_size.y;
-    xz.move(xm, zm);
-
-    /*
-    auto const model = tr.model_matrix();
-    RectFloat const vp{0, 0, 1024/2, 768/2};
-
-    auto const cxx4l = [](auto const& p) { return glm::vec3{p.x, 0.0f, p.y}; };
+    auto const cxx4l = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
 
     auto const lt_cube = cxx4l(xz.left_top());
     auto const rb_cube = cxx4l(xz.right_bottom());
 
-    auto const lt_cube_ss = sc::object_to_screen(lt_cube, model, proj, view, vp);
-    auto const rb_cube_ss = sc::object_to_screen(rb_cube, model, proj, view, vp);
+    auto const model = tr.model_matrix();
+
+    auto const vp_rect    = viewport.rect_float();
+    auto const lt_cube_ss = sc::object_to_screen(lt_cube, model, proj, view, vp_rect);
+    auto const rb_cube_ss = sc::object_to_screen(rb_cube, model, proj, view, vp_rect);
     //LOG_ERROR_SPRINTF("lt_cube_ss: %s, rb_cube_ss: %s",
                       //glm::to_string(lt_cube_ss),
                       //glm::to_string(rb_cube_ss));
 
-    auto const lt_mouse = cxx4l(mouse_rect.left_top());
-    auto const rb_mouse = cxx4l(mouse_rect.right_bottom());
+    LOG_ERROR_SPRINTF("mouse (object space?): %s", mouse_rect.to_string());
 
-    auto const lt_mouse_ss = sc::object_to_screen(lt_mouse, model, proj, view, vp);
-    auto const rb_mouse_ss = sc::object_to_screen(rb_mouse, model, proj, view, vp);
+    xz = RectFloat{lt_cube_ss.x, lt_cube_ss.y, rb_cube_ss.x, rb_cube_ss.y};
 
-    //LOG_ERROR_SPRINTF("lt_mouse_ss: %s, rb_mouse_ss: %s",
-                      //glm::to_string(lt_mouse_ss),
-                      //glm::to_string(rb_mouse_ss));
-    //LOG_ERROR_SPRINTF("mouse (object space?): %s", mouse_rect.to_string());
-
-    //LOG_ERROR("");
-    xz = RectFloat{lt_cube_ss.x, lt_cube_ss.z, rb_cube_ss.x, rb_cube_ss.z};
-    return collision::overlap_axis_aligned(xz, mouse_rect);
-    */
-
-    // Combine the transform and rectangle into a single structure.
     RectTransform const rect_tr{xz, tr};
-
-
-    // Compute whether the rectangle (converted from the cube) and the rectangle from the user
-    // clicking and dragging are overlapping.
     return collision::overlap(mouse_rect, rect_tr, proj, view);
   };
 
@@ -114,7 +92,7 @@ draw_bboxes(common::Logger& logger, CameraMatrices const& cm,
     auto &dinfo         = cube_tr.draw_info();
     bool const selected = cube_tr.selected;
 
-    auto const& wire_color = selected ? LOC4::CORNLOWER_BLUE : LOC4::DARKRED;
+    auto const& wire_color = selected ? LOC4::LIGHT_GOLDENROD_YELLOW : LOC4::DARKRED;
     draw_bbox(logger, cm, sp, tr, dinfo, wire_color, ds);
   }
 }
@@ -134,15 +112,15 @@ make_wireframe_program(common::Logger& logger)
 Cube
 make_cube(RNG& rng, bool const is_2d)
 {
-  float constexpr MIN = -100, MAX = 100;
+  float constexpr MIN = 0, MAX = 200;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
-  auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
+  auto const gen = [&rng]() { return 100; };//rng.gen_float_range(MIN + 1, MAX); };
 
   glm::vec3 min, max;
   if (is_2d) {
-    min = glm::vec3{MIN, MIN, 0};
-    max = glm::vec3{gen(), gen(), 0};
+    min = glm::vec3{-50, -50, 0};
+    max = glm::vec3{50, 50, 0};
   }
   else {
     min = glm::vec3{MIN, MIN, MIN};
@@ -157,13 +135,13 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, ScreenSize con
 {
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
   auto const gen_between_0_and = [&gen](auto const& max) { return gen(0, max); };
-  auto const gen_tr = [&]() { 
-    auto const x = gen_between_0_and(ss.width);
-    auto const y = gen_between_0_and(ss.height);
+  auto const gen_tr = [&]() {
+    auto const x = 100.0f;//gen_between_0_and(ss.width);
+    auto const y = 100.0f;//gen_between_0_and(ss.height);
 
     return is_2d
       ? glm::vec3{x, y, 0}
-      : glm::vec3{x, 0, gen_between_0_and(ss.width)};
+      : glm::vec3{x, 0, y};
   };
 
   CubeEntities cube_ents;
@@ -172,6 +150,9 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, ScreenSize con
     auto tr = gen_tr();
     auto di = make_bbox(logger, sp, cube);
     cube_ents.emplace_back(MOVE(cube), MOVE(tr), MOVE(di));
+
+    auto& back = cube_ents.back();
+    back.transform().rotate_degrees(5.0f, math::constants::Z_UNIT_VECTOR);
   }
   return cube_ents;
 }
