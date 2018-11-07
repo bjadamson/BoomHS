@@ -25,38 +25,32 @@ namespace demo
 
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
-                                   glm::ivec2 const& vpgrid_size, CubeEntities& cube_ents,
-                                   ProjMatrix const& proj, ViewMatrix const& view,
+                                   CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
                                    Viewport const& viewport)
 {
-  namespace sc = math::space_conversions;
+  namespace sc       = math::space_conversions;
+  auto const cxx4l   = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
+  auto const vp_rect = viewport.rect_float();
 
-  // Determine whether a cube projected onto the XZ plane and another rectangle overlap.
+  // Determine whether a cube projected onto the given plane and another rectangle overlap.
   auto const cube_mouserect_overlap = [&](auto const& cube_entity) {
     auto const& cube = cube_entity.cube();
     auto tr          = cube_entity.transform();
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cube.xy_rect();
-    //xz = sc::screen_to_viewport(xz, vpgrid_size);
-
-    auto const cxx4l = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
 
     auto const lt_cube = cxx4l(xz.left_top());
     auto const rb_cube = cxx4l(xz.right_bottom());
 
     auto const model = tr.model_matrix();
 
-    auto const vp_rect    = viewport.rect_float();
-    auto const lt_cube_ss = sc::object_to_screen(lt_cube, model, proj, view, vp_rect);
-    auto const rb_cube_ss = sc::object_to_screen(rb_cube, model, proj, view, vp_rect);
-    //LOG_ERROR_SPRINTF("lt_cube_ss: %s, rb_cube_ss: %s",
-                      //glm::to_string(lt_cube_ss),
-                      //glm::to_string(rb_cube_ss));
-
-    LOG_ERROR_SPRINTF("mouse (object space?): %s", mouse_rect.to_string());
-
-    xz = RectFloat{lt_cube_ss.x, lt_cube_ss.y, rb_cube_ss.x, rb_cube_ss.y};
+    auto const to_screen = [&](auto const& cube) {
+      return sc::object_to_screen(cube, model, proj, view, vp_rect);
+    };
+    auto const lt_cube_ss = to_screen(lt_cube);
+    auto const rb_cube_ss = to_screen(rb_cube);
+    xz = RectFloat{lt_cube_ss, rb_cube_ss};
 
     RectTransform const rect_tr{xz, tr};
     return collision::overlap(mouse_rect, rect_tr, proj, view);

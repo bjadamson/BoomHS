@@ -418,8 +418,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
         auto const mouse_rect    = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
                                                                vi.mouse_offset());
         auto const& cm     = vi.matrices;
-        auto const vp_size = vp_grid.viewport_size;
-        select_cubes_under_user_drawn_rect(logger, mouse_rect, vp_size, cube_ents, cm.proj, cm.view,
+        select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, cm.proj, cm.view,
                                            vi.viewport);
       }
     } break;

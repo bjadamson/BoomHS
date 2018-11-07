@@ -69,8 +69,7 @@ static int constexpr NUM_RECTS = 1;
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 
-static auto constexpr VIEWPORT          = Viewport{0, 0, WIDTH / 2, HEIGHT / 2};
-static auto const     VPGRID_DIMENSIONS = glm::ivec2{2, 2};
+static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
@@ -228,7 +227,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
     select_pmrects_under_user_drawn_rect(logger, mouse_rect, rects, proj, view);
 
-    demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, VPGRID_DIMENSIONS, cube_ents, proj,
+    demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, proj,
                                              view, VIEWPORT);
   }
 }
@@ -368,8 +367,8 @@ main(int argc, char **argv)
                                            IS_2D);
   auto wire_sp   = demo::make_wireframe_program(logger);
 
-  ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO,
-                                                  glm::ivec2{0});
+  auto constexpr ZOOM   = glm::ivec2{0};
+  ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, ZOOM);
   ViewMatrix const view{};
 
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
