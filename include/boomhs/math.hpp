@@ -652,25 +652,17 @@ clip_to_ndc(glm::vec3 const& clip)
 //
 // "ViewportSpace" defined as an offset from the screen's origin (0, 0) being the top-left, a
 // simple subtraction is required.
-template <typename T>
-inline auto
-screen_to_viewport(glm::tvec2<T> const& point, glm::ivec2 const& origin)
+inline glm::ivec2
+screen_to_viewport(glm::ivec2 const& point, glm::ivec2 const& origin)
 {
   return point - origin;
 }
 
-// Convert a rectangle in screen/window space to viewport space.
-template <typename T>
-inline auto
-screen_to_viewport(T const& rect, glm::ivec2 const& vp_size)
+inline glm::ivec2
+screen_to_viewport(glm::vec2 const& point, glm::ivec2 const& origin)
 {
-  auto r = rect;
-  r.left   /= vp_size.x;
-  r.right  /= vp_size.x;
-
-  r.top    /= vp_size.y;
-  r.bottom /= vp_size.y;
-  return r;
+  glm::ivec2 const point_i{point};
+  return screen_to_viewport(point_i, origin);
 }
 
 inline glm::vec4

@@ -50,7 +50,11 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     };
     auto const lt_cube_ss = to_screen(lt_cube);
     auto const rb_cube_ss = to_screen(rb_cube);
-    xz = RectFloat{lt_cube_ss, rb_cube_ss};
+
+    glm::ivec2 const origin = viewport.left_top();
+    auto const lt_vp = sc::screen_to_viewport(lt_cube_ss, origin);
+    auto const rb_vp = sc::screen_to_viewport(rb_cube_ss, origin);
+    xz = RectFloat{lt_vp, rb_vp};
 
     RectTransform const rect_tr{xz, tr};
     return collision::overlap(mouse_rect, rect_tr, proj, view);
@@ -106,15 +110,15 @@ make_wireframe_program(common::Logger& logger)
 Cube
 make_cube(RNG& rng, bool const is_2d)
 {
-  float constexpr MIN = 0, MAX = 200;
+  float constexpr MIN = -45, MAX = 45;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
-  auto const gen = [&rng]() { return 100; };//rng.gen_float_range(MIN + 1, MAX); };
+  auto const gen = [&rng]() { return MAX; };//rng.gen_float_range(MIN + 1, MAX); };
 
   glm::vec3 min, max;
   if (is_2d) {
-    min = glm::vec3{-50, -50, 0};
-    max = glm::vec3{50, 50, 0};
+    min = glm::vec3{-45, -45, 0};
+    max = glm::vec3{45, 45, 0};
   }
   else {
     min = glm::vec3{MIN, MIN, MIN};
@@ -124,14 +128,14 @@ make_cube(RNG& rng, bool const is_2d)
 }
 
 CubeEntities
-gen_cube_entities(common::Logger& logger, size_t const num_cubes, ScreenSize const& ss,
+gen_cube_entities(common::Logger& logger, size_t const num_cubes, RectInt const& view_size,
                   ShaderProgram const& sp, RNG &rng, bool const is_2d)
 {
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
   auto const gen_between_0_and = [&gen](auto const& max) { return gen(0, max); };
   auto const gen_tr = [&]() {
-    auto const x = 100.0f;//gen_between_0_and(ss.width);
-    auto const y = 100.0f;//gen_between_0_and(ss.height);
+    auto const x = 180.0f;//gen_between_0_and(view_size.width());
+    auto const y = 180.0f;//gen_between_0_and(view_size.height());
 
     return is_2d
       ? glm::vec3{x, y, 0}

@@ -118,7 +118,7 @@ boomhs::Cube
 make_cube(boomhs::RNG&, float, float);
 
 CubeEntities
-gen_cube_entities(common::Logger&, size_t, boomhs::ScreenSize const&, opengl::ShaderProgram const&,
+gen_cube_entities(common::Logger&, size_t, boomhs::RectInt const&, opengl::ShaderProgram const&,
                   boomhs::RNG &, bool);
 
 } // namespace demo

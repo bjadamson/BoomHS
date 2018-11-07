@@ -69,7 +69,7 @@ static int constexpr NUM_RECTS = 1;
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 
-static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
+static auto constexpr VIEWPORT = Viewport{WIDTH/2, 0, WIDTH/2, HEIGHT/2};
 
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
@@ -300,12 +300,12 @@ make_rects(common::Logger& logger, int const num_rects, ShaderProgram& sp, RNG &
     return PmRects{MOVE(vector_pms), &sp};
   };
 
-  auto constexpr prect = RectFloat{-50, -50, 50, 50};
+  auto constexpr prect = RectFloat{-15, -15, 15, 15};
   auto vppm_rects  = pmake_pmrects(prect);
 
   {
-    auto const MIN = glm::vec3{VIEWPORT.left(), VIEWPORT.top(), 0};;
-    auto const max = MIN + VEC3{VIEWPORT.width(), VIEWPORT.height(), 0};
+    //auto const MIN = glm::vec3{VIEWPORT.left(), VIEWPORT.top(), 0};;
+    //auto const max = MIN + VEC3{VIEWPORT.width(), VIEWPORT.height(), 0};
     for (auto& rect : vppm_rects.rects) {
       rect.transform.translation = glm::vec3{100, 100, 0};//rng.gen_3dposition(MIN, max);
       rect.transform.rotate_degrees(5.0f, constants::Z_UNIT_VECTOR);
@@ -363,8 +363,7 @@ main(int argc, char **argv)
   assert(!vp_rects.rects.empty());
 
   bool constexpr IS_2D = true;
-  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect.size(), rect_sp, rng,
-                                           IS_2D);
+  auto cube_ents = demo::gen_cube_entities(logger, NUM_CUBES, window_rect, rect_sp, rng, IS_2D);
   auto wire_sp   = demo::make_wireframe_program(logger);
 
   auto constexpr ZOOM   = glm::ivec2{0};
