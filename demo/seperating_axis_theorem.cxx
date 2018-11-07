@@ -69,8 +69,8 @@ static int constexpr NUM_RECTS = 1;
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 
-static auto constexpr VIEWPORT          = Viewport{0, 0, WIDTH, HEIGHT};
-static auto const     VPGRID_DIMENSIONS = glm::ivec2{1, 1};
+static auto constexpr VIEWPORT          = Viewport{0, 0, WIDTH / 2, HEIGHT / 2};
+static auto const     VPGRID_DIMENSIONS = glm::ivec2{2, 2};
 
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
@@ -99,17 +99,16 @@ struct PmRect
   MOVE_DEFAULT_ONLY(PmRect);
 };
 
-struct ViewportPmRects
+struct PmRects
 {
   std::vector<PmRect> rects;
-  Viewport            viewport;
   ShaderProgram*      sp;
 
-  MOVE_DEFAULT_ONLY(ViewportPmRects);
+  MOVE_DEFAULT_ONLY(PmRects);
 };
 
 bool
-process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRects& vp_rects,
+process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_rects,
                 Transform& controlled_tr, CubeEntities& cube_ents)
 {
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
@@ -182,7 +181,7 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, ViewportPmRec
 }
 
 void
-update(common::Logger& logger, ViewportPmRects& vp_rects, CubeEntities& cube_ents,
+update(common::Logger& logger, PmRects& vp_rects, CubeEntities& cube_ents,
        ProjMatrix const& proj, ViewMatrix const& view)
 {
   assert(!vp_rects.rects.empty());
@@ -235,7 +234,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 }
 
 bool
-process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rects,
+process_event(common::Logger& logger, SDL_Event& event, PmRects& vp_rects,
               CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
               Transform& controlled_tr, FrameTime const& ft)
 {
@@ -278,17 +277,20 @@ process_event(common::Logger& logger, SDL_Event& event, ViewportPmRects& vp_rect
       for (auto& rect : vp_rects.rects) {
         rect.mouse_selected = false;
       }
+
+      for (auto& cube : cube_ents) {
+        cube.selected = false;
+      }
     }
   }
   return event.type == SDL_QUIT;
 }
 
 auto
-make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport, ShaderProgram& sp,
-    RNG &rng)
+make_rects(common::Logger& logger, int const num_rects, ShaderProgram& sp, RNG &rng)
 {
   auto const& va = sp.va();
-  auto const make_viewportpm_rects = [&](auto const& r, auto const& viewport) {
+  auto const pmake_pmrects = [&](auto const& r) {
     std::vector<PmRect> vector_pms;
 
     FORI(i, num_rects) {
@@ -296,15 +298,15 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
       vector_pms.emplace_back(PmRect{r, MOVE(di)});
     }
 
-    return ViewportPmRects{MOVE(vector_pms), viewport, &sp};
+    return PmRects{MOVE(vector_pms), &sp};
   };
 
   auto constexpr prect = RectFloat{-50, -50, 50, 50};
-  auto vppm_rects  = make_viewportpm_rects(prect, viewport);
+  auto vppm_rects  = pmake_pmrects(prect);
 
   {
-    auto const& MIN = constants::ZERO;
-    auto const max = VEC3{WIDTH, HEIGHT, 0};
+    auto const MIN = glm::vec3{VIEWPORT.left(), VIEWPORT.top(), 0};;
+    auto const max = MIN + VEC3{VIEWPORT.width(), VIEWPORT.height(), 0};
     for (auto& rect : vppm_rects.rects) {
       rect.transform.translation = glm::vec3{100, 100, 0};//rng.gen_3dposition(MIN, max);
       rect.transform.rotate_degrees(5.0f, constants::Z_UNIT_VECTOR);
@@ -315,13 +317,10 @@ make_rects(common::Logger& logger, int const num_rects, Viewport const& viewport
 }
 
 void
-draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_rects,
+draw_scene(common::Logger& logger, UiRenderer& ui_renderer, PmRects& vp_rects,
            CubeEntities& cube_ents, ShaderProgram& wire_sp, CameraMatrices const& cm, DrawState& ds)
 {
-  auto const screen_height = VIEWPORT.height();
-
-  auto const& viewport = vp_rects.viewport;
-  OR::set_viewport_and_scissor(viewport, screen_height);
+  OR::set_viewport_and_scissor(VIEWPORT, HEIGHT);
 
   for (auto& pm_rect : vp_rects.rects) {
     auto& di         = pm_rect.di;
@@ -333,7 +332,7 @@ draw_scene(common::Logger& logger, UiRenderer& ui_renderer, ViewportPmRects& vp_
     auto const mouse_pos = gl_sdl::mouse_coords();
     auto const& pos_init = MOUSE_INFO.click_positions.left_right;
     MouseRectangleRenderer::draw_mouseselect_rect(logger, pos_init, mouse_pos, LOC4::PURPLE,
-                                                  viewport, ds);
+                                                  VIEWPORT, ds);
   }
 
   demo::draw_bboxes(logger, cm, cube_ents, wire_sp, ds);
@@ -361,7 +360,7 @@ main(int argc, char **argv)
   auto& rect_sp = color2d_program.sp();
 
   RNG rng;
-  auto vp_rects = make_rects(logger, NUM_RECTS, VIEWPORT, rect_sp, rng);
+  auto vp_rects = make_rects(logger, NUM_RECTS, rect_sp, rng);
   assert(!vp_rects.rects.empty());
 
   bool constexpr IS_2D = true;

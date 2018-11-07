@@ -38,7 +38,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cube.xy_rect();
-    xz = sc::screen_to_viewport(xz, vpgrid_size);
+    //xz = sc::screen_to_viewport(xz, vpgrid_size);
 
     auto const cxx4l = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
 
