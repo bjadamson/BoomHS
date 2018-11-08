@@ -27,7 +27,7 @@ namespace demo
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
                                    CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
-                                   Viewport const& viewport)
+                                   Viewport const& viewport, bool const is_2d)
 {
   namespace sc       = math::space_conversions;
   auto const cxx4l   = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
@@ -58,7 +58,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     xz = RectFloat{lt_vp, rb_vp};
 
     RectTransform const rect_tr{xz, tr};
-    return collision::overlap(mouse_rect, rect_tr, proj, view);
+    return collision::overlap(mouse_rect, rect_tr, proj, view, viewport, is_2d);
   };
 
   for (auto &ce : cube_ents) {
@@ -111,19 +111,19 @@ make_wireframe_program(common::Logger& logger)
 Cube
 make_cube(RNG& rng, bool const is_2d)
 {
-  float constexpr MIN = -45, MAX = 45;
+  float constexpr MIN = 0, MAX = 100;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
   auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
 
   glm::vec3 min, max;
   if (is_2d) {
-    min = glm::vec3{-45, -45, 0};
-    max = glm::vec3{45, 45, 0};
+    min = glm::vec3{-gen(), -gen(), 0};
+    max = glm::vec3{+gen(), +gen(), 0};
   }
   else {
-    min = glm::vec3{MIN, MIN, MIN};
-    max = glm::vec3{gen(), gen(), gen()};
+    min = glm::vec3{-gen(), -gen(), -gen()};
+    max = glm::vec3{+gen(), +gen(), +gen()};
   }
   return Cube{min, max};
 }

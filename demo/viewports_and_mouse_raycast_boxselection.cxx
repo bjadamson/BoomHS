@@ -420,8 +420,10 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
         auto const mouse_rect    = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
                                                                vi.mouse_offset());
         auto const& cm     = vi.matrices;
+
+        bool constexpr IS_2D = false;
         select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, cm.proj, cm.view,
-                                           vi.viewport);
+                                           vi.viewport, IS_2D);
       }
     } break;
 

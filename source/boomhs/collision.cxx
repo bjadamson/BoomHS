@@ -2,6 +2,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/transform.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <common/algorithm.hpp>
 #include <limits>
@@ -323,7 +324,8 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 
 // Compare the rectangle 'a' with the rectangle within 'rb' after applying the transform to the 
 bool
-overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, ViewMatrix const& view)
+overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, ViewMatrix const& view,
+        Viewport const& viewport, bool const is_2d)
 {
   Transform ta;
   RectTransform const ra{a, ta};
@@ -333,8 +335,14 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
 
   bool const is_axis_aligned = !rb.transform.is_rotated();
   if (is_axis_aligned) {
-    auto const lt = rbr.scaled_left_top(rb.transform);
-    auto const br = rbr.scaled_right_bottom(rb.transform);
+    auto lt           = rbr.scaled_left_top(rb.transform);
+    auto br           = rbr.scaled_right_bottom(rb.transform);
+    auto const origin = viewport.left_top();
+
+    if (is_2d) {
+      lt -= origin;
+      br -= origin;
+    }
 
     RectFloat const new_rectb{
       lt.x  + rbt.x,
@@ -348,15 +356,28 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
     tb.rotation = rb.transform.rotation;
     RectTransform const rb_new{new_rectb, tb};
 
-    return overlap(ra, rb_new, proj, view);
+    return overlap(ra, rb_new, proj, view, viewport);
   }
 
-  return overlap(ra, rb, proj, view);
+  auto rb_rect = rb.rect;
+  Transform ZZZ;
+  if (is_2d) {
+    auto const origin = viewport.left_top();
+    ZZZ.translation.x = origin.x;
+    ZZZ.translation.y = origin.y;
+  }
+
+  Transform tb = rb.transform;
+  tb.rotation = rb.transform.rotation;
+  RectTransform const rb_new{rb_rect, tb};
+
+  RectTransform const ra_rt{a, ZZZ};
+  return overlap(ra_rt, rb_new, proj, view, viewport);
 }
 
 bool
 overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj,
-        ViewMatrix const& view)
+        ViewMatrix const& view, Viewport const& viewport)
 {
   auto const& ra = a.rect;
   auto const& rb = b.rect;

@@ -65,7 +65,7 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES = 50;
+static int constexpr NUM_CUBES = 40;
 static int constexpr NUM_RECTS = 40;
 
 static int constexpr WIDTH     = 1024;
@@ -112,6 +112,8 @@ bool
 process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_rects,
                 Transform& controlled_tr, CubeEntities& cube_ents)
 {
+  auto constexpr SCALE_AMOUNT = 0.2;
+
   uint8_t const* keystate = SDL_GetKeyboardState(nullptr);
   assert(keystate);
   bool const shift_down = keystate[SDL_SCANCODE_LSHIFT];
@@ -159,13 +161,26 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
     case SDLK_s:
       transform_ents(+constants::Y_UNIT_VECTOR);
       break;
-
     // scaling
-    case SDLK_e:
-      scale_ents(+VEC3(0.2));
+    case SDLK_1:
+      scale_ents(+VEC3(SCALE_AMOUNT, 0, 0));
       break;
-    case SDLK_q:
-      scale_ents(-VEC3(0.2));
+    case SDLK_2:
+      scale_ents(-VEC3(SCALE_AMOUNT, 0, 0));
+      break;
+
+    case SDLK_3:
+      scale_ents(+VEC3(0, SCALE_AMOUNT, 0));
+      break;
+    case SDLK_4:
+      scale_ents(-VEC3(0, SCALE_AMOUNT, 0));
+      break;
+
+    case SDLK_5:
+      scale_ents(+VEC3(0, 0, SCALE_AMOUNT));
+      break;
+    case SDLK_6:
+      scale_ents(-VEC3(0, 0, SCALE_AMOUNT));
       break;
 
     // rotation
@@ -196,7 +211,7 @@ update(common::Logger& logger, PmRects& vp_rects, CubeEntities& cube_ents,
       RectTransform const ra{a.rect, a.transform};
       RectTransform const rb{b.rect, b.transform};
 
-      overlap |= collision::overlap(ra, rb, proj, view);
+      overlap |= collision::overlap(ra, rb, proj, view, VIEWPORT);
     }
 
     a.color = a.mouse_selected ? CLICK_COLOR
@@ -211,7 +226,10 @@ select_pmrects_under_user_drawn_rect(common::Logger& logger, RectFloat const& mo
 {
   for (auto& rect : rects) {
     RectTransform const rect_tr{rect.rect, rect.transform};
-    rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view);
+
+    auto const origin = VIEWPORT.left_top();
+    bool constexpr IS_2D = true;
+    rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view, VIEWPORT, IS_2D);
   }
 }
 
@@ -229,8 +247,9 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 
     select_pmrects_under_user_drawn_rect(logger, mouse_rect, rects, proj, view);
 
+    bool constexpr IS_2D = false;
     demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, proj,
-                                             view, VIEWPORT);
+                                             view, VIEWPORT, IS_2D);
   }
 }
 
@@ -302,7 +321,18 @@ make_rects(common::Logger& logger, int const num_rects, ShaderProgram& sp, RNG &
     return PmRects{MOVE(vector_pms), &sp};
   };
 
-  auto constexpr prect = RectFloat{-15, -15, 15, 15};
+  auto constexpr MIN = -80;
+  auto constexpr MAX = +80;
+
+  auto const left_top     = rng.gen_float_range(MIN, 0);
+  auto const right_bottom = rng.gen_float_range(0, MAX);
+
+  auto const prect = RectFloat{
+    left_top,
+    left_top,
+    right_bottom,
+    right_bottom
+  };
   auto vppm_rects  = pmake_pmrects(prect);
 
   {
@@ -310,7 +340,6 @@ make_rects(common::Logger& logger, int const num_rects, ShaderProgram& sp, RNG &
     auto const max = MIN + VEC3{VIEWPORT.width(), VIEWPORT.height(), 0};
     for (auto& rect : vppm_rects.rects) {
       rect.transform.translation = rng.gen_3dposition(MIN, max);
-      //rect.transform.rotate_degrees(5.0f, constants::Z_UNIT_VECTOR);
     }
   }
 
