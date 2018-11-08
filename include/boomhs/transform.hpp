@@ -1,5 +1,7 @@
 #pragma once
-#include <boomhs/math.hpp>
+#include <boomhs/euler.hpp>
+
+#include <extlibs/glm.hpp>
 
 namespace boomhs
 {
@@ -7,15 +9,12 @@ namespace boomhs
 struct Transform
 {
   // fields
-  glm::vec3 translation = math::constants::ZERO;
-  glm::quat rotation    = {};
-  glm::vec3 scale       = math::constants::ONE;
+  glm::vec3 translation;
+  glm::quat rotation;
+  glm::vec3 scale;
 
-  Transform() {}
-  Transform(glm::vec3 const& tr)
-      : translation(tr)
-  {
-  }
+  Transform();
+  Transform(glm::vec3 const&);
 
   // methods
   glm::mat4 model_matrix() const;

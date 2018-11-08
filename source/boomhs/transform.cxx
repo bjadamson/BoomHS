@@ -1,10 +1,22 @@
 #include <boomhs/transform.hpp>
+#include <boomhs/math.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math;
 
 namespace boomhs
 {
+
+Transform::Transform(glm::vec3 const& tr)
+    : translation(tr)
+    , scale(constants::ONE)
+{
+}
+
+Transform::Transform()
+    : Transform(constants::ZERO)
+{
+}
 
 glm::mat4
 Transform::model_matrix() const

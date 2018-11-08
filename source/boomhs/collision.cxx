@@ -321,11 +321,36 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
   return x && y && z;
 }
 
+// Compare the rectangle 'a' with the rectangle within 'rb' after applying the transform to the 
 bool
 overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, ViewMatrix const& view)
 {
   Transform ta;
   RectTransform const ra{a, ta};
+
+  auto const& rbr = rb.rect;
+  auto const& rbt = rb.transform.translation;
+
+  bool const is_axis_aligned = !rb.transform.is_rotated();
+  if (is_axis_aligned) {
+    auto const lt = rbr.scaled_left_top(rb.transform);
+    auto const br = rbr.scaled_right_bottom(rb.transform);
+
+    RectFloat const new_rectb{
+      lt.x  + rbt.x,
+      lt.y  + rbt.y,
+
+      br.x + rbt.x,
+      br.y + rbt.y
+    };
+
+    Transform tb;
+    tb.rotation = rb.transform.rotation;
+    RectTransform const rb_new{new_rectb, tb};
+
+    return overlap(ra, rb_new, proj, view);
+  }
+
   return overlap(ra, rb, proj, view);
 }
 

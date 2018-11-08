@@ -3,8 +3,10 @@
 #include <boomhs/color.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/raycast.hpp>
+#include <boomhs/rectangle.hpp>
 #include <boomhs/random.hpp>
 #include <boomhs/vertex_factory.hpp>
 #include <boomhs/viewport.hpp>
@@ -63,13 +65,13 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES = 1;
-static int constexpr NUM_RECTS = 1;
+static int constexpr NUM_CUBES = 50;
+static int constexpr NUM_RECTS = 40;
 
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
 
-static auto constexpr VIEWPORT = Viewport{WIDTH/2, 0, WIDTH/2, HEIGHT/2};
+static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
 static int constexpr NEAR      = -1.0;
 static int constexpr FAR       = 1.0f;
@@ -304,11 +306,11 @@ make_rects(common::Logger& logger, int const num_rects, ShaderProgram& sp, RNG &
   auto vppm_rects  = pmake_pmrects(prect);
 
   {
-    //auto const MIN = glm::vec3{VIEWPORT.left(), VIEWPORT.top(), 0};;
-    //auto const max = MIN + VEC3{VIEWPORT.width(), VIEWPORT.height(), 0};
+    auto const MIN = glm::vec3{VIEWPORT.left(), VIEWPORT.top(), 0};;
+    auto const max = MIN + VEC3{VIEWPORT.width(), VIEWPORT.height(), 0};
     for (auto& rect : vppm_rects.rects) {
-      rect.transform.translation = glm::vec3{100, 100, 0};//rng.gen_3dposition(MIN, max);
-      rect.transform.rotate_degrees(5.0f, constants::Z_UNIT_VECTOR);
+      rect.transform.translation = rng.gen_3dposition(MIN, max);
+      //rect.transform.rotate_degrees(5.0f, constants::Z_UNIT_VECTOR);
     }
   }
 

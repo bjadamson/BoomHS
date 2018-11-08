@@ -1,4 +1,5 @@
 #include <boomhs/math.hpp>
+#include <boomhs/rectangle.hpp>
 #include <boomhs/shape.hpp>
 #include <boomhs/vertex_factory.hpp>
 #include <boomhs/viewport.hpp>

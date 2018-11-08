@@ -1,6 +1,7 @@
 #include <demo/common.hpp>
 #include <boomhs/collision.hpp>
 #include <boomhs/frame.hpp>
+#include <boomhs/rectangle.hpp>
 
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
@@ -113,7 +114,7 @@ make_cube(RNG& rng, bool const is_2d)
   float constexpr MIN = -45, MAX = 45;
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
-  auto const gen = [&rng]() { return MAX; };//rng.gen_float_range(MIN + 1, MAX); };
+  auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
 
   glm::vec3 min, max;
   if (is_2d) {
@@ -134,8 +135,8 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, RectInt const&
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
   auto const gen_between_0_and = [&gen](auto const& max) { return gen(0, max); };
   auto const gen_tr = [&]() {
-    auto const x = 180.0f;//gen_between_0_and(view_size.width());
-    auto const y = 180.0f;//gen_between_0_and(view_size.height());
+    auto const x = gen_between_0_and(view_size.width());
+    auto const y = gen_between_0_and(view_size.height());
 
     return is_2d
       ? glm::vec3{x, y, 0}
@@ -148,9 +149,6 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, RectInt const&
     auto tr = gen_tr();
     auto di = make_bbox(logger, sp, cube);
     cube_ents.emplace_back(MOVE(cube), MOVE(tr), MOVE(di));
-
-    auto& back = cube_ents.back();
-    back.transform().rotate_degrees(5.0f, math::constants::Z_UNIT_VECTOR);
   }
   return cube_ents;
 }

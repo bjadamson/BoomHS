@@ -2,9 +2,11 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/frame_time.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/raycast.hpp>
 #include <boomhs/random.hpp>
+#include <boomhs/rectangle.hpp>
 #include <boomhs/vertex_factory.hpp>
 #include <boomhs/viewport.hpp>
 

@@ -6,6 +6,8 @@
 #include <opengl/shader.hpp>
 
 #include <boomhs/camera.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/rectangle.hpp>
 #include <boomhs/shape.hpp>
 
 using namespace boomhs;
