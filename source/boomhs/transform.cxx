@@ -4,12 +4,58 @@
 using namespace boomhs;
 using namespace boomhs::math;
 
+namespace
+{
+
+
+template <typename T>
+glm::mat4
+compute_modelmatrix(T const& transform)
+{
+  auto const& t = transform.translation;
+  auto const& r = transform.rotation;
+  auto const& s = transform.scale;
+  return math::compute_modelmatrix(t, r, s);
+}
+
+} // namespace
+
 namespace boomhs
 {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Transform2D
+Transform2D::Transform2D(glm::vec2 const& pos)
+    : translation(pos)
+    , scale(constants::ONE)
+{
+}
+
+Transform2D::Transform2D(float const x, float const y)
+    : Transform2D(glm::vec2{x, y})
+{
+}
+
+Transform2D::Transform2D()
+    : Transform2D(constants::ZERO)
+{
+}
+
+glm::mat4
+Transform2D::model_matrix() const
+{
+  return compute_modelmatrix(*this);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Transform
 Transform::Transform(glm::vec3 const& tr)
     : translation(tr)
     , scale(constants::ONE)
+{
+}
+Transform::Transform(float const x, float const y, float const z)
+    : Transform(glm::vec3{x, y, z})
 {
 }
 
@@ -21,70 +67,7 @@ Transform::Transform()
 glm::mat4
 Transform::model_matrix() const
 {
-  return math::compute_modelmatrix(translation, rotation, scale);
-}
-
-glm::vec3
-Transform::get_rotation_radians() const
-{
-  return glm::eulerAngles(rotation);
-}
-
-void
-Transform::rotate_radians(float const radians, glm::vec3 const& axis)
-{
-  rotation = glm::angleAxis(radians, axis) * rotation;
-}
-
-void
-Transform::rotate_radians(float const radians, EulerAxis const axis)
-{
-  switch (axis) {
-  case EulerAxis::X:
-    rotate_radians(radians, constants::X_UNIT_VECTOR);
-    break;
-  case EulerAxis::Y:
-    rotate_radians(radians, constants::Y_UNIT_VECTOR);
-    break;
-  case EulerAxis::Z:
-    rotate_radians(radians, constants::Z_UNIT_VECTOR);
-    break;
-  case EulerAxis::INVALID:
-    std::abort();
-    break;
-  }
-}
-
-void
-Transform::rotate_xyz_radians(glm::vec3 const& rot)
-{
-  rotate_radians(rot.x, EulerAxis::X);
-  rotate_radians(rot.y, EulerAxis::Y);
-  rotate_radians(rot.z, EulerAxis::Z);
-}
-
-glm::vec3
-Transform::get_rotation_degrees() const
-{
-  return glm::degrees(get_rotation_radians());
-}
-
-void
-Transform::rotate_degrees(float const degrees, glm::vec3 const& axis)
-{
-  rotate_radians(glm::radians(degrees), axis);
-}
-
-void
-Transform::rotate_degrees(float const degrees, EulerAxis const axis)
-{
-  rotate_radians(glm::radians(degrees), axis);
-}
-
-void
-Transform::rotate_xyz_degrees(glm::vec3 const& rot)
-{
-  rotate_xyz_radians(glm::radians(rot));
+  return compute_modelmatrix(*this);
 }
 
 } // namespace boomhs

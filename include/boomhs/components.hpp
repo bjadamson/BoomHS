@@ -176,4 +176,10 @@ struct RectTransform
   Transform const& transform;
 };
 
+struct RectTransform2D
+{
+  RectFloat   const& rect;
+  Transform2D const& transform;
+};
+
 } // namespace boomhs

@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/math_constants.hpp>
 #include <boomhs/rectangle.hpp>
 #include <common/algorithm.hpp>
 
@@ -24,21 +25,6 @@ using ScaleMatrix       = glm::mat4;
 using RotationMatrix    = glm::mat4;
 
 } // namespace boomhs
-
-namespace boomhs::math::constants
-{
-auto constexpr ZERO = glm::vec3{0};
-auto constexpr ONE  = glm::vec3{1};
-
-auto constexpr X_UNIT_VECTOR = glm::vec3{1.0f, 0.0f, 0.0f};
-auto constexpr Y_UNIT_VECTOR = glm::vec3{0.0f, 1.0f, 0.0f};
-auto constexpr Z_UNIT_VECTOR = glm::vec3{0.0f, 0.0f, 1.0f};
-
-auto constexpr PI       = glm::pi<float>();
-auto constexpr TWO_PI   = PI * 2.0f;
-auto constexpr EPSILONF = std::numeric_limits<float>::epsilon();
-
-} // namespace boomhs::math::constants
 
 namespace boomhs::math
 {
@@ -174,6 +160,19 @@ compute_modelmatrix(glm::vec3 const& translation, glm::quat const& rotation, glm
   auto const rmatrix = glm::toMat4(rotation);
   auto const smatrix = glm::scale(glm::mat4{}, scale);
   return tmatrix * rmatrix * smatrix;
+}
+
+inline ModelMatrix
+compute_modelmatrix(glm::vec2 const& t, glm::quat const& r, glm::vec2 const& s)
+{
+  // 2D
+  auto constexpr Z = 0;
+  auto constexpr Z_SCALE = 0;
+
+  glm::vec3 const tr{t.x, t.y, Z};
+  glm::vec3 const sc{s.x, s.y, Z_SCALE};
+
+  return compute_modelmatrix(tr, r, sc);
 }
 
 inline ModelViewMatrix
