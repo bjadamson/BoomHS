@@ -55,7 +55,7 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES                   = 100;
+static int constexpr NUM_CUBES                   = 1;
 static glm::ivec2 constexpr SCREENSIZE_VIEWPORT_SIZE{2.0f, 2.0};
 
 // clang-format off

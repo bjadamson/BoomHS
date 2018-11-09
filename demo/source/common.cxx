@@ -26,8 +26,9 @@ namespace demo
 
 void
 select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mouse_rect,
-                                   CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
-                                   Viewport const& viewport, bool const is_2d)
+                                   CubeEntities& cube_ents, ProjMatrix const& proj,
+                                   ViewMatrix const& view, Viewport const& viewport,
+                                   bool const is_2d)
 {
   namespace sc       = math::space_conversions;
   auto const cxx4l   = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
@@ -40,17 +41,17 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
 
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cube.xy_rect();
-
-    auto const lt_cube = cxx4l(xz.left_top());
-    auto const rb_cube = cxx4l(xz.right_bottom());
-
     {
       auto const model = tr.model_matrix();
       auto const convert_to_viewport_space = [&](auto const& cube) {
         return sc::object_to_viewport(cube, model, proj, view, vp_rect);
       };
-      auto const lt_vp = convert_to_viewport_space(lt_cube);
-      auto const rb_vp = convert_to_viewport_space(rb_cube);
+
+      auto const lt = cxx4l(xz.left_top());
+      auto const rb = cxx4l(xz.right_bottom());
+
+      auto const lt_vp = convert_to_viewport_space(lt);
+      auto const rb_vp = convert_to_viewport_space(rb);
       xz = RectFloat{lt_vp, rb_vp};
     }
 
