@@ -161,25 +161,32 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
     case SDLK_s:
       transform_ents(+constants::Y_UNIT_VECTOR);
       break;
-    // scaling
+
+    // non-uniform scaling
     case SDLK_1:
-      scale_ents(+VEC3(SCALE_AMOUNT, 0, 0));
+      scale_ents(+VEC3(SCALE_AMOUNT));
       break;
     case SDLK_2:
-      scale_ents(-VEC3(SCALE_AMOUNT, 0, 0));
+      scale_ents(-VEC3(SCALE_AMOUNT));
       break;
 
+    // non-uniform scaling
     case SDLK_3:
-      scale_ents(+VEC3(0, SCALE_AMOUNT, 0));
+      scale_ents(+VEC3(SCALE_AMOUNT, 0, 0));
       break;
     case SDLK_4:
-      scale_ents(-VEC3(0, SCALE_AMOUNT, 0));
+      scale_ents(-VEC3(SCALE_AMOUNT, 0, 0));
       break;
-
     case SDLK_5:
-      scale_ents(+VEC3(0, 0, SCALE_AMOUNT));
+      scale_ents(+VEC3(0, SCALE_AMOUNT, 0));
       break;
     case SDLK_6:
+      scale_ents(-VEC3(0, SCALE_AMOUNT, 0));
+      break;
+    case SDLK_7:
+      scale_ents(+VEC3(0, 0, SCALE_AMOUNT));
+      break;
+    case SDLK_8:
       scale_ents(-VEC3(0, 0, SCALE_AMOUNT));
       break;
 
