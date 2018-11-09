@@ -44,18 +44,15 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     auto const lt_cube = cxx4l(xz.left_top());
     auto const rb_cube = cxx4l(xz.right_bottom());
 
-    auto const model = tr.model_matrix();
-
-    auto const to_screen = [&](auto const& cube) {
-      return sc::object_to_screen(cube, model, proj, view, vp_rect);
-    };
-    auto const lt_cube_ss = to_screen(lt_cube);
-    auto const rb_cube_ss = to_screen(rb_cube);
-
-    glm::ivec2 const origin = viewport.left_top();
-    auto const lt_vp = sc::screen_to_viewport(lt_cube_ss, origin);
-    auto const rb_vp = sc::screen_to_viewport(rb_cube_ss, origin);
-    xz = RectFloat{lt_vp, rb_vp};
+    {
+      auto const model = tr.model_matrix();
+      auto const convert_to_viewport_space = [&](auto const& cube) {
+        return sc::object_to_viewport(cube, model, proj, view, vp_rect);
+      };
+      auto const lt_vp = convert_to_viewport_space(lt_cube);
+      auto const rb_vp = convert_to_viewport_space(rb_cube);
+      xz = RectFloat{lt_vp, rb_vp};
+    }
 
     RectTransform const rect_tr{xz, tr};
     return collision::overlap(mouse_rect, rect_tr, proj, view, viewport, is_2d);

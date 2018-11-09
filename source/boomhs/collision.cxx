@@ -335,8 +335,8 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
 
   bool const is_axis_aligned = !rb.transform.is_rotated();
   if (is_axis_aligned) {
-    auto lt           = rbr.scaled_left_top(rb.transform);
-    auto br           = rbr.scaled_right_bottom(rb.transform);
+    auto lt           = rbr.left_top_scaled(rb.transform);
+    auto br           = rbr.right_bottom_scaled(rb.transform);
     auto const origin = viewport.left_top();
 
     if (is_2d) {

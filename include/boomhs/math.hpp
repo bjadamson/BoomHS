@@ -579,4 +579,24 @@ object_to_screen(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const&
   return object_to_screen(p4, model, proj, view, viewport);
 }
 
+// from:
+//   object space
+// to:
+//    viewport space
+inline glm::vec2
+object_to_viewport(glm::vec4 const& p, ModelMatrix const& model, ProjMatrix const& proj,
+                 ViewMatrix const& view, RectFloat const& viewport)
+{
+  auto const ss = object_to_screen(p, model, proj, view, viewport);
+  return screen_to_viewport(ss, viewport.left_top());
+}
+
+inline glm::vec2
+object_to_viewport(glm::vec3 const& p, ModelMatrix const& model, ProjMatrix const& proj,
+                 ViewMatrix const& view, RectFloat const& viewport)
+{
+  glm::vec4 const p4{p, DEFAULT_W};
+  return object_to_viewport(p4, model, proj, view, viewport);
+}
+
 } // namespace boomhs::math::space_conversions

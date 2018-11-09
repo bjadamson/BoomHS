@@ -39,8 +39,24 @@ struct PolygonVertices
 
 
 template <typename V>
-struct RectT
+class RectT
 {
+  // Helper function for getting the center and the scaled half sizes
+  auto constexpr
+  center_and_scaled_half_size(Transform const& tr) const
+  {
+    auto const& s   = tr.scale;
+    auto const hs   = half_size();
+    auto const s_hs = glm::vec2{
+      s.x * hs.x,
+      s.y * hs.y
+    };
+
+    auto const c = center();
+    return PAIR(c, s_hs);
+  }
+
+public:
   static auto constexpr num_vertices = 4;
   using vertex_type                  = V;
   using value_type                   = typename V::value_type;
@@ -51,6 +67,20 @@ struct RectT
   value_type right, bottom;
 
   // methods
+  void move(value_type const& x, value_type const& y)
+  {
+    left  += x;
+    right += x;
+
+    top    += y;
+    bottom += y;
+  }
+
+  void move(V const& v)
+  {
+    move(v.x, v.y);
+  }
+
   auto constexpr left_top() const { return V{left, top}; }
   auto constexpr left_bottom() const { return V{left, bottom}; }
 
@@ -72,65 +102,61 @@ struct RectT
   auto constexpr center_top() const { return V{center().x, top}; }
   auto constexpr center_bottom() const { return V{center().x, bottom}; }
 
-  V constexpr scaled_left_top(Transform const& tr) const
+  V constexpr left_top_scaled(Transform const& tr) const
   {
-    auto const& s = tr.scale;
-    auto const c  = center();
-    auto const hs = half_size();
+    auto const [c, shs] = center_and_scaled_half_size(tr);
 
-    auto p = V{left, top};
-    p.x    = c.x - (s.x * hs.x);
-    p.y    = c.y - (s.y * hs.y);
+    V p;
+    p.x = c.x - shs.x;
+    p.y = c.y - shs.y;
     return p;
   }
 
-  V constexpr scaled_right_bottom(Transform const& tr) const
+  V constexpr right_top_scaled(Transform const& tr) const
   {
-    auto const& s = tr.scale;
-    auto const c  = center();
-    auto const hs = half_size();
+    auto const [c, shs] = center_and_scaled_half_size(tr);
 
-    auto p = V{right, bottom};
-    p.x    = c.x + (s.x * hs.x);
-    p.y    = c.y + (s.y * hs.y);
+    V p;
+    p.x = c.x + shs.x;
+    p.y = c.y - shs.y;
     return p;
   }
 
-  /*
-  RectT<V> constexpr
-  scaled_rect(Transform const& tr) const
+  V constexpr left_bottom_scaled(Transform const& tr) const
   {
-    auto const lt = scaled_left_top(tr);
-    auto const rb = scaled_right_bottom(tr);
+    auto const [c, shs] = center_and_scaled_half_size(tr);
 
-    return RectT<V>{lt, rb};
+    V p;
+    p.x = c.x - shs.x;
+    p.y = c.y + shs.y;
+    return p;
   }
 
-  RectT<V> constexpr
-  scaled_half_vertices(Transform const& tr) const
+  V constexpr right_bottom_scaled(Transform const& tr) const
   {
-    return scaled_vertices(tr) / V{2};
-  }
-  */
+    auto const [c, shs] = center_and_scaled_half_size(tr);
 
-  void move(value_type const& x, value_type const& y)
-  {
-    left  += x;
-    right += x;
-
-    top    += y;
-    bottom += y;
+    V p;
+    p.x = c.x + shs.x;
+    p.y = c.y + shs.y;
+    return p;
   }
 
-  void move(V const& v)
-  {
-    move(v.x, v.y);
-  }
-
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // Keep these two sets of functions in sync by hand:
+  //     p*()
+  // and
+  //     p*_scaled()
   V constexpr p0() const { return left_bottom(); }
   V constexpr p1() const { return right_bottom(); }
   V constexpr p2() const { return right_top(); }
   V constexpr p3() const { return left_top(); }
+
+  V constexpr p0_scaled(Transform const& tr) const { return left_bottom_scaled(tr); }
+  V constexpr p1_scaled(Transform const& tr) const { return right_bottom_scaled(tr); }
+  V constexpr p2_scaled(Transform const& tr) const { return right_top_scaled(tr); }
+  V constexpr p3_scaled(Transform const& tr) const { return left_top_scaled(tr); }
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   auto constexpr operator[](size_t const i) const
   {
