@@ -85,10 +85,10 @@ static Color CLICK_COLOR;
 
 struct PmRect
 {
-  RectFloat rect;
-  DrawInfo  di;
-  Transform transform;
-  Color     color;
+  RectFloat   rect;
+  DrawInfo    di;
+  Transform2D transform;
+  Color       color;
 
   bool mouse_selected = false;
 
@@ -108,9 +108,29 @@ struct PmRects
   MOVE_DEFAULT_ONLY(PmRects);
 };
 
+template <typename T, typename F>
+void
+something_3d2d(T& transform, F const& fn, glm::vec3 const& delta)
+{
+  auto& tr = transform;
+
+  bool constexpr IS_3D     = std::is_same_v<T, Transform>;
+  bool constexpr IS_2D     = std::is_same_v<T, Transform2D>;
+  static_assert(IS_3D != IS_2D, "Cannot be both 2D AND 3D.");
+
+  if constexpr (IS_2D) {
+    // When transforming a 2D entity by a 3d vector, drop the Z component.
+    auto const d2 = glm::vec2{delta.x, delta.y};
+    fn(tr, d2);
+  }
+  else {
+    fn(tr, delta);
+  }
+}
+
 bool
 process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_rects,
-                Transform& controlled_tr, CubeEntities& cube_ents)
+                Transform2D& controlled_tr, CubeEntities& cube_ents)
 {
   auto constexpr SCALE_AMOUNT = 0.2;
 
@@ -118,28 +138,39 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
   assert(keystate);
   bool const shift_down = keystate[SDL_SCANCODE_LSHIFT];
 
-  auto const iter_rects = [&](auto const& fn) {
+  auto const iter_rects = [&](auto const& fn, auto&&... args)
+  {
     if (shift_down) {
       for (auto& rect : vp_rects.rects) {
-        fn(rect.transform);
+        fn(rect.transform, FORWARD(args));
       }
       for (auto& cube : cube_ents) {
-        fn(cube.transform());
+        fn(cube.transform(), FORWARD(args));
       }
     }
     else {
-      fn(controlled_tr);
+      fn(controlled_tr, FORWARD(args));
     }
   };
 
   auto const rotate_ents = [&](float const angle_degrees, glm::vec3 const& axis) {
     iter_rects([&](auto& tr) { tr.rotate_degrees(angle_degrees, axis); });
   };
-  auto const transform_ents = [&](glm::vec3 const& delta) {
-    iter_rects([&](auto& tr) { tr.translation += 4 * delta; });
+
+
+  auto const invoke_on_entities = [&iter_rects](auto const& fn, auto&&... args) {
+    auto const lifted = [&](auto& tr) { something_3d2d(tr, fn, FORWARD(args)); };
+    iter_rects(lifted);
   };
+
+  auto const transform_ents = [&](glm::vec3 const& delta) {
+    auto const add_fn = [](auto& tr, auto const& d) { tr.translation += 4 * d; };
+    invoke_on_entities(add_fn, delta);
+  };
+
   auto const scale_ents = [&](glm::vec3 const& delta) {
-    iter_rects([&](auto& tr) { tr.scale += delta; });
+    auto const scale_fn = [](auto& tr, auto const& d) { tr.scale += d; };
+    invoke_on_entities(scale_fn, delta);
   };
   switch (keycode)
   {
@@ -263,7 +294,7 @@ process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
 bool
 process_event(common::Logger& logger, SDL_Event& event, PmRects& vp_rects,
               CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
-              Transform& controlled_tr, FrameTime const& ft)
+              Transform2D& controlled_tr, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
 

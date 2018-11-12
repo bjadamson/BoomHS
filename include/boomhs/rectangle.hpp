@@ -43,7 +43,7 @@ class RectT
 {
   // Helper function for getting the center and the scaled half sizes
   auto constexpr
-  center_and_scaled_half_size(Transform const& tr) const
+  center_and_scaled_half_size(Transform2D const& tr) const
   {
     auto const& s   = tr.scale;
     auto const hs   = half_size();
@@ -102,7 +102,7 @@ public:
   auto constexpr center_top() const { return V{center().x, top}; }
   auto constexpr center_bottom() const { return V{center().x, bottom}; }
 
-  V constexpr left_top_scaled(Transform const& tr) const
+  V constexpr left_top_scaled(Transform2D const& tr) const
   {
     auto const [c, shs] = center_and_scaled_half_size(tr);
 
@@ -112,7 +112,7 @@ public:
     return p;
   }
 
-  V constexpr right_top_scaled(Transform const& tr) const
+  V constexpr right_top_scaled(Transform2D const& tr) const
   {
     auto const [c, shs] = center_and_scaled_half_size(tr);
 
@@ -122,7 +122,7 @@ public:
     return p;
   }
 
-  V constexpr left_bottom_scaled(Transform const& tr) const
+  V constexpr left_bottom_scaled(Transform2D const& tr) const
   {
     auto const [c, shs] = center_and_scaled_half_size(tr);
 
@@ -132,7 +132,7 @@ public:
     return p;
   }
 
-  V constexpr right_bottom_scaled(Transform const& tr) const
+  V constexpr right_bottom_scaled(Transform2D const& tr) const
   {
     auto const [c, shs] = center_and_scaled_half_size(tr);
 
@@ -152,10 +152,10 @@ public:
   V constexpr p2() const { return right_top(); }
   V constexpr p3() const { return left_top(); }
 
-  V constexpr p0_scaled(Transform const& tr) const { return left_bottom_scaled(tr); }
-  V constexpr p1_scaled(Transform const& tr) const { return right_bottom_scaled(tr); }
-  V constexpr p2_scaled(Transform const& tr) const { return right_top_scaled(tr); }
-  V constexpr p3_scaled(Transform const& tr) const { return left_top_scaled(tr); }
+  V constexpr p0_scaled(Transform2D const& tr) const { return left_bottom_scaled(tr); }
+  V constexpr p1_scaled(Transform2D const& tr) const { return right_bottom_scaled(tr); }
+  V constexpr p2_scaled(Transform2D const& tr) const { return right_top_scaled(tr); }
+  V constexpr p3_scaled(Transform2D const& tr) const { return left_top_scaled(tr); }
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   auto constexpr operator[](size_t const i) const

@@ -327,7 +327,7 @@ bool
 overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, ViewMatrix const& view,
         Viewport const& viewport, bool const is_2d)
 {
-  Transform ta;
+  Transform2D ta;
   RectTransform const ra{a, ta};
 
   auto const& rbr = rb.rect;
@@ -352,7 +352,7 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
       br.y + rbt.y
     };
 
-    Transform tb;
+    Transform2D tb;
     tb.rotation = rb.transform.rotation;
     RectTransform const rb_new{new_rectb, tb};
 
@@ -360,15 +360,15 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
   }
 
   auto rb_rect = rb.rect;
-  Transform ZZZ;
+  Transform2D ZZZ;
   if (is_2d) {
     auto const origin = viewport.left_top();
     ZZZ.translation.x = origin.x;
     ZZZ.translation.y = origin.y;
   }
 
-  Transform tb = rb.transform;
-  tb.rotation = rb.transform.rotation;
+  Transform2D tb = rb.transform;
+  tb.rotation    = rb.transform.rotation;
   RectTransform const rb_new{rb_rect, tb};
 
   RectTransform const ra_rt{a, ZZZ};

@@ -100,6 +100,7 @@ rotate_xyz_degrees(T& transform, float const x, float const y, float const z)
   rotate_xyz_degrees(transform, glm::vec3{x, y, z});
 }
 
+
 } // namespace boomhs::transform
 
 namespace boomhs
@@ -210,3 +211,32 @@ struct Transform
 #undef DECLARE_TRANSFORM_COMMON_MEMBER_FUNCTIONS
 
 } // namespace boomhs
+
+namespace boomhs::transform
+{
+
+// Utility/helper function to perform the common operation of lowering a Transform in 3dimensions
+// to a 2d transform.
+//
+// This routine maps the x/y values to the output transform, discarding the z coordinates of the
+// input transform.
+inline Transform2D
+from_3d_to_2d(Transform const& tr3d)
+{
+  Transform2D tr2d;
+  tr2d.rotation = tr3d.rotation;
+  {
+    auto const& scale = tr3d.scale;
+    tr2d.scale        = glm::vec2{scale.x, scale.y};
+  }
+  {
+    auto const& pos_3d = tr3d.translation;
+    auto& pos_2d       = tr2d.translation;
+
+    pos_2d.x = pos_3d.x;
+    pos_2d.y = pos_3d.y;
+  }
+  return tr2d;
+}
+
+} // namespace boomhs::transform

@@ -172,12 +172,6 @@ struct CubeTransform
 
 struct RectTransform
 {
-  RectFloat const& rect;
-  Transform const& transform;
-};
-
-struct RectTransform2D
-{
   RectFloat   const& rect;
   Transform2D const& transform;
 };
