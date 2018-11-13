@@ -159,19 +159,20 @@ auto
 rotated_rectangle_points(RectT<V> const& rect, ModelMatrix const& model, ProjMatrix const& proj,
                          ViewMatrix const& view)
 {
+  auto const& [p0, p1, p2, p3] = rect.points().vertices;
   auto constexpr Z = 0;
 
-  auto const p0 = glm::vec3{rect.p0(), Z};
-  auto const p1 = glm::vec3{rect.p1(), Z};
-  auto const p2 = glm::vec3{rect.p2(), Z};
-  auto const p3 = glm::vec3{rect.p3(), Z};
+  auto const p0_3d = glm::vec3{p0.x, p0.y, Z};
+  auto const p1_3d = glm::vec3{p1.x, p1.y, Z};
+  auto const p2_3d = glm::vec3{p2.x, p2.y, Z};
+  auto const p3_3d = glm::vec3{p3.x, p3.y, Z};
 
   // Transform the points into eye space
   namespace sv = space_conversions;
-  auto const v0_eye = sv::object_to_eye(p0, model, view);
-  auto const v1_eye = sv::object_to_eye(p1, model, view);
-  auto const v2_eye = sv::object_to_eye(p2, model, view);
-  auto const v3_eye = sv::object_to_eye(p3, model, view);
+  auto const v0_eye = sv::object_to_eye(p0_3d, model, view);
+  auto const v1_eye = sv::object_to_eye(p1_3d, model, view);
+  auto const v2_eye = sv::object_to_eye(p2_3d, model, view);
+  auto const v3_eye = sv::object_to_eye(p3_3d, model, view);
 
   // Discard the extra vertices, rectangles only have two dimensions.
   using VerticesT = typename RectT<V>::vertex_type;

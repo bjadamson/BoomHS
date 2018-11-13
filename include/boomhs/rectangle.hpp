@@ -181,7 +181,7 @@ public:
   }
 
   auto constexpr points() const {
-    return vertices_type(p0(), p1(), p2(), p3());
+    return array_type{p0(), p1(), p2(), p3()};
   }
 };
 
