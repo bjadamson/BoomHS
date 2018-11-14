@@ -437,7 +437,13 @@ main(int argc, char **argv)
 
   auto constexpr ZOOM   = glm::ivec2{0};
   ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, ZOOM);
-  ViewMatrix const view = opengl::global::default_viewmatrix();
+
+
+  auto const& CAMERA_POS = constants::ZERO;
+  auto const& VIEW_FWD   = -constants::Z_UNIT_VECTOR;
+  auto const& VIEW_UP    = constants::Y_UNIT_VECTOR;
+
+  ViewMatrix const view = glm::lookAt(CAMERA_POS, VIEW_FWD, VIEW_UP);
 
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 
