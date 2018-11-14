@@ -437,7 +437,7 @@ main(int argc, char **argv)
 
   auto constexpr ZOOM   = glm::ivec2{0};
   ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, ZOOM);
-  ViewMatrix const view{};
+  ViewMatrix const view = opengl::global::default_viewmatrix();
 
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 
