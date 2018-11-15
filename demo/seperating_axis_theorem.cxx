@@ -65,8 +65,8 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES = 40;
-static int constexpr NUM_RECTS = 40;
+static int constexpr NUM_CUBES = 1;
+static int constexpr NUM_RECTS = 1;
 
 static int constexpr WIDTH     = 1024;
 static int constexpr HEIGHT    = 768;
@@ -442,8 +442,7 @@ main(int argc, char **argv)
   auto const& CAMERA_POS = constants::ZERO;
   auto const& VIEW_FWD   = -constants::Z_UNIT_VECTOR;
   auto const& VIEW_UP    = constants::Y_UNIT_VECTOR;
-
-  ViewMatrix const view = glm::lookAt(CAMERA_POS, VIEW_FWD, VIEW_UP);
+  ViewMatrix const view  = glm::lookAtRH(CAMERA_POS, VIEW_FWD, VIEW_UP);
 
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 
