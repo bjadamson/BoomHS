@@ -1,8 +1,8 @@
 #pragma once
 #include <opengl/types.hpp>
-#include <boomhs/math.hpp>
-
 #include <extlibs/static_string.hpp>
+
+#include <boomhs/world_object.hpp>
 
 // Functions within this namespace have global side effects within OpenGL's internal state.
 //
@@ -27,9 +27,9 @@ default_viewmatrix()
 {
   using namespace ::boomhs::math;
 
-  auto const/*expr*/ EYE    = constants::ZERO;
-  auto const/*expr*/ CENTER = -constants::Z_UNIT_VECTOR;
-  auto const/*expr*/ UP     = constants::Y_UNIT_VECTOR;
+  auto const/*expr*/ EYE    = +boomhs::math::constants::ZERO;
+  auto const/*expr*/ CENTER = -boomhs::math::constants::Z_UNIT_VECTOR;
+  auto const/*expr*/ UP     = +boomhs::math::constants::Y_UNIT_VECTOR;
   return glm::lookAt(EYE, CENTER, UP);
 }
 
@@ -58,3 +58,28 @@ precision mediump float;
   ::opengl::glsl::prefix_string() + SOURCE
 
 } // namespace opengl::glsl
+
+namespace opengl::world_orientation
+{
+
+// -Z is pointing FORWARD into the scene, +Y is pointing UP on the screen.
+auto const/*expr*/     FORWARDZ_FORWARD = -boomhs::math::constants::Z_UNIT_VECTOR;
+auto const/*expr*/     FORWARDZ_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto const/*expr*/     FORWARDZ         = boomhs::WorldOrientation{FORWARDZ_FORWARD, FORWARDZ_UP};
+
+// +Z is pointing BACKWARD into the scene, +Y is pointing UP on the screen.
+auto const/*expr*/     REVERSEZ_FORWARD = +boomhs::math::constants::Z_UNIT_VECTOR;
+auto const/*expr*/     REVERSEZ_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto const/*expr*/     REVERSEZ         = boomhs::WorldOrientation{REVERSEZ_FORWARD, REVERSEZ_UP};
+
+// -Y is pointing FORWARD into the scene, +Z is pointing UP on the screen.
+auto const/*expr*/     TOPDOWN_FORWARD  = -boomhs::math::constants::Y_UNIT_VECTOR;
+auto const/*expr*/     TOPDOWN_UP       = +boomhs::math::constants::Z_UNIT_VECTOR;
+auto const/*expr*/     TOPDOWN          = boomhs::WorldOrientation{TOPDOWN_FORWARD, TOPDOWN_UP};
+
+// +Y is pointing FORWARD into the scene, +Z is pointing UP on the screen.
+auto const/*expr*/     BOTTOMUP_FORWARD = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto const/*expr*/     BOTTOMUP_UP      = +boomhs::math::constants::Z_UNIT_VECTOR;
+auto const/*expr*/     BOTTOMUP         = boomhs::WorldOrientation{BOTTOMUP_FORWARD, BOTTOMUP_UP};
+
+} // namespace opengl::world_orientation

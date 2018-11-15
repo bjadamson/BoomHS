@@ -20,6 +20,7 @@
 #include <gl_sdl/common.hpp>
 
 #include <opengl/bind.hpp>
+#include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
@@ -602,39 +603,30 @@ create_viewport_grid(common::Logger &logger, RectInt const& window_rect)
     LOC4::LIGHT_GOLDENROD_YELLOW
   };
 
+  namespace WO = opengl::world_orientation;
+
   // pers => perspective
-  auto const     PERS_MINUSZ_FORWARD = -constants::Z_UNIT_VECTOR;
-  auto constexpr PERS_MINUSZ_UP      =  constants::Y_UNIT_VECTOR;
-  auto const wo_pers_minusz          = WorldOrientation{PERS_MINUSZ_FORWARD, PERS_MINUSZ_UP};
-
-  auto const     PERS_PLUSZ_FORWARD = constants::Z_UNIT_VECTOR;
-  auto constexpr PERS_PLUSZ_UP      = constants::Y_UNIT_VECTOR;
-  auto const wo_pers_plusz          = WorldOrientation{PERS_MINUSZ_FORWARD, PERS_MINUSZ_UP};
-
-  auto const     ORTHO_TOPDOWN_FORWARD = -constants::Y_UNIT_VECTOR;
-  auto constexpr ORTHO_TOPDOWN_UP      =  constants::Z_UNIT_VECTOR;
-  auto const wo_ortho_td               = WorldOrientation{ORTHO_TOPDOWN_FORWARD, ORTHO_TOPDOWN_UP};
-
-  auto const ORTHO_BOTTOMTOP_FORWARD   =  constants::Y_UNIT_VECTOR;
-  auto const ORTHO_BOTTOMTOP_UP        =  constants::Z_UNIT_VECTOR;
-  auto const wo_ortho_bu               = WorldOrientation{ORTHO_BOTTOMTOP_FORWARD, ORTHO_BOTTOMTOP_UP};
+  auto const& pers_minusz_wo = WO::FORWARDZ;
+  auto const& pers_plusz_wo  = WO::REVERSEZ;
+  auto const& ortho_td_wo    = WO::TOPDOWN;
+  auto const& ortho_bu_wo    = WO::BOTTOMUP;
 
   // TODO: Understand the following better.
   //
   // The top-down camera should flip the right unit vector.
   // The bottom-up camera does NOT flip the right unit vector.
-  auto ortho_td = Camera::make_default(CameraMode::Ortho, wo_pers_minusz, wo_ortho_td);
+  auto ortho_td = Camera::make_default(CameraMode::Ortho, pers_minusz_wo, ortho_td_wo);
   ortho_td.ortho.position = CAMERA_POS_TOPDOWN;
   ortho_td.ortho.flip_rightv = true;
 
-  auto ortho_bu = Camera::make_default(CameraMode::Ortho, wo_pers_minusz, wo_ortho_bu);
+  auto ortho_bu = Camera::make_default(CameraMode::Ortho, pers_minusz_wo, ortho_bu_wo);
   ortho_bu.ortho.position = CAMERA_POS_BOTTOP;
 
-  auto const tps_fwd = Camera::make_default(CameraMode::ThirdPerson, wo_pers_minusz, wo_ortho_td);
-  auto const tps_bkwd = Camera::make_default(CameraMode::ThirdPerson, wo_pers_plusz, wo_ortho_td);
+  auto const tps_fwd = Camera::make_default(CameraMode::ThirdPerson, pers_minusz_wo, ortho_td_wo);
+  auto const tps_bkwd = Camera::make_default(CameraMode::ThirdPerson, pers_plusz_wo, ortho_td_wo);
 
-  auto const fps_fwd = Camera::make_default(CameraMode::FPS, wo_pers_minusz, wo_ortho_td);
-  auto const fps_bkwd = Camera::make_default(CameraMode::FPS, wo_pers_plusz, wo_ortho_td);
+  auto const fps_fwd = Camera::make_default(CameraMode::FPS, pers_minusz_wo, ortho_td_wo);
+  auto const fps_bkwd = Camera::make_default(CameraMode::FPS, pers_plusz_wo, ortho_td_wo);
 
   auto const pick_camera = [&](RNG& rng) {
     int const val = rng.gen_int_range(0, 5);
