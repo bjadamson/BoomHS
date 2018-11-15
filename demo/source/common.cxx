@@ -43,8 +43,8 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     auto xz = cube.xy_rect();
     {
       auto const model = tr.model_matrix();
-      auto const convert_to_viewport_space = [&](auto const& cube) {
-        return sc::object_to_viewport(cube, model, proj, view, vp_rect);
+      auto const convert_to_viewport_space = [&](auto const& point) {
+        return sc::object_to_viewport(point, model, proj, view, vp_rect);
       };
 
       auto const lt = cxx4l(xz.left_top());
@@ -110,24 +110,16 @@ make_wireframe_program(common::Logger& logger)
 }
 
 Cube
-make_cube(RNG& rng, bool const is_2d)
+make_cube(RNG& rng)
 {
   float constexpr MIN = 0, MAX = 100;
-  static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
+  static_assert(MIN < MAX, "MIN must be strictly less than MAX");
 
   auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
-  auto const x = gen(), y = gen();
+  auto const x = gen(), y = gen(), z = gen();
 
-  glm::vec3 min, max;
-  if (is_2d) {
-    min = glm::vec3{-x, -y, 0};
-    max = glm::vec3{+x, +y, 0};
-  }
-  else {
-    auto const z = gen();
-    min = glm::vec3{-x, -y, -z};
-    max = glm::vec3{+x, +y, +z};
-  }
+  glm::vec3 const min = glm::vec3{-x, -y, -z};
+  glm::vec3 const max = glm::vec3{+x, +y, +z};
   return Cube{min, max};
 }
 
@@ -148,7 +140,7 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, RectInt const&
 
   CubeEntities cube_ents;
   FOR(i, num_cubes) {
-    auto cube = demo::make_cube(rng, is_2d);
+    auto cube = demo::make_cube(rng);
     auto tr = gen_tr();
     auto di = make_bbox(logger, sp, cube);
     cube_ents.emplace_back(MOVE(cube), MOVE(tr), MOVE(di));

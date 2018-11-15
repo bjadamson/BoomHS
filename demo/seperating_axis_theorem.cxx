@@ -73,8 +73,8 @@ static int constexpr HEIGHT    = 768;
 
 static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
-static int constexpr NEAR      = -100;
-static int constexpr FAR       = +100;
+static int constexpr NEAR      = -500;
+static int constexpr FAR       = +500;
 
 // global state
 static bool MOUSE_BUTTON_PRESSED        = false;
@@ -191,6 +191,13 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
       break;
     case SDLK_s:
       transform_ents(+constants::Y_UNIT_VECTOR);
+      break;
+
+    case SDLK_e:
+      transform_ents(+constants::Z_UNIT_VECTOR);
+      break;
+    case SDLK_q:
+      transform_ents(-constants::Z_UNIT_VECTOR);
       break;
 
     // UNIFORM scaling
@@ -455,8 +462,10 @@ main(int argc, char **argv)
 
 
   auto const& CAMERA_POS = constants::ZERO;
-  auto const& VIEW_FWD   = -constants::Z_UNIT_VECTOR;
-  auto const& VIEW_UP    = constants::Y_UNIT_VECTOR;
+
+  namespace WO = opengl::world_orientation;
+  auto const& VIEW_FWD   = WO::FORWARDZ_FORWARD;
+  auto const& VIEW_UP    = WO::FORWARDZ_UP;
   ViewMatrix const view  = glm::lookAtRH(CAMERA_POS, VIEW_FWD, VIEW_UP);
 
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
