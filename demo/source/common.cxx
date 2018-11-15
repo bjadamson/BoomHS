@@ -116,15 +116,17 @@ make_cube(RNG& rng, bool const is_2d)
   static_assert(MIN < MAX, "MIN must be atleast one less than MAX");
 
   auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
+  auto const x = gen(), y = gen();
 
   glm::vec3 min, max;
   if (is_2d) {
-    min = glm::vec3{-gen(), -gen(), 0};
-    max = glm::vec3{+gen(), +gen(), 0};
+    min = glm::vec3{-x, -y, 0};
+    max = glm::vec3{+x, +y, 0};
   }
   else {
-    min = glm::vec3{-gen(), -gen(), -gen()};
-    max = glm::vec3{+gen(), +gen(), +gen()};
+    auto const z = gen();
+    min = glm::vec3{-x, -y, -z};
+    max = glm::vec3{+x, +y, +z};
   }
   return Cube{min, max};
 }

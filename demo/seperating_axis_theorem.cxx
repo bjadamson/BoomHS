@@ -73,8 +73,8 @@ static int constexpr HEIGHT    = 768;
 
 static auto constexpr VIEWPORT = Viewport{0, 0, WIDTH, HEIGHT};
 
-static int constexpr NEAR      = -1.0;
-static int constexpr FAR       = 1.0f;
+static int constexpr NEAR      = -100;
+static int constexpr FAR       = +100;
 
 // global state
 static bool MOUSE_BUTTON_PRESSED        = false;
