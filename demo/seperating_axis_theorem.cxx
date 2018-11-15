@@ -193,7 +193,7 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
       transform_ents(+constants::Y_UNIT_VECTOR);
       break;
 
-    // non-uniform scaling
+    // UNIFORM scaling
     case SDLK_1:
       scale_ents(+VEC3(SCALE_AMOUNT));
       break;
@@ -201,7 +201,7 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
       scale_ents(-VEC3(SCALE_AMOUNT));
       break;
 
-    // non-uniform scaling
+    // NON-uniform scaling
     case SDLK_3:
       scale_ents(+VEC3(SCALE_AMOUNT, 0, 0));
       break;
@@ -228,6 +228,21 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
     case SDLK_KP_8:
       rotate_ents(+1.0f, constants::Z_UNIT_VECTOR);
       break;
+
+    case SDLK_KP_4:
+      rotate_ents(-1.0f, constants::Y_UNIT_VECTOR);
+      break;
+    case SDLK_KP_6:
+      rotate_ents(+1.0f, constants::Y_UNIT_VECTOR);
+      break;
+
+    case SDLK_KP_1:
+      rotate_ents(-1.0f, constants::X_UNIT_VECTOR);
+      break;
+    case SDLK_KP_3:
+      rotate_ents(+1.0f, constants::X_UNIT_VECTOR);
+      break;
+
     default:
       break;
   }
