@@ -257,8 +257,7 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
 }
 
 void
-update(common::Logger& logger, PmRects& vp_rects, CubeEntities& cube_ents,
-       ProjMatrix const& proj, ViewMatrix const& view)
+update(common::Logger& logger, PmRects& vp_rects, CubeEntities& cube_ents)
 {
   assert(!vp_rects.rects.empty());
   auto& a = vp_rects.rects.front();
@@ -271,7 +270,7 @@ update(common::Logger& logger, PmRects& vp_rects, CubeEntities& cube_ents,
       RectTransform const ra{a.rect, a.transform};
       RectTransform const rb{b.rect, b.transform};
 
-      overlap |= collision::overlap(ra, rb, proj, view, VIEWPORT);
+      overlap |= collision::overlap(ra, rb);
     }
 
     a.color = a.mouse_selected ? CLICK_COLOR
@@ -289,7 +288,7 @@ select_pmrects_under_user_drawn_rect(common::Logger& logger, RectFloat const& mo
 
     auto const origin = VIEWPORT.left_top();
     bool constexpr IS_2D = true;
-    rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, proj, view, VIEWPORT, IS_2D);
+    rect.mouse_selected = collision::overlap(mouse_rect, rect_tr, VIEWPORT, IS_2D);
   }
 }
 
@@ -482,7 +481,7 @@ main(int argc, char **argv)
       quit = process_event(logger, event, vp_rects, cube_ents, proj, view, controlled_tr, ft);
     }
 
-    update(logger, vp_rects, cube_ents, proj, view);
+    update(logger, vp_rects, cube_ents);
 
     DrawState ds;
     OR::clear_screen(LOC4::DEEP_SKY_BLUE);

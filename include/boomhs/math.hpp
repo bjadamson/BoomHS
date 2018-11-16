@@ -358,33 +358,51 @@ auto constexpr DEFAULT_W = 1;
 // to:
 //    world space
 inline glm::vec4
-object_to_world(glm::vec4 const& p, ModelMatrix const& model)
+object_to_world(glm::vec4 const& p, ModelMatrix const& mm)
 {
-  return model * p;
+  return mm * p;
 }
 
 inline glm::vec3
-object_to_world(glm::vec3 const& p, ModelMatrix const& model)
+object_to_world(glm::vec3 const& p, ModelMatrix const& mm)
 {
   auto const v4 = glm::vec4{p, DEFAULT_W};
 
-  return object_to_world(v4, model);
+  return object_to_world(v4, mm);
 }
 
 // from:
-//   world space
+//    world space
+// to:
+//    object space
+inline glm::vec4
+world_to_object(glm::vec4 const& p, ModelMatrix const& mm)
+{
+  auto const imm = glm::inverse(mm);
+  return imm * p;
+}
+
+inline glm::vec4
+world_to_object(glm::vec3 const& p, ModelMatrix const& mm)
+{
+  auto const v4 = glm::vec4{p, DEFAULT_W};
+  return world_to_object(v4, mm);
+}
+
+// from:
+//    world space
 // to:
 //    eye space
 inline glm::vec4
-world_to_eye(glm::vec4 const& wp, ViewMatrix const& view)
+world_to_eye(glm::vec4 const& p, ViewMatrix const& view)
 {
-  return view * wp;
+  return view * p;
 }
 
 inline glm::vec3
-world_to_eye(glm::vec3 const& wp, ViewMatrix const& view)
+world_to_eye(glm::vec3 const& p, ViewMatrix const& view)
 {
-  auto const v4 = glm::vec4{wp, DEFAULT_W};
+  auto const v4 = glm::vec4{p, DEFAULT_W};
   return world_to_eye(v4, view);
 }
 
@@ -393,15 +411,15 @@ world_to_eye(glm::vec3 const& wp, ViewMatrix const& view)
 // to:
 //    clip space
 inline glm::vec4
-eye_to_clip(glm::vec4 const& eyep, ProjMatrix const& proj)
+eye_to_clip(glm::vec4 const& p, ProjMatrix const& proj)
 {
-  return proj * eyep;
+  return proj * p;
 }
 
 inline glm::vec3
-eye_to_clip(glm::vec3 const& eyep, ProjMatrix const& proj)
+eye_to_clip(glm::vec3 const& p, ProjMatrix const& proj)
 {
-  auto const v4 = glm::vec4{eyep, DEFAULT_W};
+  auto const v4 = glm::vec4{p, DEFAULT_W};
   return eye_to_clip(v4, proj);
 }
 
@@ -410,16 +428,16 @@ eye_to_clip(glm::vec3 const& eyep, ProjMatrix const& proj)
 // to:
 //    ndc space
 inline glm::vec3
-clip_to_ndc(glm::vec4 const& clip)
+clip_to_ndc(glm::vec4 const& p)
 {
-  auto const ndc4 = clip / clip.w;
+  auto const ndc4 = p / p.w;
   return glm::vec3{ndc4.x, ndc4.y, ndc4.z};
 }
 
 inline glm::vec3
-clip_to_ndc(glm::vec3 const& clip)
+clip_to_ndc(glm::vec3 const& p)
 {
-  glm::vec4 const clip4{clip, DEFAULT_W};
+  glm::vec4 const clip4{p, DEFAULT_W};
 
   return clip_to_ndc(clip4);
 }

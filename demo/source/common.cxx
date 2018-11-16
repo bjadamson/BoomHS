@@ -59,7 +59,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     auto const tr2d = transform::from_3d_to_2d(tr);
 
     RectTransform const rect_tr{xz, tr2d};
-    return collision::overlap(mouse_rect, rect_tr, proj, view, viewport, is_2d);
+    return collision::overlap(mouse_rect, rect_tr, viewport, is_2d);
   };
 
   for (auto &ce : cube_ents) {

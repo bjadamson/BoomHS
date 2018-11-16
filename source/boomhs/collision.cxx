@@ -156,34 +156,30 @@ ray_axis_aligned_cube_intersect(Ray const& r, Transform const& transform, Cube c
 
 template <typename V>
 auto
-rotated_rectangle_points(RectT<V> const& rect, ModelMatrix const& model, ProjMatrix const& proj,
-                         ViewMatrix const& view)
+rotated_rectangle_points(RectT<V> const& rect, ModelMatrix const& model)
 {
   auto const& [p0, p1, p2, p3] = rect.points().vertices;
-  auto constexpr Z = 0;
-
-  auto const p0_3d = glm::vec3{p0.x, p0.y, Z};
-  auto const p1_3d = glm::vec3{p1.x, p1.y, Z};
-  auto const p2_3d = glm::vec3{p2.x, p2.y, Z};
-  auto const p3_3d = glm::vec3{p3.x, p3.y, Z};
+  auto constexpr Z             = 0;
+  auto const make_3d           = [](auto const& p) { return glm::vec3{p.x, p.y, Z}; };
 
   // Transform the points into eye space
   namespace sv = space_conversions;
-  auto const v0_eye = sv::object_to_eye(p0_3d, model, view);
-  auto const v1_eye = sv::object_to_eye(p1_3d, model, view);
-  auto const v2_eye = sv::object_to_eye(p2_3d, model, view);
-  auto const v3_eye = sv::object_to_eye(p3_3d, model, view);
+  auto const v0 = sv::object_to_world(make_3d(p0), model);
+  auto const v1 = sv::object_to_world(make_3d(p1), model);
+  auto const v2 = sv::object_to_world(make_3d(p2), model);
+  auto const v3 = sv::object_to_world(make_3d(p3), model);
 
   // Discard the extra vertices, rectangles only have two dimensions.
   using VerticesT = typename RectT<V>::vertex_type;
-  auto const v2p0 = VerticesT{v0_eye.x, v0_eye.y};
-  auto const v2p1 = VerticesT{v1_eye.x, v1_eye.y};
-  auto const v2p2 = VerticesT{v2_eye.x, v2_eye.y};
-  auto const v2p3 = VerticesT{v3_eye.x, v3_eye.y};
+  auto const make_2d = [](auto const& p) { return VerticesT{p.x, p.y}; };
+  auto const v0_2d = make_2d(v0);
+  auto const v1_2d = make_2d(v1);
+  auto const v2_2d = make_2d(v2);
+  auto const v3_2d = make_2d(v3);
 
   // Combine the rectangles vertices into an array and return.
   using VerticesArray = typename RectT<V>::array_type;
-  return VerticesArray{v2p0, v2p1, v2p2, v2p3};
+  return VerticesArray{v0_2d, v1_2d, v2_2d, v3_2d};
 }
 
 // Determine whether two (possibly rotated) polygons overlap eachother.
@@ -325,8 +321,7 @@ overlap_axis_aligned(common::Logger& logger, CubeTransform const& a, CubeTransfo
 
 // Compare the rectangle 'a' with the rectangle within 'rb' after applying the transform to the 
 bool
-overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, ViewMatrix const& view,
-        Viewport const& viewport, bool const is_2d)
+overlap(RectFloat const& a, RectTransform const& rb, Viewport const& viewport, bool const is_2d)
 {
   Transform2D ta;
   RectTransform const ra{a, ta};
@@ -357,7 +352,7 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
     tb.rotation = rb.transform.rotation;
     RectTransform const rb_new{new_rectb, tb};
 
-    return overlap(ra, rb_new, proj, view, viewport);
+    return overlap(ra, rb_new);
   }
 
   auto rb_rect = rb.rect;
@@ -373,12 +368,11 @@ overlap(RectFloat const& a, RectTransform const& rb, ProjMatrix const& proj, Vie
   RectTransform const rb_new{rb_rect, tb};
 
   RectTransform const ra_rt{a, ZZZ};
-  return overlap(ra_rt, rb_new, proj, view, viewport);
+  return overlap(ra_rt, rb_new);
 }
 
 bool
-overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj,
-        ViewMatrix const& view, Viewport const& viewport)
+overlap(RectTransform const& a, RectTransform const& b)
 {
   auto const& ra = a.rect;
   auto const& rb = b.rect;
@@ -390,8 +384,8 @@ overlap(RectTransform const& a, RectTransform const& b, ProjMatrix const& proj,
   bool const simple_test = !ta.is_rotated() && !tb.is_rotated();
 
   // Rotate the rectangles using their vertices/transform and proj matrix.
-  auto const a_points = rotated_rectangle_points(ra, ta.model_matrix(), proj, view);
-  auto const b_points = rotated_rectangle_points(rb, tb.model_matrix(), proj, view);
+  auto const a_points = rotated_rectangle_points(ra, ta.model_matrix());
+  auto const b_points = rotated_rectangle_points(rb, tb.model_matrix());
 
   // There are 4 vertices in a rectangle.
   constexpr auto N = 4;
