@@ -39,6 +39,10 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
     auto const& cube = cube_entity.cube();
     auto tr          = cube_entity.transform();
 
+    if (mouse_rect.width() > 50 && mouse_rect.height() > 50 && !is_2d) {
+      LOG_ERROR("3D BREAK");
+    }
+
     // Take the Cube in Object space, and create a rectangle from the x/z coordinates.
     auto xz = cube.xy_rect();
     {
@@ -115,7 +119,7 @@ make_cube(RNG& rng)
   float constexpr MIN = 0, MAX = 100;
   static_assert(MIN < MAX, "MIN must be strictly less than MAX");
 
-  auto const gen = [&rng]() { return rng.gen_float_range(MIN + 1, MAX); };
+  auto const gen = [&rng]() { return MAX; };//rng.gen_float_range(MIN + 1, MAX); };
   auto const x = gen(), y = gen(), z = gen();
 
   glm::vec3 const min = glm::vec3{-x, -y, -z};
@@ -130,8 +134,8 @@ gen_cube_entities(common::Logger& logger, size_t const num_cubes, RectInt const&
   auto const gen = [&rng](auto const& l, auto const& h) { return rng.gen_float_range(l, h); };
   auto const gen_between_0_and = [&gen](auto const& max) { return gen(0, max); };
   auto const gen_tr = [&]() {
-    auto const x = gen_between_0_and(view_size.width());
-    auto const y = gen_between_0_and(view_size.height());
+    auto const x = 0;//gen_between_0_and(view_size.width());
+    auto const y = 0;//gen_between_0_and(view_size.height());
 
     return is_2d
       ? glm::vec3{x, y, 0}
