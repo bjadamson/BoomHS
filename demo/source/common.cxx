@@ -31,7 +31,7 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
                                    bool const is_2d)
 {
   namespace sc       = math::space_conversions;
-  auto const cxx4l   = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
+  auto const cxx3l   = [](auto const& p) { return glm::vec3{p.x, p.y, 0}; };
   auto const vp_rect = viewport.rect_float();
 
   // Determine whether a cube projected onto the given plane and another rectangle overlap.
@@ -51,8 +51,8 @@ select_cubes_under_user_drawn_rect(common::Logger& logger, RectFloat const& mous
         return sc::object_to_viewport(point, model, proj, view, vp_rect);
       };
 
-      auto const lt = cxx4l(xz.left_top());
-      auto const rb = cxx4l(xz.right_bottom());
+      auto const lt = cxx3l(xz.left_top());
+      auto const rb = cxx3l(xz.right_bottom());
 
       auto const lt_vp = convert_to_viewport_space(lt);
       auto const rb_vp = convert_to_viewport_space(rb);
