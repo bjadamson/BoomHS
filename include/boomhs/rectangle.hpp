@@ -142,17 +142,17 @@ public:
     return p;
   }
 
-  // Yield the vertex points.
-  V constexpr p0() const { return left_bottom(); }
-  V constexpr p1() const { return right_bottom(); }
-  V constexpr p2() const { return right_top(); }
-  V constexpr p3() const { return left_top(); }
+  // Yield the vertex points (counter-clockwise order).
+  V constexpr p0() const { return left_top(); }
+  V constexpr p1() const { return left_bottom(); }
+  V constexpr p2() const { return right_bottom(); }
+  V constexpr p3() const { return right_top(); }
 
-  // Yield the vertex points.
-  V constexpr p0_scaled(Transform2D const& tr) const { return left_bottom_scaled(tr); }
-  V constexpr p1_scaled(Transform2D const& tr) const { return right_bottom_scaled(tr); }
-  V constexpr p2_scaled(Transform2D const& tr) const { return right_top_scaled(tr); }
-  V constexpr p3_scaled(Transform2D const& tr) const { return left_top_scaled(tr); }
+  // Yield the vertex points (counter-clockwise order).
+  V constexpr p0_scaled(Transform2D const& tr) const { return left_top_scaled(tr); }
+  V constexpr p1_scaled(Transform2D const& tr) const { return left_bottom_scaled(tr); }
+  V constexpr p2_scaled(Transform2D const& tr) const { return right_bottom_scaled(tr); }
+  V constexpr p3_scaled(Transform2D const& tr) const { return right_top_scaled(tr); }
 
   auto constexpr operator[](size_t const i) const
   {
@@ -176,6 +176,7 @@ public:
     return V{};
   }
 
+  // Yield the vertex points (counter-clockwise order).
   auto constexpr points() const {
     return array_type{p0(), p1(), p2(), p3()};
   }
