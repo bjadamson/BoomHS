@@ -1,6 +1,7 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/math.hpp>
+#include <boomhs/polygon.hpp>
 #include <boomhs/transform.hpp>
 #include <boomhs/viewport.hpp>
 

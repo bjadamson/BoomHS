@@ -1,4 +1,5 @@
 #pragma once
+#include <boomhs/rectangle_algorithms.hpp>
 #include <boomhs/transform.hpp>
 #include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
@@ -7,178 +8,69 @@
 #include <extlibs/glm.hpp>
 #include <array>
 
+// Define/implement various 2dimensional rectangle types.
+//
+// Algorithm's are seperated from the actual rectangle types to allow reuse.
+//
+// User's may directly call the functions in boomhs::rectangle if they wish, but the functionality
+// has been re-exported as member functions on Rectangle objects.
 namespace boomhs
 {
 
-template <typename V, size_t N>
-struct PolygonVertices
-{
-  std::array<V, N> vertices;
-
-  template <typename ...P>
-  constexpr PolygonVertices(P&&... points) noexcept
-      : vertices(common::make_array<V>(FORWARD(points)))
-  {
-    auto constexpr NUM_POINTS_PASSED_TO_CTOR = sizeof...(P);
-    static_assert(N == NUM_POINTS_PASSED_TO_CTOR, "Not enough points provided.");
-  }
-
-  DEFINE_ARRAY_LIKE_WRAPPER_FNS(vertices);
-
-  auto to_string() const
-  {
-    static_assert(N == 4, "Exactly 4 points required (for now).");
-    return fmt::sprintf("{%s, %s, %s, %s}",
-        glm::to_string(vertices[0]),
-        glm::to_string(vertices[1]),
-        glm::to_string(vertices[2]),
-        glm::to_string(vertices[3]));
-  }
-};
-
-
-
+// Template for defining 2D Rectangle types with a polymorphic Vertex type V.
+//
+// This class template maps the functions from rectangle_algorithm's namespace to member functions
+// on a Rectangle type.
+//
+// This seperation of algorithm and object is intentional. The details of how the algorithm's are
+// implemented is seperated from the "object-ness" of the rectangle itself.
 template <typename V>
-class RectT
+struct RectT : public rectangle::RectVertices<V>
 {
-  // Helper function for getting the center and the scaled half sizes
-  auto constexpr
-  center_and_scaled_half_size(Transform2D const& tr) const
-  {
-    auto const& s   = tr.scale;
-    auto const hs   = half_size();
-    auto const s_hs = glm::vec2{
-      s.x * hs.x,
-      s.y * hs.y
-    };
-
-    auto const c = center();
-    return PAIR(c, s_hs);
-  }
-
-public:
-  static auto constexpr num_vertices = 4;
-  using vertex_type                  = V;
-  using value_type                   = typename V::value_type;
-  using array_type                   = PolygonVertices<V, num_vertices>;
-
-  // fields
-  value_type left, top;
-  value_type right, bottom;
+  // Re-export the public defined types for RectVertices
+  using vertex_type = typename rectangle::RectVertices<V>::vertex_type;
+  using value_type  = typename rectangle::RectVertices<V>::value_type;
+  using array_type  = typename rectangle::RectVertices<V>::array_type;
 
   // methods
-  void move(value_type const& x, value_type const& y)
-  {
-    left  += x;
-    right += x;
+  void move(value_type const& x, value_type const& y) { rectangle::move(*this, x, y); }
+  void move(V const& v)                               { rectangle::move(*this, v); }
 
-    top    += y;
-    bottom += y;
-  }
+  auto constexpr left_top() const     { return rectangle::left_top(*this); }
+  auto constexpr left_bottom() const  { return rectangle::left_bottom(*this); }
+  auto constexpr right_top() const    { return rectangle::right_top(*this); }
+  auto constexpr right_bottom() const { return rectangle::right_bottom(*this); }
 
-  void move(V const& v)
-  {
-    move(v.x, v.y);
-  }
+  auto constexpr width() const  { return rectangle::width(*this); }
+  auto constexpr height() const { return rectangle::height(*this); }
+  auto constexpr size() const   { return rectangle::size(*this); }
 
-  auto constexpr left_top() const { return V{left, top}; }
-  auto constexpr left_bottom() const { return V{left, bottom}; }
+  auto constexpr half_size() const   { return rectangle::half_size(*this); }
+  auto constexpr half_width() const  { return rectangle::half_width(*this); }
+  auto constexpr half_height() const { return rectangle::half_height(*this); }
 
-  auto constexpr right_top() const { return V{right, top}; }
-  auto constexpr right_bottom() const { return V{right, bottom}; }
+  auto constexpr center() const       { return rectangle::center(*this); }
+  auto constexpr center_left() const  { return rectangle::center_left(*this); }
+  auto constexpr center_right() const { return rectangle::center_right(*this); }
 
-  auto constexpr width() const { return std::abs(right - left); }
-  auto constexpr height() const { return std::abs(bottom - top); }
-  auto constexpr size() const { return V{width(), height()}; }
+  auto constexpr center_top() const    { return rectangle::center_top(*this); }
+  auto constexpr center_bottom() const { return rectangle::center_bottom(*this); }
 
-  auto constexpr half_size() const { return size() / 2; }
-  auto constexpr half_width() const { return width() / 2; }
-  auto constexpr half_height() const { return height() / 2; }
+  V constexpr left_top_scaled(Transform2D const& tr) const     { return rectangle::left_top_scaled(*this, tr); }
+  V constexpr right_top_scaled(Transform2D const& tr) const    { return rectangle::right_top_scaled(*this, tr); }
+  V constexpr left_bottom_scaled(Transform2D const& tr) const  { return rectangle::left_bottom_scaled(*this, tr); }
+  V constexpr right_bottom_scaled(Transform2D const& tr) const { return rectangle::right_bottom_scaled(*this, tr); }
 
-  auto constexpr center() const { return left_top() + half_size(); }
-  auto constexpr center_left() const { return V{left, center().y}; }
-  auto constexpr center_right() const { return V{right, center().y}; }
-
-  auto constexpr center_top() const { return V{center().x, top}; }
-  auto constexpr center_bottom() const { return V{center().x, bottom}; }
-
-  V constexpr left_top_scaled(Transform2D const& tr) const
-  {
-    auto const [c, shs] = center_and_scaled_half_size(tr);
-
-    V p;
-    p.x = c.x - shs.x;
-    p.y = c.y - shs.y;
-    return p;
-  }
-
-  V constexpr right_top_scaled(Transform2D const& tr) const
-  {
-    auto const [c, shs] = center_and_scaled_half_size(tr);
-
-    V p;
-    p.x = c.x + shs.x;
-    p.y = c.y - shs.y;
-    return p;
-  }
-
-  V constexpr left_bottom_scaled(Transform2D const& tr) const
-  {
-    auto const [c, shs] = center_and_scaled_half_size(tr);
-
-    V p;
-    p.x = c.x - shs.x;
-    p.y = c.y + shs.y;
-    return p;
-  }
-
-  V constexpr right_bottom_scaled(Transform2D const& tr) const
-  {
-    auto const [c, shs] = center_and_scaled_half_size(tr);
-
-    V p;
-    p.x = c.x + shs.x;
-    p.y = c.y + shs.y;
-    return p;
-  }
-
-  // Yield the vertex points (counter-clockwise order).
-  V constexpr p0() const { return left_top(); }
-  V constexpr p1() const { return left_bottom(); }
-  V constexpr p2() const { return right_bottom(); }
-  V constexpr p3() const { return right_top(); }
-
-  // Yield the vertex points (counter-clockwise order).
-  V constexpr p0_scaled(Transform2D const& tr) const { return left_top_scaled(tr); }
-  V constexpr p1_scaled(Transform2D const& tr) const { return left_bottom_scaled(tr); }
-  V constexpr p2_scaled(Transform2D const& tr) const { return right_bottom_scaled(tr); }
-  V constexpr p3_scaled(Transform2D const& tr) const { return right_top_scaled(tr); }
-
+  // Map the vertex index to the vertex point.
   auto constexpr operator[](size_t const i) const
   {
-    switch (i) {
-      case 0:
-        return p0();
-      case 1:
-        return p1();
-      case 2:
-        return p2();
-      case 3:
-        return p3();
-      default:
-        break;
-    }
-
-    /* INVALID to index this far into a rectangle. Rectangle only has 4 points. */
-    std::abort();
-
-    /* Satisfy Compiler */
-    return V{};
+    return rectangle::rect_vertex_index_to_point(*this, i);
   }
 
-  // Yield the vertex points (counter-clockwise order).
-  auto constexpr points() const {
-    return array_type{p0(), p1(), p2(), p3()};
+  // Yield the vertex points in object-space (counter-clockwise order).
+  array_type constexpr points() const
+  {
+    return rectangle::vertex_points(*this);
   }
 };
 
@@ -193,6 +85,9 @@ operator/(RectT<V> const& rect, typename RectT<V>::value_type const& d)
   return RectT{left, top, right, bottom};
 }
 
+// The "format" of printing one of these rectangles is uniform between rectangle types, but this
+// uniformity (only having to write the body of this function once, code duplication) can only be
+// captured by a macro.
 #define DEFINE_RECT_TO_STRING_MEMBER_IMPL(FMT_IDENTIFIER)                                          \
 std::string to_string() const                                                                      \
 {                                                                                                  \
@@ -201,9 +96,11 @@ std::string to_string() const                                                   
       "(w:"#FMT_IDENTIFIER",h:"#FMT_IDENTIFIER")",                                                 \
       left, top,                                                                                   \
       right, bottom,                                                                               \
-      width(), height());                                                                          \
+      width(), height());                                                                              \
 }
 
+// Define a RectFloat with various helper constructors, that uses the Rectangle template defined
+// above to share a common implementation with other rectangle types.
 class RectFloat : public RectT<glm::vec2>
 {
   float constexpr cast(int const v) const { return static_cast<float>(v); }
@@ -229,6 +126,8 @@ public:
   DEFINE_RECT_TO_STRING_MEMBER_IMPL(%f);
 };
 
+// Define a RectInt with various helper constructors, that uses the Rectangle template defined
+// above to share a common implementation with other rectangle types.
 struct RectInt : public RectT<glm::ivec2>
 {
   constexpr RectInt(int const l, int const t, int const r, int const b)
@@ -263,6 +162,5 @@ struct RectInt : public RectT<glm::ivec2>
 };
 
 #undef DEFINE_RECT_TO_STRING_MEMBER_IMPL
-
 
 } // namespace boomhs
