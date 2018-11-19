@@ -293,22 +293,37 @@ select_pmrects_under_user_drawn_rect(common::Logger& logger, RectFloat const& mo
 }
 
 void
-process_mousemotion(common::Logger& logger, SDL_MouseMotionEvent const& motion,
+on_mouse_press(common::Logger& logger, SDL_MouseMotionEvent const& motion,
     std::vector<PmRect>& rects, CubeEntities& cube_ents, ProjMatrix const& proj,
     ViewMatrix const& view)
 {
-  if (MOUSE_BUTTON_PRESSED) {
-    auto const mouse_pos   = glm::ivec2{motion.x, motion.y};
-    auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
+  auto const mouse_pos     = glm::ivec2{motion.x, motion.y};
+  auto const& click_pos_ss = MOUSE_INFO.click_positions.left_right;
+  auto const mouse_rect    = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
+                                                                  VIEWPORT.left_top());
+  // 2d
+  select_pmrects_under_user_drawn_rect(logger, mouse_rect, rects, proj, view);
 
-    auto const mouse_rect = MouseRectangleRenderer::make_mouse_rect(click_pos_ss, mouse_pos,
-                                                                    VIEWPORT.left_top());
+  // 3d
+  // 1. Convert viewport coordinates to world space.
+  auto const mouse_lt = mouse_rect.left_top();
+  auto const mouse_rb = mouse_rect.right_bottom();
 
-    select_pmrects_under_user_drawn_rect(logger, mouse_rect, rects, proj, view);
+  auto const viewport = VIEWPORT.rect_float();
+  auto const left_top_world_pos = math::space_conversions::screen_to_world(mouse_lt, viewport, proj, view, NEAR);
+  auto const right_bottom_world_pos = math::space_conversions::screen_to_world(mouse_rb, viewport, proj, view, NEAR);
 
-    bool constexpr IS_2D = false;
-    demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, proj,
+  bool constexpr IS_2D = false;
+  demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, proj,
                                              view, VIEWPORT, IS_2D);
+}
+
+template <typename ...Args>
+void
+process_mousemotion(Args&&... args)
+{
+  if (MOUSE_BUTTON_PRESSED) {
+    on_mouse_press(FORWARD(args));
   }
 }
 
