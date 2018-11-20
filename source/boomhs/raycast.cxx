@@ -17,7 +17,7 @@ Raycast::calculate_ray_into_screen(glm::vec2 const& point, glm::mat4 const& proj
   // When doing mouse picking, we want our ray to be pointed "into" the screen
   float constexpr Z    = -1.0f;
   auto const view_rect = vp.size_rect_float();
-  return sconv::screen_to_world(point, view_rect, proj, view, Z);
+  return sconv::screen_to_world(point, Z, proj, view, view_rect);
 }
 
 } // namespace boomhs

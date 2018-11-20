@@ -310,8 +310,8 @@ on_mouse_press(common::Logger& logger, SDL_MouseMotionEvent const& motion,
   auto const mouse_rb = mouse_rect.right_bottom();
 
   auto const viewport = VIEWPORT.rect_float();
-  auto const left_top_world_pos = math::space_conversions::screen_to_world(mouse_lt, viewport, proj, view, NEAR);
-  auto const right_bottom_world_pos = math::space_conversions::screen_to_world(mouse_rb, viewport, proj, view, NEAR);
+  auto const left_top_world_pos = math::space_conversions::screen_to_world(mouse_lt, NEAR, proj, view, viewport);
+  auto const right_bottom_world_pos = math::space_conversions::screen_to_world(mouse_rb, NEAR, proj, view, viewport);
 
   bool constexpr IS_2D = false;
   demo::select_cubes_under_user_drawn_rect(logger, mouse_rect, cube_ents, proj,

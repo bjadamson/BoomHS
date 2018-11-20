@@ -10,6 +10,7 @@
 #include <cmath>
 #include <limits>
 #include <string>
+#include <type_traits>
 
 namespace boomhs
 {
@@ -58,15 +59,21 @@ lesser_of(T const& a, T const& b)
 }
 
 inline bool
-compare_epsilon(float const a, float const b)
+float_compare(float const a, float const b)
 {
   return std::fabs(a - b) < constants::EPSILONF;
 }
 
 inline bool
+float_cmp(float const a, float const b)
+{
+  return float_compare(a, b);
+}
+
+inline bool
 is_unitv(glm::vec3 const& v)
 {
-  return compare_epsilon(glm::length(v), 1);
+  return float_compare(glm::length(v), 1);
 }
 
 inline glm::vec3
@@ -187,10 +194,12 @@ compute_mvp_matrix(ModelMatrix const& model, ViewMatrix const& view, ProjMatrix 
   return proj * view * model;
 }
 
-template <typename T>
+template <typename T1, typename T2>
 inline constexpr void
-assert_abs_lessthan_equal(T const& v, T const& max)
+assert_abs_lessthan_equal(T1 const& v, T2 const& max)
 {
+  constexpr bool IS_CONVERTIBLE = std::is_convertible_v<T1, T2>;
+  static_assert(IS_CONVERTIBLE, "T1 and T2 must be implicitely convertible.");
   assert(std::abs(v) <= max);
 }
 
@@ -483,14 +492,23 @@ eye_to_world(glm::vec4 const& eye, ViewMatrix const& vm)
 // to:
 //    screen/window
 inline constexpr glm::vec2
+screen_to_ndc(glm::vec2 const& scoords, glm::vec4 const& viewport)
+{
+  auto const& right  = viewport.z;
+  auto const& bottom = viewport.w;
+  float const x = ((2.0f * scoords.x) / right) - 1.0f;
+  float const y = ((2.0f * scoords.y) / bottom) - 1.0f;
+
+  assert_abs_lessthan_equal(x, 1);
+  assert_abs_lessthan_equal(y, 1);
+  return glm::vec2{x, -y};
+}
+
+inline constexpr glm::vec2
 screen_to_ndc(glm::vec2 const& scoords, RectFloat const& viewport)
 {
-  float const x = ((2.0f * scoords.x) / viewport.right) - 1.0f;
-  float const y = ((2.0f * scoords.y) / viewport.bottom) - 1.0f;
-
-  assert_abs_lessthan_equal(x, 1.0f);
-  assert_abs_lessthan_equal(y, 1.0f);
-  return glm::vec2{x, -y};
+  auto const vec4 = viewport.size_vec4();
+  return screen_to_ndc(scoords, vec4);
 }
 
 //
@@ -514,7 +532,8 @@ ndc_to_screen(glm::vec3 const& ndc, RectFloat const& viewport)
 inline glm::vec4
 ndc_to_clip(glm::vec2 const& ndc, float const z)
 {
-  return glm::vec4{ndc.x, ndc.y, z, 1.0f};
+  auto const W = 1.0f;
+  return glm::vec4{ndc.x, ndc.y, z, W};
 }
 
 // from:
@@ -522,14 +541,46 @@ ndc_to_clip(glm::vec2 const& ndc, float const z)
 // to:
 //    world
 inline glm::vec3
-screen_to_world(glm::vec2 const& scoords, RectFloat const& viewport, ProjMatrix const& pm,
-                ViewMatrix const& vm, float const z)
+screen_to_world(glm::vec3 const& scoords, ProjMatrix const& proj, ViewMatrix const& view,
+                RectFloat const& viewport)
 {
-  glm::vec2 const ndc   = screen_to_ndc(scoords, viewport);
+  // ss => screenspace
+  glm::vec2 const ss2d = glm::vec2{scoords.x, scoords.y};
+  auto const& z         = scoords.z;
+
+  glm::vec2 const ndc   = screen_to_ndc(ss2d, viewport);
   glm::vec4 const clip  = ndc_to_clip(ndc, z);
-  glm::vec4 const eye   = clip_to_eye(clip, pm, z);
-  glm::vec3 const world = eye_to_world(eye, vm);
+  glm::vec4 const eye   = clip_to_eye(clip, proj, z);
+  glm::vec3 const world = eye_to_world(eye, view);
+
+  /*
+  {
+    auto const vp_vec4 = viewport.size_vec4();
+    auto const TEST = glm::unProject(scoords, proj, view, vp_vec4);
+    assert(float_cmp(TEST.x, world.x));
+    assert(float_cmp(TEST.y, world.y));
+    assert(float_cmp(TEST.z, world.z));
+  }
+  */
   return world;
+}
+
+inline glm::vec3
+screen_to_world(glm::vec2 const& scoords, float const z, ProjMatrix const& proj,
+                ViewMatrix const& view, RectFloat const& viewport)
+{
+  // ss => screenspace
+  glm::vec3 const ss3d{scoords.x, scoords.y, z};
+  return screen_to_world(ss3d, proj, view, viewport);
+}
+
+inline glm::vec3
+screen_to_world(glm::vec2 const& scoords, float const z, ProjMatrix const& proj,
+                ViewMatrix const& view, glm::vec4 const& viewport)
+{
+  auto const& v = viewport;
+  RectFloat const view_rect{v.x, v.y, v.z, v.w};
+  return screen_to_world(scoords, z, proj, view, view_rect);
 }
 
 // from:
