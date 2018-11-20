@@ -474,9 +474,8 @@ clip_to_eye(glm::vec4 const& clip, ProjMatrix const& pm)
   auto const      inv_proj   = glm::inverse(pm);
   glm::vec4 const eye_coords = inv_proj * clip;
 
-  auto const& z    = clip.z;
   auto constexpr W = 0;
-  return glm::vec4{eye_coords.x, eye_coords.y, z, W};
+  return glm::vec4{eye_coords.x, eye_coords.y, eye_coords.z, W};
 }
 
 inline glm::vec3
