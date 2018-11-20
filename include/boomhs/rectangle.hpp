@@ -45,7 +45,7 @@ struct RectT : public rectangle::RectVertices<V>
   auto constexpr width() const     { return rectangle::width(*this); }
   auto constexpr height() const    { return rectangle::height(*this); }
   auto constexpr size() const      { return rectangle::size(*this); }
-  auto constexpr size_vec4() const { return glm::vec4{left_top(), size()}; }
+  auto constexpr size_vec4() const { return glm::vec4{left_top(), right_bottom()}; }
 
   auto constexpr half_size() const   { return rectangle::half_size(*this); }
   auto constexpr half_width() const  { return rectangle::half_width(*this); }
