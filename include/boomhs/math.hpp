@@ -469,11 +469,12 @@ screen_to_viewport(glm::vec2 const& point, glm::ivec2 const& origin)
 }
 
 inline glm::vec4
-clip_to_eye(glm::vec4 const& clip, ProjMatrix const& pm, float const z)
+clip_to_eye(glm::vec4 const& clip, ProjMatrix const& pm)
 {
   auto const      inv_proj   = glm::inverse(pm);
   glm::vec4 const eye_coords = inv_proj * clip;
 
+  auto const& z    = clip.z;
   auto constexpr W = 0;
   return glm::vec4{eye_coords.x, eye_coords.y, z, W};
 }
@@ -549,7 +550,7 @@ screen_to_world(glm::vec3 const& scoords, ProjMatrix const& proj, ViewMatrix con
 
   glm::vec2 const ndc   = screen_to_ndc(ss2d, viewport);
   glm::vec4 const clip  = ndc_to_clip(ndc, z);
-  glm::vec4 const eye   = clip_to_eye(clip, proj, z);
+  glm::vec4 const eye   = clip_to_eye(clip, proj);
   glm::vec3 const world = eye_to_world(eye, view);
 
   /*
