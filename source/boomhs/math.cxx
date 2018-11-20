@@ -31,8 +31,7 @@ Cube::scaled_dimensions(Transform const& tr) const
 glm::vec3
 Cube::center() const
 {
-  auto const hw = half_widths();
-  return glm::vec3{min.x + hw.x, min.y + hw.y, min.z + hw.z};
+  return (min + max) / 2;
 }
 
 glm::vec3
