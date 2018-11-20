@@ -286,7 +286,7 @@ sed -i "s|STDLIB_PLACEHOLDER|${CXX_STD_LIBRARY}|g"                      ${ROOT}/
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
-glm/0.9.8.5@g-truc/stable
+glm/0.9.9.0@g-truc/stable
 
 [generators]
 cmake
