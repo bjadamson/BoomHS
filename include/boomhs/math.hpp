@@ -481,10 +481,9 @@ clip_to_eye(glm::vec4 const& clip, ProjMatrix const& pm, float const z)
 inline glm::vec3
 eye_to_world(glm::vec4 const& eye, ViewMatrix const& vm)
 {
-  auto const inv_view       = glm::inverse(vm);
-  glm::vec4 const ray       = inv_view * eye;
-  glm::vec3 const ray_world = glm::vec3{ray.x, ray.y, ray.z};
-  return glm::normalize(ray_world);
+  auto const inv_view  = glm::inverse(vm);
+  glm::vec4 const wpos = inv_view * eye;
+  return glm::vec3{wpos.x, wpos.y, wpos.z};
 }
 
 // from:
