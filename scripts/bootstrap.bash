@@ -54,9 +54,8 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
 set(DEMO_DIRECTORY_INCLUDE_DIR ${PROJECT_DIR}/demo/include)
 set(DEMO_DIRECTORY_SOURCE_DIR  ${PROJECT_DIR}/demo/source)
 
-set(IMGUI_INCLUDE_DIR         "${EXTERNAL_DIR}/imgui/include/imgui")
-set(CPPTOML_INCLUDE_DIR       "${EXTERNAL_DIR}/cpptoml/include")
 set(STATIC_STRING_INCLUDE_DIR "${EXTERNAL_DIR}/static_string/include")
+
 set(CMAKE_PREFIX_PATH         "${EXTERNAL_DIR}")
 
 set(INCLUDE_DIRECTORY ${PROJECT_DIR}/include)
@@ -72,9 +71,13 @@ set(STACKTRACE_LIB "dw")
 
 ###################################################################################################
 # Create lists of files to be used when issuing build commands further below.
-file(GLOB         EXTERNAL_INCLUDE_DIRS
-                  include external/**/include
-                  external/boost/libs/**/include/)
+file(GLOB         EXTERNAL_INCLUDE_DIRS include
+                  ${EXTERNAL_DIR}/**/include
+                  ${EXTERNAL_DIR}/boost/libs/**/include
+                  ${EXTERNAL_DIR}/glm
+                  ${EXTERNAL_DIR}/imgui/include/imgui
+                  ${EXTERNAL_DIR}/cpptoml/include
+                  ${EXTERNAL_DIR}/static_string/include)
 
 file(GLOB_RECURSE EXTERNAL_SOURCES
         ${EXTERNAL_DIR}/backward/*.cxx
@@ -150,25 +153,20 @@ target_include_directories(DEMO_COMMON_SOURCE_CODE PUBLIC
   ${DEMO_DIRECTORY_INCLUDE_DIR}
   ${EXTERNAL_INCLUDE_DIRS}
   ${GLEW_INCLUDE_DIRS}
-  ${IMGUI_INCLUDE_DIR}
   ${OPENGL_INDLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
   ${SOIL_INCLUDE_DIR}
-  ${STATIC_STRING_INCLUDE_DIR}
   )
 
 target_include_directories(PROJECT_SOURCE_CODE PUBLIC
   ${EXTERNAL_INCLUDE_DIRS}
-  ${CPPTOML_INCLUDE_DIR}
   ${GLEW_INCLUDE_DIRS}
-  ${IMGUI_INCLUDE_DIR}
   ${LIBAUDIO_INCLUDE_DIRS}
   ${OPENGL_INDLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
   ${SOIL_INCLUDE_DIR}
-  ${STATIC_STRING_INCLUDE_DIR}
   )
 
 ###################################################################################################
@@ -286,7 +284,6 @@ sed -i "s|STDLIB_PLACEHOLDER|${CXX_STD_LIBRARY}|g"                      ${ROOT}/
 
 cat > "${BUILD}/conanfile.txt" << "EOF"
 [requires]
-glm/0.9.9.0@g-truc/stable
 
 [generators]
 cmake
