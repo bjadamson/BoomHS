@@ -90,13 +90,14 @@ select_mouse_under_cursor(FrameState& fstate, MouseButton const mb)
                                   /*:*/ fstate.camera_world_position();
   glm::vec3 const ray_dir =
       Raycast::calculate_ray_into_screen(mouse_pos, proj_matrix, view_matrix, view_rect);
+  Ray const  ray{ray_start, ray_dir};
+
   EntityDistances distances;
   for (auto const eid : find_all_entities_with_component<Selectable>(registry)) {
     auto const& cube = registry.get<AABoundingBox>(eid).cube;
     auto const& tr   = registry.get<Transform>(eid);
     auto&       sel  = registry.get<Selectable>(eid);
 
-    Ray const  ray{ray_start, ray_dir};
     bool const intersects = ray_intersects_cube_entity(logger, eid, ray, tr, cube, distances);
     if (intersects) {
       LOG_ERROR("\n\n\n\n\n\n\nIntersects something\n\n\n\n\n\n\n");
