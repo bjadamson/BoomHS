@@ -11,7 +11,7 @@ an online adventure.
     + [World Design](#world-design)
     + [World Story](#world-story)
     + [Design Decisions](#design-decisions)
-    + [Screenshots](https://github.com/bjadamson/BoomHS/tree/release/screenshots)
+    + [Screenshots](./screenshots/)
 
   + [Getting Started](#getting-started)
     * [Install Dependencies](#install-dependencies)
