@@ -4,8 +4,7 @@
 namespace boomhs
 {
 
-Attenuation
-operator*(Attenuation const& att, float const v)
+Attenuation operator*(Attenuation const& att, float const v)
 {
   Attenuation result = att;
   result *= v;
@@ -13,7 +12,7 @@ operator*(Attenuation const& att, float const v)
 }
 
 Attenuation&
-operator*=(Attenuation &att, float const v)
+operator*=(Attenuation& att, float const v)
 {
   att.constant *= v;
   att.linear *= v;
@@ -30,7 +29,7 @@ operator/(Attenuation const& att, float const v)
 }
 
 Attenuation&
-operator/=(Attenuation &att, float const v)
+operator/=(Attenuation& att, float const v)
 {
   att.constant /= v;
   att.linear /= v;
@@ -49,10 +48,10 @@ operator<<(std::ostream& stream, Attenuation const& att)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // GlobalLight
-GlobalLight::GlobalLight(Color const& amb, DirectionalLight &&dl)
-  : ambient(amb)
-  , directional(MOVE(dl))
+GlobalLight::GlobalLight(ColorRGB const& amb, DirectionalLight&& dl)
+    : ambient(amb)
+    , directional(MOVE(dl))
 {
 }
 
-} // ns boomhs
+} // namespace boomhs

@@ -1,6 +1,6 @@
-#include <boomhs/nearby_targets.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/math.hpp>
-#include <boomhs/clock.hpp>
+#include <boomhs/nearby_targets.hpp>
 
 using namespace boomhs;
 
@@ -8,8 +8,7 @@ namespace
 {
 
 bool
-should_change_offset(std::optional<SelectedTarget> const& selected,
-                     std::vector<EntityID> const&         targets)
+should_change_offset(std::optional<SelectedTarget> const& selected, EntityArray const& targets)
 {
   return selected && (targets.size() > 1);
 }
@@ -153,18 +152,17 @@ NearbyTargets::update_time(FrameTime const& ft)
 Color
 NearbyTargets::color_from_level_difference(int const player_level, int const target_level)
 {
-  int const diff = player_level - target_level;
+  int const diff     = player_level - target_level;
   int const abs_diff = std::abs(diff);
 
   bool const player_gt = diff > 0;
   bool const player_lt = diff < 0;
-  bool const equals = diff == 0;
+  bool const equals    = diff == 0;
 
   {
-    bool const equals_and_neither_gtlt     = (equals && (!player_gt && !player_lt));
-    bool const gltl_notsame                = ((player_gt && !player_lt)
-                                                || (!player_gt && player_lt));
-    bool const notequals_and_onlyone_gtlt  = (!equals && gltl_notsame);
+    bool const equals_and_neither_gtlt = (equals && (!player_gt && !player_lt));
+    bool const gltl_notsame            = ((player_gt && !player_lt) || (!player_gt && player_lt));
+    bool const notequals_and_onlyone_gtlt = (!equals && gltl_notsame);
 
     // Ensure that either they are the same (and gt/lt are false)
     // or
@@ -173,28 +171,28 @@ NearbyTargets::color_from_level_difference(int const player_level, int const tar
   }
 
   if (equals) {
-    return LOC::WHITE;
+    return LOC4::WHITE;
   }
   else if (player_gt && (abs_diff <= 2)) {
-    return LOC::BLUE;
+    return LOC4::BLUE;
   }
   else if (player_gt && (abs_diff <= 3)) {
-    return LOC::LIGHT_BLUE;
+    return LOC4::LIGHT_BLUE;
   }
   else if (player_gt && (abs_diff <= 3)) {
-    return LOC::GREEN;
+    return LOC4::GREEN;
   }
   else if (player_gt) {
-    return LOC::GRAY;
+    return LOC4::GRAY;
   }
   else if (player_lt && (abs_diff <= 2)) {
-    return LOC::YELLOW;
+    return LOC4::YELLOW;
   }
   else if (player_lt && (abs_diff <= 3)) {
-    return LOC::ORANGE;
+    return LOC4::ORANGE;
   }
   else if (player_lt) {
-    return LOC::RED;
+    return LOC4::RED;
   }
   std::abort();
 }

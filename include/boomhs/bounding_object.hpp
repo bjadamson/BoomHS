@@ -20,4 +20,4 @@ struct AABoundingBox
                                       EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
 };
 
-} // namspace boomhs
+} // namespace boomhs

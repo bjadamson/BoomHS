@@ -20,11 +20,8 @@ enum class AttributeType
 AttributeType
 attribute_type_from_string(char const*);
 
-class AttributePointerInfo
+struct AttributePointerInfo
 {
-  static void invalidate(AttributePointerInfo&);
-
-public:
   static constexpr auto INVALID_TYPE = -1;
 
   // fields
@@ -35,14 +32,12 @@ public:
 
   // constructors
   AttributePointerInfo() = default;
-  COPY_DEFAULT(AttributePointerInfo);
   AttributePointerInfo(GLuint const, GLint const, AttributeType const, GLsizei const);
-  AttributePointerInfo(AttributePointerInfo&&) noexcept;
 
-  std::string to_string() const;
+  COPYMOVE_DEFAULT(AttributePointerInfo);
 
   // methods
-  AttributePointerInfo& operator=(AttributePointerInfo&&) noexcept;
+  std::string to_string() const;
 };
 
 std::ostream&
@@ -58,9 +53,9 @@ private:
   GLsizei                                           stride_;
   std::array<AttributePointerInfo, API_BUFFER_SIZE> apis_;
 
+  COPY_DEFAULT(VertexAttribute);
 public:
   MOVE_DEFAULT(VertexAttribute);
-  COPY_DEFAULT(VertexAttribute);
   explicit VertexAttribute(size_t const, GLsizei const,
                            std::array<AttributePointerInfo, API_BUFFER_SIZE>&&);
 
@@ -72,6 +67,8 @@ public:
   bool has_colors() const;
   bool has_uvs() const;
 
+  auto clone() const { return *this; }
+
   std::string to_string() const;
 
   BEGIN_END_FORWARD_FNS(apis_);
@@ -81,7 +78,7 @@ std::ostream&
 operator<<(std::ostream&, VertexAttribute const&);
 
 template <typename ITB, typename ITE>
-auto
+auto constexpr
 make_vertex_attribute(ITB const begin, ITE const end)
 {
   // Requested to many APIs. Increase maximum number (more memory per instance required)
@@ -106,16 +103,23 @@ make_vertex_attribute(std::initializer_list<AttributePointerInfo> apis)
 }
 
 template <size_t N>
-auto
+auto constexpr
 make_vertex_attribute(std::array<AttributePointerInfo, N> const& apis)
 {
-  return make_vertex_attribute(apis.begin(), apis.end());
+  return make_vertex_attribute(apis.cbegin(), apis.cend());
+}
+
+inline auto
+make_vertex_attribute(AttributePointerInfo const& api)
+{
+  std::array<AttributePointerInfo, 1> const apis{{api}};
+  return make_vertex_attribute(apis.cbegin(), apis.cend());
 }
 
 inline auto
 make_vertex_attribute(std::vector<AttributePointerInfo> const& container)
 {
-  return make_vertex_attribute(container.begin(), container.end());
+  return make_vertex_attribute(container.cbegin(), container.cend());
 }
 
 } // namespace opengl

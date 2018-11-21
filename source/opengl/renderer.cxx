@@ -4,38 +4,36 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/fog.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/material.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/terrain.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/vertex_factory.hpp>
+#include <boomhs/vertex_interleave.hpp>
+#include <boomhs/viewport.hpp>
 #include <boomhs/zone_state.hpp>
 
-#include <opengl/renderer.hpp>
+#include <boomhs/shape.hpp>
 #include <opengl/draw_info.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/global.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/light_renderer.hpp>
+#include <opengl/renderer.hpp>
 #include <opengl/shader.hpp>
-#include <opengl/shapes.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <extlibs/sdl.hpp>
-#include <boomhs/clock.hpp>
 
-#include <common/log.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/random.hpp>
+#include <common/log.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
-
-glm::vec3 static constexpr VIEWING_OFFSET{0.5f, 0.0f, 0.5f};
-auto static constexpr WIGGLE_UNDERATH_OFFSET = -0.2f;
+using namespace gl_sdl;
 
 namespace
 {
@@ -56,11 +54,11 @@ disable_depth_tests()
 void
 set_fog(common::Logger& logger, Fog const& fog, glm::mat4 const& view_matrix, ShaderProgram& sp)
 {
-  sp.set_uniform_matrix_4fv(logger, "u_viewmatrix", view_matrix);
+  shader::set_uniform(logger, sp, "u_viewmatrix", view_matrix);
 
-  sp.set_uniform_float1(logger, "u_fog.density", fog.density);
-  sp.set_uniform_float1(logger, "u_fog.gradient", fog.gradient);
-  sp.set_uniform_color(logger, "u_fog.color", fog.color);
+  shader::set_uniform(logger, sp, "u_fog.density", fog.density);
+  shader::set_uniform(logger, sp, "u_fog.gradient", fog.gradient);
+  shader::set_uniform(logger, sp, "u_fog.color", fog.color);
 }
 
 void
@@ -84,11 +82,15 @@ namespace opengl
 ///////////////////////////////////////////////////////////////////////////////////////////////
 // DrawState
 DrawState::DrawState()
+    : DrawState(false)
 {
-  common::memzero(this, sizeof(DrawState));
+}
 
-  assert(0 == num_vertices);
-  assert(0 == num_drawcalls);
+DrawState::DrawState(bool const wireframe_override)
+    : num_vertices(0)
+    , num_drawcalls(0)
+    , draw_wireframes(wireframe_override)
+{
 }
 
 std::string
@@ -96,6 +98,8 @@ DrawState::to_string() const
 {
   return fmt::sprintf("{vertices: %lu, drawcalls: %lu}", num_vertices, num_drawcalls);
 }
+
+
 
 } // namespace opengl
 
@@ -158,13 +162,13 @@ set_blendstate(BlendState const& state)
 }
 
 void
-init(common::Logger& logger, ScreenDimensions const& dimensions)
+init(common::Logger& logger)
 {
   // Initialize opengl
-  glViewport(dimensions.left(), dimensions.top(), dimensions.right(), dimensions.bottom());
-
   glDisable(GL_BLEND);
   glDisable(GL_CULL_FACE);
+
+  glEnable(GL_SCISSOR_TEST);
 
   enable_depth_tests();
 
@@ -185,8 +189,8 @@ void
 clear_screen(Color const& color)
 {
   // https://stackoverflow.com/a/23944124/562174
-  glDisable(GL_DEPTH_TEST);
-  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+  // glDisable(GL_DEPTH_TEST);
+  // ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
   // Render
   glClearColor(color.r(), color.g(), color.b(), color.a());
@@ -199,7 +203,7 @@ draw_2d(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo
   disable_depth_tests();
   ON_SCOPE_EXIT([]() { enable_depth_tests(); });
 
-  draw(rstate, dm, sp, dinfo);
+  draw(rstate.fs.es.logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -226,7 +230,7 @@ draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
     // ASSUMPTION: If the light source has a texture, then DO NOT set u_lightcolor.
     // Instead, assume the image should be rendered unaffected by the lightsource itself.
     auto const diffuse = pointlight.light.diffuse;
-    sp.set_uniform_color_3fv(logger, "u_lightcolor", diffuse);
+    shader::set_uniform(logger, sp, "u_lightcolor", diffuse);
   }
 
   if (!sp.is_2d) {
@@ -235,7 +239,7 @@ draw_3dlightsource(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
     set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
   }
 
-  draw(rstate, dm, sp, dinfo);
+  draw(logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -261,8 +265,8 @@ draw_3dshape(RenderState& rstate, GLenum const dm, glm::mat4 const& model_matrix
   }
 
   // misc
-  sp.set_uniform_bool(logger, "u_drawnormals", es.draw_normals);
-  draw(rstate, dm, sp, dinfo);
+  shader::set_uniform(logger, sp, "u_drawnormals", es.draw_normals);
+  draw(logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -277,7 +281,7 @@ draw_3dblack_water(RenderState& rstate, GLenum const dm, glm::mat4 const& model_
   auto const camera_matrix = fstate.camera_matrix();
   set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-  draw(rstate, dm, sp, dinfo);
+  draw(logger, rstate.ds, dm, sp, dinfo);
 }
 
 void
@@ -291,21 +295,18 @@ draw_3dlit_shape(RenderState& rstate, GLenum const dm, glm::vec3 const& position
   auto& zs     = fstate.zs;
 
   if (!es.draw_normals) {
-    LightRenderer::set_light_uniforms(rstate, registry, sp, material, position, model_matrix, set_normalmatrix);
+    LightRenderer::set_light_uniforms(rstate, registry, sp, material, position, model_matrix,
+                                      set_normalmatrix);
   }
 
   draw_3dshape(rstate, dm, model_matrix, sp, dinfo);
 }
 
 void
-draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
+draw(common::Logger& logger, DrawState& ds, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 {
-  auto&      fstate      = rstate.fs;
-  auto&      es          = fstate.es;
-  auto&      logger      = es.logger;
-  auto const draw_mode   = es.wireframe_override ? GL_LINE_LOOP : dm;
+  auto const draw_mode   = ds.draw_wireframes ? GL_LINE_LOOP : dm;
   auto const num_indices = dinfo.num_indices();
-  auto constexpr OFFSET  = nullptr;
 
   /*
   LOG_DEBUG("---------------------------------------------------------------------------");
@@ -317,16 +318,43 @@ draw(RenderState& rstate, GLenum const dm, ShaderProgram& sp, DrawInfo& dinfo)
 
   FOR_DEBUG_ONLY([&]() { assert(sp.is_bound()); });
   FOR_DEBUG_ONLY([&]() { assert(dinfo.is_bound()); });
+  draw_elements(logger, draw_mode, sp, num_indices, ds);
+}
+
+void
+draw_elements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
+              GLuint const num_indices, DrawState& ds)
+{
+  auto constexpr INDICES_PTR = nullptr;
+
   if (sp.instance_count) {
-    auto const ic = *sp.instance_count;
-    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, nullptr, ic);
+    auto const prim_count = *sp.instance_count;
+    glDrawElementsInstanced(draw_mode, num_indices, GL_UNSIGNED_INT, INDICES_PTR, prim_count);
   }
   else {
-    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, OFFSET);
+    glDrawElements(draw_mode, num_indices, GL_UNSIGNED_INT, INDICES_PTR);
   }
 
-  rstate.ds.num_vertices += num_indices;
-  ++rstate.ds.num_drawcalls;
+  ds.num_vertices += num_indices;
+  ++ds.num_drawcalls;
+}
+
+void
+draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp,
+                GLuint const num_indices, DrawState& ds)
+{
+  disable_depth_tests();
+  ON_SCOPE_EXIT([]() { enable_depth_tests(); });
+
+  draw_elements(logger, draw_mode, sp, num_indices, ds);
+}
+
+void
+draw_2delements(common::Logger& logger, GLenum const draw_mode, ShaderProgram& sp, TextureInfo& ti,
+                GLuint const num_indices, DrawState& ds)
+{
+  BIND_UNTIL_END_OF_SCOPE(logger, ti);
+  draw_2delements(logger, draw_mode, sp, num_indices, ds);
 }
 
 void
@@ -340,20 +368,20 @@ draw_arrow(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& head, C
   auto& registry = zs.registry;
 
   auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("3d_pos_color");
+  auto& sp  = sps.ref_sp(logger, "3d_pos_color");
 
-  auto const acp = ArrowCreateParams{color, start, head};
-  auto const arrow_v = ArrowFactory::create_vertices(acp);
-  auto        dinfo = OG::copy_arrow(logger, sp.va(), arrow_v);
-  auto const& ldata = zs.level_data;
+  auto const acp     = ArrowTemplate{color, start, head};
+  auto const arrow_v = VertexFactory::build(acp);
+  auto       dinfo   = OG::copy(logger, sp.va(), arrow_v);
 
   Transform transform;
-  sp.while_bound(logger, [&]() {
-    auto const camera_matrix = fstate.camera_matrix();
-    set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
 
-    dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
-  });
+  auto const camera_matrix = fstate.camera_matrix();
+  set_mvpmatrix(logger, camera_matrix, transform.model_matrix(), sp);
+
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  draw(logger, rstate.ds, GL_LINES, sp, dinfo);
 }
 
 void
@@ -367,14 +395,14 @@ draw_line(RenderState& rstate, glm::vec3 const& start, glm::vec3 const& end, Col
   auto& registry = zs.registry;
 
   auto& sps = zs.gfx_state.sps;
-  auto& sp  = sps.ref_sp("line");
+  auto& sp  = sps.ref_sp(logger, "line");
 
-  auto const  lcp   = LineCreateParams{start, end};
-  auto const  line_v = LineFactory::create_vertices(lcp);
-  auto        dinfo = OG::copy_line(logger, sp.va(), line_v);
+  LineTemplate const lt{start, end};
+  auto const         line_v = VertexFactory::build(lt);
+  auto               dinfo  = OG::copy(logger, sp.va(), line_v);
 
   sp.while_bound(logger, [&]() {
-    sp.set_uniform_color(logger, "u_linecolor", color);
+      shader::set_uniform(logger, sp, "u_linecolor", color);
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_LINES, sp, dinfo); });
   });
 }
@@ -387,24 +415,18 @@ draw_fbo_testwindow(RenderState& rstate, glm::vec2 const& pos, glm::vec2 const& 
   auto& es     = fstate.es;
   auto& logger = es.logger;
 
-  auto const& dimensions = es.dimensions;
+  auto const v    = VertexFactory::build(pos.x, pos.y, size.x, size.y);
+  auto const uv   = UvFactory::build_rectangle(ti.uv_max);
+  auto const vuvs = vertex_interleave(v, uv);
 
-  auto const v     = OF::rectangle_vertices(pos.x, pos.y, size.x, size.y);
-  auto const uv = OF::rectangle_uvs(ti.uv_max);
-  auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
-
-  DrawInfo   dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
-
+  DrawInfo   dinfo       = OG::copy_rectangle(logger, sp.va(), vuvs);
   auto const proj_matrix = fstate.projection_matrix();
-  sp.while_bound(logger, [&]() {
-    sp.set_uniform_matrix_4fv(logger, "u_projmatrix", proj_matrix);
+  BIND_UNTIL_END_OF_SCOPE(logger, sp);
+  shader::set_uniform(logger, sp, "u_mv", proj_matrix);
 
-    glActiveTexture(GL_TEXTURE0);
-
-    dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
-
-    glActiveTexture(GL_TEXTURE0);
-  });
+  glActiveTexture(GL_TEXTURE0);
+  BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+  draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo);
 }
 
 void
@@ -432,7 +454,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
   Transform transform;
   transform.translation = npc_transform.translation;
   auto const scale      = nearby_targets.calculate_scale(ft);
-  transform.scale = glm::vec3{scale};
+  transform.scale       = glm::vec3{scale};
 
   auto const proj_matrix = fstate.projection_matrix();
 
@@ -443,8 +465,8 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto& zs     = fstate.zs;
 
     auto& gfx_state = zs.gfx_state;
-    auto& ttable = gfx_state.texture_table;
-    auto& sps    = gfx_state.sps;
+    auto& ttable    = gfx_state.texture_table;
+    auto& sps       = gfx_state.sps;
 
     auto& logger = es.logger;
 
@@ -452,10 +474,10 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     assert(texture_o);
     auto& ti = *texture_o;
 
-    auto const      v = OF::rectangle_vertices_default();
-    auto const uv = OF::rectangle_uvs(ti.uv_max);
-    auto const vuvs  = RectangleFactory::from_vertices_and_uvs(v, uv);
-    DrawInfo dinfo = gpu::copy_rectangle_uvs(logger, sp.va(), vuvs);
+    auto const v     = VertexFactory::build_default();
+    auto const uv    = UvFactory::build_rectangle(ti.uv_max);
+    auto const vuvs  = vertex_interleave(v, uv);
+    DrawInfo   dinfo = OG::copy_rectangle(logger, sp.va(), vuvs);
 
     dinfo.while_bound(logger, [&]() { draw_2d(rstate, GL_TRIANGLES, sp, ti, dinfo); });
   };
@@ -469,19 +491,19 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
     auto const  rmatrix         = glm::toMat4(rot);
 
     auto const mvp_matrix = proj_matrix * (view_model * rmatrix);
-    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+    shader::set_uniform(logger, sp, "u_mv", mvp_matrix);
 
-    auto const& player = find_player(registry);
-    auto const target_level = registry.get<NPCData>(npc_selected_eid).level;
-    auto const blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
-    sp.set_uniform_color(logger, "u_blendcolor", blendc);
+    auto const& player       = find_player(registry);
+    auto const  target_level = registry.get<NPCData>(npc_selected_eid).level;
+    auto const  blendc = NearbyTargets::color_from_level_difference(player.level, target_level);
+    shader::set_uniform(logger, sp, "u_blendcolor", blendc);
 
     draw_billboard(rstate, transform, sp, "TargetReticle");
   };
 
   auto const draw_glow = [&](auto& sp) {
     auto const mvp_matrix = proj_matrix * view_model;
-    sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+    shader::set_uniform(logger, sp, "u_mv", mvp_matrix);
     draw_billboard(rstate, transform, sp, "NearbyTargetGlow");
   };
 
@@ -489,7 +511,7 @@ draw_targetreticle(RenderState& rstate, FrameTime const& ft)
 
   auto& sps = zs.gfx_state.sps;
 
-  auto& sp = sps.ref_sp(should_draw_glow ? "billboard" : "target_reticle");
+  auto& sp = sps.ref_sp(logger, should_draw_glow ? "billboard" : "target_reticle");
   BIND_UNTIL_END_OF_SCOPE(logger, sp);
   ENABLE_ALPHA_BLENDING_UNTIL_SCOPE_EXIT();
   if (should_draw_glow) {
@@ -509,59 +531,32 @@ draw_grid_lines(RenderState& rstate)
 
   auto& logger = es.logger;
   auto& sps    = zs.gfx_state.sps;
-  auto& sp     = sps.ref_sp("3d_pos_color");
+  auto& sp     = sps.ref_sp(logger, "3d_pos_color");
 
-  auto const& leveldata = zs.level_data;
+  auto const& grid_dimensions       = es.grid_lines.dimensions;
+  auto const  draw_the_terrain_grid = [&](auto const& color) {
+    Transform  transform;
+    auto const model_matrix = transform.model_matrix();
 
-  bool const show_y = es.show_yaxis_lines;
+    auto const grid_t = GridTemplate{grid_dimensions, color};
+    auto const grid_v = VertexFactory::build(grid_t);
+    auto       dinfo  = OG::copy(logger, sp.va(), grid_v);
 
-  glm::vec2 constexpr GRID_DIMENSIONS{20, 20};
+    auto const camera_matrix = fstate.camera_matrix();
+    BIND_UNTIL_END_OF_SCOPE(logger, sp);
+    set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
 
-  auto const draw_the_terrain_grid = [&](glm::mat4 const& model_matrix, auto const& color) {
-    auto const grid = GridFactory::create_grid(GRID_DIMENSIONS, show_y, color);
-    auto dinfo = OG::copy_grid_gpu(logger, sp.va(), grid);
-
-    sp.while_bound(logger, [&]() {
-      auto const camera_matrix = fstate.camera_matrix();
-      set_mvpmatrix(logger, camera_matrix, model_matrix, sp);
-
-      dinfo.while_bound(logger, [&]() { draw(rstate, GL_LINES, sp, dinfo); });
-    });
+    BIND_UNTIL_END_OF_SCOPE(logger, dinfo);
+    draw(logger, rstate.ds, GL_LINES, sp, dinfo);
   };
 
-
-  Transform transform;
-  draw_the_terrain_grid(transform.model_matrix(), LOC::RED);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, 0};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::BLUE);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::GREEN);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::ORANGE);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, 0};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::PURPLE);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::BROWN);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::NAVY);
-
-  transform.translation = glm::vec3{-GRID_DIMENSIONS.x, 0.0f, -GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::YELLOW);
-
-  transform.translation = glm::vec3{GRID_DIMENSIONS.x, 0.0f, GRID_DIMENSIONS.y};
-  draw_the_terrain_grid(transform.model_matrix(), LOC::GRAY);
+  draw_the_terrain_grid(LOC4::RED);
 }
 
 void
 set_modelmatrix(common::Logger& logger, glm::mat4 const& model_matrix, ShaderProgram& sp)
 {
-  sp.set_uniform_matrix_4fv(logger, "u_modelmatrix", model_matrix);
+  shader::set_uniform(logger, sp, "u_modelmatrix", model_matrix);
 }
 
 void
@@ -569,7 +564,56 @@ set_mvpmatrix(common::Logger& logger, glm::mat4 const& camera_matrix, glm::mat4 
               ShaderProgram& sp)
 {
   auto const mvp_matrix = camera_matrix * model_matrix;
-  sp.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+  shader::set_uniform(logger, sp, "u_mv", mvp_matrix);
+}
+
+namespace detail
+{
+
+// Invoke OpenGL function using information from the Viewport, handling coordinate conversions.
+// ie converts:
+//   left, top, width, height
+//
+// to:
+//   left, bottom, width, height
+void
+gl_fn_using_viewport(Viewport const& vp, int const screen_height, void (*fn)(int, int, int, int))
+{
+  auto const left = vp.left();
+
+  // OpenGL assumes (0, 0) is the BOTTOM-left corner.
+  // Our Viewport deals with (0, 0) is the TOP-left corner.
+  //
+  // Convert viewport's "top" to OpenGL's "bottom".
+  // https://www.opengl.org/discussion_boards/showthread.php/129422-glViewport-from-top-left-not-bottom-left?p=970469&viewfull=1#post970469
+  auto const bottom = screen_height - vp.top() - vp.height();
+
+  auto const width  = vp.width();
+  auto const height = vp.height();
+
+  // OpenGL functions (using viewport data) assume this argument order.
+  fn(left, bottom, width, height);
+}
+
+} // namespace detail
+
+void
+set_viewport(Viewport const& vp, int const screen_height)
+{
+  detail::gl_fn_using_viewport(vp, screen_height, glViewport);
+}
+
+void
+set_scissor(Viewport const& vp, int const screen_height)
+{
+  detail::gl_fn_using_viewport(vp, screen_height, glScissor);
+}
+
+void
+set_viewport_and_scissor(Viewport const& vp, int const screen_height)
+{
+  set_viewport(vp, screen_height);
+  set_scissor(vp, screen_height);
 }
 
 } // namespace opengl::render

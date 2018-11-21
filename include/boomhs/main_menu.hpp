@@ -1,29 +1,28 @@
 #pragma once
 #include <extlibs/sdl.hpp>
 
-struct ImVec2;
-
 namespace opengl
 {
 struct DrawState;
 class SkyboxRenderer;
 } // namespace opengl
 
-namespace window
+namespace gl_sdl
 {
 class SDLWindow;
-} // namespace window
+} // namespace gl_sdl
 
 namespace boomhs
 {
 class  Camera;
+class  Viewport;
 struct EngineState;
 class  FrameTime;
-struct GameState;
-struct LevelManager;
-class  PlayerBehavior;
-class  SDLEventProcessArgs;
-class  WaterAudioSystem;
+class  GameState;
+class  LevelManager;
+struct PlayerBehavior;
+struct SDLEventProcessArgs;
+struct WaterAudioSystem;
 
 struct MainMenuState
 {
@@ -37,10 +36,10 @@ namespace boomhs::main_menu
 {
 
 void
-draw(EngineState&, window::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl::DrawState&,
-     LevelManager&, ImVec2 const&, WaterAudioSystem&);
+draw(EngineState&, gl_sdl::SDLWindow&, Camera&, opengl::SkyboxRenderer&, opengl::DrawState&,
+     LevelManager&, Viewport const&, WaterAudioSystem&);
 
 void
-process_event(SDLEventProcessArgs &&);
+process_event(SDLEventProcessArgs&&);
 
 } // namespace boomhs::main_menu

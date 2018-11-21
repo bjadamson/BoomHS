@@ -4,9 +4,9 @@
 #include <boomhs/terrain.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <extlibs/fmt.hpp>
-#include <common/algorithm.hpp>
 #include <boomhs/math.hpp>
+#include <common/algorithm.hpp>
+#include <extlibs/fmt.hpp>
 
 using namespace boomhs;
 using namespace boomhs::math;
@@ -15,12 +15,10 @@ using namespace boomhs::math::constants;
 namespace boomhs
 {
 
-WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, glm::vec3 const& forward,
-                         glm::vec3 const& up)
+WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, WorldOrientation const& world_orien)
     : eid_(eid)
     , registry_(&r)
-    , forward_(forward)
-    , up_(up)
+    , world_orientation_(&world_orien)
 {
   registry_->assign<Transform>(eid_);
 }
@@ -28,13 +26,13 @@ WorldObject::WorldObject(EntityID const eid, EntityRegistry& r, glm::vec3 const&
 glm::vec3
 WorldObject::eye_forward() const
 {
-  return forward_ * orientation();
+  return world_orientation_->forward * orientation();
 }
 
 glm::vec3
 WorldObject::eye_up() const
 {
-  return up_ * orientation();
+  return world_orientation_->up * orientation();
 }
 
 WorldObject&
@@ -47,11 +45,7 @@ WorldObject::move(glm::vec3 const& delta)
 std::string
 WorldObject::display() const
 {
-  return fmt::sprintf("world_pos: '%s'\neye_forward: '%s'\nworld_forward: '%s'\n"
-                      "world_right: '%s'\nworld_up: '%s'\nquat: '%s'\n",
-                      glm::to_string(world_position()), glm::to_string(eye_forward()),
-                      glm::to_string(world_forward()), glm::to_string(world_right()),
-                      glm::to_string(world_up()), glm::to_string(orientation()));
+  return fmt::sprintf("quat: '%s'\n", glm::to_string(orientation()));
 }
 
 glm::vec3 const&
@@ -90,8 +84,8 @@ WorldObject::rotate_to_match_camera_rotation(Camera const& camera)
   wo_fwd           = glm::normalize(wo_fwd);
 
   glm::quat const rot_between = math::rotation_between_vectors(camera_wo_fwd, wo_fwd);
-  auto& t = transform();
-  t.rotation = rot_between * t.rotation;
+  auto&           t           = transform();
+  t.rotation                  = rot_between * t.rotation;
 }
 
 } // namespace boomhs

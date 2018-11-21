@@ -1,6 +1,6 @@
 #pragma once
+#include <boomhs/color.hpp>
 #include <common/type_macros.hpp>
-#include <boomhs/colors.hpp>
 
 namespace boomhs
 {
@@ -10,7 +10,7 @@ struct Fog
   float density;
   float gradient;
 
-  Color color;
+  ColorRGBA color = LOC4::NO_ALPHA;
 
   Fog() = default;
   MOVE_CONSTRUCTIBLE_ONLY(Fog);

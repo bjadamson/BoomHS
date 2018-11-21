@@ -6,42 +6,47 @@
 #include <boomhs/collision.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/controller.hpp>
+#include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/frame.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/item.hpp>
 #include <boomhs/item_factory.hpp>
-#include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
 #include <boomhs/npc.hpp>
+
+#include <boomhs/ortho_renderer.hpp>
+#include <boomhs/perspective_renderer.hpp>
+#include <boomhs/scene_renderer.hpp>
+
 #include <boomhs/player.hpp>
-#include <boomhs/rexpaint.hpp>
-#include <boomhs/state.hpp>
-#include <boomhs/start_area_generator.hpp>
+
+#include <boomhs/random.hpp>
 #include <boomhs/skybox.hpp>
+#include <boomhs/start_area_generator.hpp>
+#include <boomhs/state.hpp>
 #include <boomhs/terrain.hpp>
 #include <boomhs/tree.hpp>
 #include <boomhs/ui_debug.hpp>
 #include <boomhs/ui_ingame.hpp>
+#include <boomhs/vertex_factory.hpp>
+#include <boomhs/vertex_interleave.hpp>
 #include <boomhs/water.hpp>
 
-
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/texture.hpp>
 
-#include <extlibs/sdl.hpp>
-#include <boomhs/clock.hpp>
-
 #include <common/log.hpp>
-#include <boomhs/math.hpp>
-#include <boomhs/random.hpp>
 #include <common/result.hpp>
 
 #include <extlibs/fastnoise.hpp>
 #include <extlibs/imgui.hpp>
+#include <extlibs/sdl.hpp>
 
 #include <cassert>
 #include <chrono>
@@ -54,7 +59,7 @@
 using namespace boomhs;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace
 {
@@ -62,19 +67,22 @@ namespace
 bool
 player_in_water(common::Logger& logger, EntityRegistry& registry)
 {
-  auto const& player = find_player(registry);
+  auto const& player      = find_player(registry);
   auto const& player_bbox = player.bounding_box().cube;
-  auto const& p_tr        = player.transform();
+  auto const& player_tr   = player.transform();
 
   auto const eids = find_all_entities_with_component<WaterInfo, Transform, AABoundingBox>(registry);
   for (auto const eid : eids) {
     auto const& water_bbox = registry.get<AABoundingBox>(eid).cube;
     auto const& water_info = registry.get<WaterInfo>(eid);
-    auto  w_tr       = registry.get<Transform>(eid);
-    w_tr.scale.x = water_info.dimensions.x;
-    w_tr.scale.z = water_info.dimensions.y;
 
-    if (collision::cube_intersects(logger, p_tr, player_bbox, w_tr, water_bbox)) {
+    auto water_tr    = registry.get<Transform>(eid);
+    water_tr.scale.x = water_info.dimensions.x;
+    water_tr.scale.z = water_info.dimensions.y;
+
+    CubeTransform const& player_ct{player_bbox, player_tr};
+    CubeTransform const& water_ct{water_bbox, water_tr};
+    if (collision::overlap_axis_aligned(logger, player_ct, water_ct)) {
       return true;
     }
   }
@@ -84,14 +92,16 @@ player_in_water(common::Logger& logger, EntityRegistry& registry)
 void
 update_mousestates(EngineState& es)
 {
-  auto& mss = es.device_states.mouse;
+  auto& mss    = es.device_states.mouse;
   mss.previous = mss.current;
 }
 
 void
-update_playaudio(common::Logger& logger, LevelData& ldata, EntityRegistry& registry,
-                 WaterAudioSystem& audio)
+update_playaudio(common::Logger& logger, EngineState& es, LevelData& ldata,
+                 EntityRegistry& registry, WaterAudioSystem& audio)
 {
+  audio.set_volume(es.ui_state.debug.buffers.audio.ambient);
+
   if (player_in_water(logger, registry)) {
     audio.play_inwater_sound(logger);
   }
@@ -101,13 +111,13 @@ update_playaudio(common::Logger& logger, LevelData& ldata, EntityRegistry& regis
 }
 
 void
-set_heights_ontop_terrain(common::Logger& logger, TerrainGrid& terrain,
-                               EntityRegistry& registry, EntityID const eid)
+set_heights_ontop_terrain(common::Logger& logger, TerrainGrid& terrain, EntityRegistry& registry,
+                          EntityID const eid)
 {
-  auto& transform    = registry.get<Transform>(eid);
-  auto const& bbox   = registry.get<AABoundingBox>(eid).cube;
-  auto &tr           = transform.translation;
-  float const height = terrain.get_height(logger, tr.x, tr.z);
+  auto&       transform = registry.get<Transform>(eid);
+  auto const& bbox      = registry.get<AABoundingBox>(eid).cube;
+  auto&       tr        = transform.translation;
+  float const height    = terrain.get_height(logger, tr.x, tr.z);
 
   // update original transform
   tr.y = bbox.half_widths().y + height;
@@ -119,7 +129,7 @@ update_npcpositions(common::Logger& logger, EntityRegistry& registry, TerrainGri
 {
   auto const update = [&](auto const eid) {
     auto& npcdata = registry.get<NPCData>(eid);
-    auto& npc_hp = npcdata.health;
+    auto& npc_hp  = npcdata.health;
     if (NPC::is_dead(npc_hp)) {
       return;
     }
@@ -213,8 +223,8 @@ update_orbital_bodies(EngineState& es, LevelData& ldata, glm::mat4 const& view_m
 inline auto
 find_torches(EntityRegistry& registry)
 {
-  std::vector<EntityID> torches;
-  auto                  view = registry.view<Torch>();
+  EntityArray torches;
+  auto        view = registry.view<Torch>();
   for (auto const eid : view) {
     assert(registry.has<Transform>(eid));
     torches.emplace_back(eid);
@@ -223,8 +233,7 @@ find_torches(EntityRegistry& registry)
 }
 
 void
-update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng,
-                    FrameTime const& ft)
+update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng, FrameTime const& ft)
 {
   auto const update_torch = [&](auto const eid) {
     auto& pointlight = registry.get<PointLight>(eid);
@@ -232,14 +241,14 @@ update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng,
     auto const v       = std::sin(ft.since_start_millis() * M_PI);
     auto&      flicker = registry.get<LightFlicker>(eid);
     auto&      light   = pointlight.light;
-    light.diffuse      = Color::lerp(flicker.colors[0], flicker.colors[1], v);
+    light.diffuse      = color::lerp(flicker.colors[0], flicker.colors[1], v);
     light.specular     = light.diffuse;
 
     auto& item            = registry.get<Item>(eid);
     auto& torch_transform = registry.get<Transform>(eid);
     if (item.is_pickedup) {
       // Player has picked up the torch, make it follow player around
-      auto const& player = find_player(registry);
+      auto const& player     = find_player(registry);
       auto const& player_pos = player.world_position();
 
       torch_transform.translation = player_pos;
@@ -279,23 +288,21 @@ update_torchflicker(LevelData const& ldata, EntityRegistry& registry, RNG& rng,
 void
 update_visible_entities(LevelManager& lm, EntityRegistry& registry)
 {
-  auto& zs       = lm.active();
-  auto& ldata    = zs.level_data;
+  auto& zs           = lm.active();
+  auto& ldata        = zs.level_data;
   auto& terrain_grid = ldata.terrain;
 
   for (auto const eid : registry.view<NPCData>()) {
-    auto& isr = registry.get<IsRenderable>(eid);
-    isr.hidden        = false; //terrain.is_visible(registry);
+    auto& isr  = registry.get<IsRenderable>(eid);
+    isr.hidden = false; // terrain.is_visible(registry);
   }
 }
 
 void
-update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate, Camera& camera,
-                  StaticRenderers& static_renderers, WaterAudioSystem& water_audio,
+update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const& fstate,
+                  Camera& camera, StaticRenderers& static_renderers, WaterAudioSystem& water_audio,
                   SDLWindow& window, FrameTime const& ft)
 {
-  auto& skybox_renderer = static_renderers.skybox;
-
   auto& logger   = es.logger;
   auto& zs       = lm.active();
   auto& registry = zs.registry;
@@ -307,13 +314,13 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   auto& ttable    = gfx_state.texture_table;
 
   auto& player = find_player(registry);
-  auto& nbt = ldata.nearby_targets;
+  auto& nbt    = ldata.nearby_targets;
 
   // THIS GOES FIRST ALWAYS.
   es.time.update(ft.since_start_seconds());
 
   // Update the world
-  update_playaudio(logger, ldata, registry, water_audio);
+  update_playaudio(logger, es, ldata, registry, water_audio);
 
   auto const view_matrix = fstate.view_matrix();
   auto const proj_matrix = fstate.projection_matrix();
@@ -329,8 +336,8 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
       return false; // target not selected
     }
     auto const target_eid = *target;
-    auto& npcdata = registry.get<NPCData>(target_eid);
-    auto& target_hp = npcdata.health;
+    auto&      npcdata    = registry.get<NPCData>(target_eid);
+    auto&      target_hp  = npcdata.health;
     return !NPC::is_dead(target_hp);
   };
 
@@ -339,10 +346,13 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   update_npcpositions(logger, registry, terrain, ft);
   update_nearbytargets(nbt, registry, ft);
 
+  // LOG_ERROR_SPRINTF("ortho cam pos: %s, player pos: %s",
+  // glm::to_string(camera.ortho.position),
+  // glm::to_string(player.transform().translation));
 
-  //auto& terrain = ldata.terrain;
-  //for (auto const eid : registry.view<Transform, MeshRenderable>()) {
-    //set_heights_ontop_terrain(logger, terrain, registry, eid);
+  // auto& terrain = ldata.terrain;
+  // for (auto const eid : registry.view<Transform, MeshRenderable>()) {
+  // set_heights_ontop_terrain(logger, terrain, registry, eid);
   //}
 
   bool const previously_alive = is_target_selected_and_alive(registry, nbt);
@@ -351,20 +361,21 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   if (previously_alive) {
     auto const target = nbt.selected();
     if (target) {
-      auto const target_eid = *target;
-      auto& npcdata = registry.get<NPCData>(target_eid);
-      auto& target_hp = npcdata.health;
+      auto const target_eid               = *target;
+      auto&      npcdata                  = registry.get<NPCData>(target_eid);
+      auto&      target_hp                = npcdata.health;
       bool const target_dead_after_attack = NPC::is_dead(target_hp);
-      bool const dead_from_attack = previously_alive && target_dead_after_attack;
+      bool const dead_from_attack         = previously_alive && target_dead_after_attack;
 
       auto const add_worlditem_at_targets_location = [&](EntityID const item_eid) {
         auto& item_tr = registry.get<Transform>(item_eid);
 
         auto const& target_pos = registry.get<Transform>(target_eid).translation;
-        item_tr.translation = target_pos;
+        item_tr.translation    = target_pos;
         item_tr.rotate_degrees(90, math::EulerAxis::X);
         auto const& item_name = registry.get<Name>(item_eid).value;
-        LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name, glm::to_string(item_tr.translation));
+        LOG_ERROR_SPRINTF("ADDING item %s AT xyz: %s", item_name,
+                          glm::to_string(item_tr.translation));
 
         auto& ldata     = zs.level_data;
         auto& obj_store = ldata.obj_store;
@@ -375,10 +386,10 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
         dhm.add_mesh(logger, sps, obj_store, item_eid, registry);
       };
       if (dead_from_attack) {
-        auto  const book_eid = ItemFactory::create_book(registry, ttable);
+        auto const book_eid = ItemFactory::create_book(registry, ttable);
         add_worlditem_at_targets_location(book_eid);
 
-        auto  const spear_eid = ItemFactory::create_spear(registry, ttable);
+        auto const spear_eid = ItemFactory::create_spear(registry, ttable);
         add_worlditem_at_targets_location(spear_eid);
       }
     }
@@ -387,39 +398,34 @@ update_everything(EngineState& es, LevelManager& lm, RNG& rng, FrameState const&
   update_mousestates(es);
 }
 
-
 } // namespace
 
 namespace boomhs
 {
 
 Result<common::Nothing, std::string>
-copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
-                EntityRegistry& registry, ObjStore& obj_store, DrawHandleManager& dhm)
+copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
+                ObjStore& obj_store, DrawHandleManager& dhm)
 {
   // copy CUBES to GPU
   registry.view<ShaderName, CubeRenderable>().each(
-      [&](auto const eid, auto&&...) {
-      dhm.add_cube(logger, sps, eid, registry);
-      });
+      [&](auto const eid, auto&&...) { dhm.add_cube(logger, sps, eid, registry); });
 
   // copy MESHES to GPU
   registry.view<ShaderName, MeshRenderable>().each(
-      [&](auto const eid, auto&&...) {
-      dhm.add_mesh(logger, sps, obj_store, eid, registry);
-      });
+      [&](auto const eid, auto&&...) { dhm.add_mesh(logger, sps, obj_store, eid, registry); });
 
   // copy billboarded textures to GPU
   registry.view<ShaderName, BillboardRenderable, TextureRenderable>().each(
       [&](auto entity, auto& sn, auto&, auto& texture) {
-        auto&      va = sps.ref_sp(sn.value).va();
-        auto*      ti = texture.texture_info;
+        auto& va = sps.ref_sp(logger, sn.value).va();
+        auto* ti = texture.texture_info;
         assert(ti);
 
-        auto const v  = OF::rectangle_vertices_default();
-        auto const uv = OF::rectangle_uvs(ti->uv_max);
-        auto const vertices = RectangleFactory::from_vertices_and_uvs(v, uv);
-        auto handle = opengl::gpu::copy_rectangle_uvs(logger, va, vertices);
+        auto const v        = VertexFactory::build_default();
+        auto const uv       = UvFactory::build_rectangle(ti->uv_max);
+        auto const vertices = vertex_interleave(v, uv);
+        auto       handle   = opengl::gpu::copy_rectangle(logger, va, vertices);
         dhm.add_entity(entity, MOVE(handle));
       });
 
@@ -428,12 +434,12 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
       [&](auto entity, auto& sn, auto& mesh, auto& tree) {
         auto& name = registry.get<MeshRenderable>(entity).name;
 
-        auto&          va    = sps.ref_sp(sn.value).va();
+        auto&          va    = sps.ref_sp(logger, sn.value).va();
         auto const     flags = BufferFlags::from_va(va);
         ObjQuery const query{name, flags};
         auto&          obj = obj_store.get(logger, name);
 
-        auto& tc = registry.get<TreeComponent>(entity);
+        auto& tc    = registry.get<TreeComponent>(entity);
         auto& dinfo = dhm.lookup_entity(logger, entity);
         Tree::update_colors(logger, va, dinfo, tc);
       });
@@ -444,17 +450,16 @@ copy_assets_gpu(common::Logger& logger, ShaderPrograms& sps,
 void
 add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
 {
-  auto& logger = es.logger;
-  auto& ldata     = zs.level_data;
-  auto& registry  = zs.registry;
+  auto& logger   = es.logger;
+  auto& ldata    = zs.level_data;
+  auto& registry = zs.registry;
 
   auto& gfx_state    = zs.gfx_state;
   auto& sps          = gfx_state.sps;
   auto& draw_handles = gfx_state.draw_handles;
 
   auto& obj_store                 = ldata.obj_store;
-  auto constexpr WIREFRAME_SHADER = "wireframe";
-  auto& va                        = sps.ref_sp(WIREFRAME_SHADER).va();
+  auto& va                        = sps.sp_wireframe(logger).va();
 
   for (auto const eid : registry.view<OrbitalBody>()) {
     auto constexpr MIN = glm::vec3{-1.0f};
@@ -465,14 +470,14 @@ add_orbitalbodies_and_water(EngineState& es, ZoneState& zs)
     {
       BufferFlags const flags{true, false, false, true};
 
-      auto& wi = registry.get<WaterInfo>(eid);
-      auto const dimensions = wi.dimensions;
+      auto&      wi           = registry.get<WaterInfo>(eid);
+      auto const dimensions   = wi.dimensions;
       auto const num_vertexes = wi.num_vertexes;
-      auto const data = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
-      auto const        buffer = VertexBuffer::create_interleaved(logger, data, flags);
+      auto const data         = WaterFactory::generate_water_data(logger, dimensions, num_vertexes);
+      auto const buffer       = VertexBuffer::create_interleaved(logger, data, flags);
 
-      auto& sp   = graphics_mode_to_water_shader(es.graphics_settings.mode, sps);
-      auto dinfo = gpu::copy_gpu(logger, sp.va(), buffer);
+      auto& sp    = graphics_mode_to_water_shader(logger, es.graphics_settings.mode, sps);
+      auto  dinfo = gpu::copy_gpu(logger, sp.va(), buffer);
 
       draw_handles.add_entity(eid, MOVE(dinfo));
       wi.eid = eid;
@@ -484,12 +489,9 @@ ZoneState
 assemble(LevelGeneratedData&& gendata, LevelAssets&& assets, EntityRegistry& registry)
 {
   // Combine the generated data with the asset data, creating the LevelData instance.
-  LevelData level_data{
-                       MOVE(gendata.terrain),
+  LevelData level_data{MOVE(gendata.terrain),
 
-                       MOVE(assets.fog),
-                       assets.global_light,
-                       MOVE(assets.material_table),
+                       MOVE(assets.fog), assets.global_light, MOVE(assets.material_table),
                        MOVE(assets.obj_store)};
   GfxState  gfx{MOVE(assets.shader_programs), MOVE(assets.texture_table)};
   return ZoneState{MOVE(level_data), MOVE(gfx), registry};
@@ -502,7 +504,8 @@ floornumber_to_levelfilename(int const floor_number)
 }
 
 Result<GameState, std::string>
-init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
+create_gamestate(Engine& engine, EngineState& es, WorldOrientation const& wo, Camera& camera,
+                 RNG& rng)
 {
   auto& logger = es.logger;
 
@@ -521,8 +524,8 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     char const* HEIGHTMAP_NAME = "Area0-HM";
     auto const  heightmap = TRY_MOVEOUT(heightmap::load_fromtable(logger, ttable, HEIGHTMAP_NAME));
 
-    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable,
-        material_table, heightmap);
+    auto gendata = StartAreaGenerator::gen_level(logger, registry, rng, sps, ttable, material_table,
+                                                 heightmap, wo);
 
     ZoneState zs = assemble(MOVE(gendata), MOVE(level_assets), registry);
     zstates.emplace_back(MOVE(zs));
@@ -531,7 +534,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     // copy the first zonestate to GPU
     assert(zstates.size() > 0);
 
-    auto& zs = zstates.front();
+    auto& zs        = zstates.front();
     auto& ldata     = zs.level_data;
     auto& objstore  = ldata.obj_store;
     auto& gfx_state = zs.gfx_state;
@@ -545,42 +548,46 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 
     auto& terrain = ldata.terrain;
     for (auto const eid : registry.view<Transform, AABoundingBox, MeshRenderable>()) {
-      //set_heights_ontop_terrain(logger, terrain, registry, eid);
+      // set_heights_ontop_terrain(logger, terrain, registry, eid);
     }
   }
 
-  GameState state{es, LevelManager{MOVE(zstates)}};
+  auto         water_audio = TRY_MOVEOUT(WaterAudioSystem::create());
+  LevelManager lm{MOVE(zstates)};
+  return Ok(GameState{es, MOVE(lm), MOVE(water_audio)});
+}
 
-  auto& lm       = state.level_manager;
-  auto& zs       = lm.active();
+void
+init_gamestate_inplace(GameState& gs, Camera& camera)
+{
+  auto& es = gs.engine_state();
+  auto& lm = gs.level_manager();
+
+  auto& logger = es.logger;
+  auto& zs     = lm.active();
+
+  auto& registry = zs.registry;
+  auto& player   = find_player(registry);
+  camera.set_target(player.head_world_object());
 
   {
-    auto test_r = rexpaint::RexImage::load("assets/test.xp");
-    if (!test_r) {
-      LOG_ERROR_SPRINTF("%s", test_r.unwrapErrMove());
-      std::abort();
-    }
-    auto test = test_r.expect_moveout("loading text.xp");
-    test.flatten();
-    auto save = rexpaint::RexImage::save(test, "assets/test.xp");
-    if (!save) {
-      LOG_ERROR_SPRINTF("%s", save.unwrapErrMove().to_string());
-      std::abort();
-    }
+    auto const vp  = Viewport::from_frustum(es.frustum);
+    auto       srs = make_static_renderers(es, zs, vp);
+    gs.set_renderers(MOVE(srs));
   }
 
   {
-    auto& ingame = es.ui_state.ingame;
+    auto& ingame       = es.ui_state.ingame;
     auto& chat_history = ingame.chat_history;
-    auto& chat_state = ingame.chat_state;
+    auto& chat_state   = ingame.chat_state;
 
-    chat_history.add_channel(0, "General", LOC::WHITE);
-    chat_history.add_channel(1, "Group",   LOC::LIGHT_BLUE);
-    chat_history.add_channel(2, "Guild",   LOC::LIGHT_GREEN);
-    chat_history.add_channel(3, "Whisper", LOC::MEDIUM_PURPLE);
-    chat_history.add_channel(4, "Area",    LOC::INDIAN_RED);
+    chat_history.add_channel(0, "General", LOC4::WHITE);
+    chat_history.add_channel(1, "Group", LOC4::LIGHT_BLUE);
+    chat_history.add_channel(2, "Guild", LOC4::LIGHT_GREEN);
+    chat_history.add_channel(3, "Whisper", LOC4::MEDIUM_PURPLE);
+    chat_history.add_channel(4, "Area", LOC4::INDIAN_RED);
 
-    auto const addmsg = [&](ChannelId const channel, auto &&msg) {
+    auto const addmsg = [&](ChannelId const channel, auto&& msg) {
       Message m{channel, MOVE(msg)};
       chat_history.add_message(MOVE(m));
     };
@@ -590,7 +597,7 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
     addmsg(0, "Mufk: SUp man");
     addmsg(2, "Kazaghual: anyone w2b this axe I just found?");
     addmsg(2, "PizzaMan: Yo I'm here to deliver this pizza, I'll just leave it over here by the "
-        "dragon ok?");
+              "dragon ok?");
     addmsg(3, "Moo: grass plz");
     addmsg(4, "Aladin: STFU Jafar");
     addmsg(2, "Rocky: JKSLFJS");
@@ -614,39 +621,51 @@ init(Engine& engine, EngineState& es, Camera& camera, RNG& rng)
 
               The short supporter blames the hack fudge. The waffle exacts the bankrupt within an
               infantile attitude.)");
-    addmsg(2, "A flesh hazards the sneaking tooth. An analyst steams before an instinct! The muscle "
-              "expands within each brother! Why can't the indefinite garbage harden? The feasible "
-              "cider moans in the forest.");
+    addmsg(2,
+           "A flesh hazards the sneaking tooth. An analyst steams before an instinct! The muscle "
+           "expands within each brother! Why can't the indefinite garbage harden? The feasible "
+           "cider moans in the forest.");
     addmsg(1, "Opposite the initiative scratches an inane plant. Why won't the late school "
               "experiment with a crown? The sneak papers a go dinner without a straw. How can an "
               "eating guy camp?"
-          "Around the convinced verdict waffles a scratching shed. The "
+              "Around the convinced verdict waffles a scratching shed. The "
               "inhabitant escapes before whatever outcry.");
 
     chat_state.reset_yscroll_position = true;
   }
-
-  return OK_MOVE(state);
 }
 
 void
-WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Camera& camera,
-              FrameTime const& ft, bool const silhouette_black)
+draw_everything(GameState& gs, FrameState& fs, LevelManager& lm, RNG& rng, Camera& camera,
+                StaticRenderers& static_renderers, DrawState& ds, FrameTime const& ft)
 {
-  if (silhouette_black) {
-    silhouette.render_water(rstate, ds, lm, ft);
-  }
-  else {
-    auto const& water_buffer = rstate.fs.es.ui_state.debug.buffers.water;
-    auto const  water_type = static_cast<GameGraphicsMode>(water_buffer.selected_water_graphicsmode);
-    if (GameGraphicsMode::Basic == water_type) {
-      basic.render_water(rstate, ds, lm, ft);
+  auto& es = fs.es;
+  auto& zs = lm.active();
+  {
+    RenderState rstate{fs, ds};
+
+    auto const mode = camera.mode();
+    if (CameraMode::FPS == mode || CameraMode::ThirdPerson == mode) {
+      auto const& fr = es.frustum;
+      auto const  vp = Viewport::from_frustum(fr);
+      render::set_viewport_and_scissor(vp, fr.height());
+
+      PerspectiveRenderer::draw_scene(rstate, lm, ds, camera, rng, static_renderers, ft);
+
+      auto& io       = es.imgui;
+      io.DisplaySize = ImVec2{fr.right_float(), fr.bottom_float()};
+      auto& ui_state = es.ui_state;
+      if (ui_state.draw_ingame_ui) {
+        ui_ingame::draw(fs, camera, static_renderers, ds);
+      }
+      if (ui_state.draw_debug_ui) {
+
+        auto static constexpr WINDOW_FLAGS = (0 | ImGuiWindowFlags_AlwaysAutoResize);
+        ui_debug::draw("Perspective", WINDOW_FLAGS, es, lm, camera, ft);
+      }
     }
-    else if (GameGraphicsMode::Medium == water_type) {
-      medium.render_water(rstate, ds, lm, ft);
-    }
-    else if (GameGraphicsMode::Advanced == water_type) {
-      advanced.render_water(rstate, ds, lm, ft);
+    else if (CameraMode::Ortho == mode) {
+      OrthoRenderer::draw_scene(gs, rstate, lm, ds, camera, rng, static_renderers, ft);
     }
     else {
       std::abort();
@@ -655,310 +674,54 @@ WaterRenderers::render(RenderState& rstate, DrawState& ds, LevelManager& lm, Cam
 }
 
 void
-StaticRenderers::render(LevelManager&lm, RenderState& rstate, Camera& camera, RNG& rng, DrawState& ds,
-            FrameTime const& ft, bool const silhouette_black)
+game_loop(Engine& engine, GameState& gs, RNG& rng, Camera& camera, FrameTime const& ft)
 {
-  // Render the scene with no culling (setting it zero disables culling mathematically)
-  glm::vec4 const NOCULL_VECTOR{0, 0, 0, 0};
+  auto& es  = gs.engine_state();
+  auto& lm  = gs.level_manager();
+  auto& srs = gs.static_renderers();
 
-  auto& fs = rstate.fs;
-  auto& es = fs.es;
-  if (es.draw_terrain) {
-    auto const draw_basic = [&](auto& terrain_renderer, auto& entity_renderer) {
-      auto& zs = fs.zs;
-      auto& ldata = zs.level_data;
-      auto& registry = zs.registry;
-
-      terrain_renderer.render(rstate, ldata.material_table, registry, ft, NOCULL_VECTOR);
-    };
-    if (silhouette_black) {
-      draw_basic(silhouette_terrain, silhouette_entity);
-    }
-    else {
-      draw_basic(default_terrain, default_entity);
-    }
-  }
-  // DRAW ALL ENTITIES
-  {
-    if (es.draw_3d_entities) {
-      if (silhouette_black) {
-        silhouette_entity.render3d(rstate, rng, ft);
-      }
-      else {
-        default_entity.render3d(rstate, rng, ft);
-      }
-    }
-    if (es.draw_2d_billboard_entities) {
-      if (silhouette_black) {
-        silhouette_entity.render2d_billboard(rstate, rng, ft);
-      }
-      else {
-        default_entity.render2d_billboard(rstate, rng, ft);
-      }
-    }
-    if (es.draw_2d_ui_entities) {
-      if (silhouette_black) {
-        silhouette_entity.render2d_ui(rstate, rng, ft);
-      }
-      else {
-        default_entity.render2d_ui(rstate, rng, ft);
-      }
-    }
-  }
-  if (silhouette_black) {
-    // do nothing
-  }
-  else {
-    debug.render_scene(rstate, lm, camera, rng, ft);
-  }
-}
-
-void
-render_scene(RenderState& rstate, LevelManager& lm, DrawState& ds, Camera& camera,
-             RNG& rng, FrameTime const& ft, StaticRenderers& static_renderers)
-{
-  auto& es     = rstate.fs.es;
-  auto& logger = es.logger;
-  auto const& graphics_settings      = es.graphics_settings;
-  bool const  graphics_mode_advanced = GameGraphicsMode::Advanced == graphics_settings.mode;
-
-  auto const& water_buffer = es.ui_state.debug.buffers.water;
-  bool const  draw_water = water_buffer.draw;
-  bool const  draw_water_advanced    = draw_water && graphics_mode_advanced;
-
-  auto& skybox_renderer = static_renderers.skybox;
-
-  auto const draw_scene = [&](bool const silhouette_black) {
-    auto& water_renderer = static_renderers.water;
-    auto const draw_advanced = [&](auto& terrain_renderer, auto& entity_renderer) {
-      water_renderer.advanced.render_reflection(es, ds, lm, camera, entity_renderer,
-                                                skybox_renderer, terrain_renderer, rng, ft);
-      water_renderer.advanced.render_refraction(es, ds, lm, camera, entity_renderer,
-                                                skybox_renderer, terrain_renderer, rng, ft);
-    };
-    if (draw_water && draw_water_advanced && !silhouette_black) {
-      // Render the scene to the refraction and reflection FBOs
-      draw_advanced(static_renderers.default_terrain, static_renderers.default_entity);
-    }
-
-    auto const& zs    = lm.active();
-    auto const& ldata = zs.level_data;
-    auto const clear_color = silhouette_black ? LOC::BLACK : ldata.fog.color;
-    render::clear_screen(clear_color);
-
-    // render scene
-    if (es.draw_skybox) {
-      if (!silhouette_black) {
-        skybox_renderer.render(rstate, ds, ft);
-      }
-    }
-
-    // The water must be drawn BEFORE rendering the scene the last time, otherwise it shows up
-    // ontop of the ingame UI nearby target indicators.
-    if (draw_water) {
-      water_renderer.render(rstate, ds, lm, camera, ft, silhouette_black);
-    }
-
-    static_renderers.render(lm, rstate, camera, rng, ds, ft, silhouette_black);
-  };
-
-  auto const draw_scene_normal_render = [&]() { draw_scene(false); };
-
-  auto const render_scene_with_sunshafts = [&]() {
-    // draw scene with black silhouttes into the sunshaft FBO.
-    auto& sunshaft_renderer = static_renderers.sunshaft;
-    sunshaft_renderer.with_sunshaft_fbo(logger, [&]() { draw_scene(true); });
-
-    // draw the scene (normal render) to the screen
-    draw_scene_normal_render();
-
-    // With additive blending enabled, render the FBO ontop of the previously rendered scene to
-    // obtain the sunglare effect.
-    ENABLE_ADDITIVE_BLENDING_UNTIL_SCOPE_EXIT();
-    sunshaft_renderer.render(rstate, ds, lm, camera, ft);
-  };
-
-  if (!graphics_settings.disable_sunshafts) {
-    render_scene_with_sunshafts();
-  }
-  else {
-    draw_scene_normal_render();
-  }
-}
-
-StaticRenderers
-make_static_renderers(EngineState& es, LevelManager& lm)
-{
-  auto const make_basic_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
-    auto& diff   = *ttable.find("water-diffuse");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
-    return BasicWaterRenderer{logger, diff, normal, sp};
-  };
-
-  auto const make_medium_water_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
-    auto& diff   = *ttable.find("water-diffuse");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Medium, sps);
-    return MediumWaterRenderer{logger, diff, normal, sp};
-  };
-
-  auto const       make_advanced_water_renderer = [](EngineState& es, ZoneState& zs) {
-    auto& logger   = es.logger;
-    auto const&      dim = es.dimensions;
-    ScreenSize const screen_size{dim.right(), dim.bottom()};
-
-    auto& gfx_state = zs.gfx_state;
-    auto& ttable    = gfx_state.texture_table;
-    auto& sps       = gfx_state.sps;
-    auto& ti     = *ttable.find("water-diffuse");
-    auto& dudv   = *ttable.find("water-dudv");
-    auto& normal = *ttable.find("water-normal");
-    auto& sp     = graphics_mode_to_water_shader(GameGraphicsMode::Advanced, sps);
-    return AdvancedWaterRenderer{logger, screen_size, sp, ti, dudv, normal};
-  };
-
-  auto const make_black_water_renderer = [](EngineState& es, ZoneState& zs) {
-    auto& logger   = es.logger;
-    auto& gfx_state = zs.gfx_state;
-    auto& sps       = gfx_state.sps;
-    auto& sp = sps.ref_sp("silhoutte_black");
-    return SilhouetteWaterRenderer{logger, sp};
-  };
-
-  auto const make_black_terrain_renderer = [](ShaderPrograms& sps) {
-    auto& sp = sps.ref_sp("silhoutte_black");
-    return SilhouetteTerrainRenderer{sp};
-  };
-
-  auto const make_sunshaft_renderer = [](EngineState& es, ZoneState& zs) {
-    auto& logger   = es.logger;
-    auto& gfx_state = zs.gfx_state;
-    auto& sps       = gfx_state.sps;
-    auto& sunshaft_sp = sps.ref_sp("sunshaft");
-    auto const&      dim = es.dimensions;
-    ScreenSize const screen_size{dim.right(), dim.bottom()};
-    return SunshaftRenderer{logger, screen_size, sunshaft_sp};
-  };
-
-  // TODO: Move out into state somewhere.
-  auto const make_skybox_renderer = [](common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable) {
-    auto&              skybox_sp = sps.ref_sp("skybox");
-    glm::vec3 const    vmin{-0.5f};
-    glm::vec3 const    vmax{0.5f};
-
-    auto const vertices = OF::cube_vertices(vmin, vmax);
-    DrawInfo           dinfo    = opengl::gpu::copy_cube_gpu(logger, vertices, skybox_sp.va());
-    auto&              day_ti   = *ttable.find("building_skybox");
-    auto&              night_ti = *ttable.find("night_skybox");
-    return SkyboxRenderer{logger, MOVE(dinfo), day_ti, night_ti, skybox_sp};
-  };
-
-  auto& logger   = es.logger;
-
-  auto& zs        = lm.active();
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-  auto& ttable    = gfx_state.texture_table;
-  return StaticRenderers{
-    DefaultTerrainRenderer{},
-    make_black_terrain_renderer(sps),
-    EntityRenderer{},
-    SilhouetteEntityRenderer{},
-    make_skybox_renderer(logger, sps, ttable),
-    make_sunshaft_renderer(es, zs),
-    DebugRenderer{},
-
-    WaterRenderers{
-      make_basic_water_renderer(logger, sps, ttable),
-      make_medium_water_renderer(logger, sps, ttable),
-      make_advanced_water_renderer(es, zs),
-      make_black_water_renderer(es, zs)
-    }
-  };
-}
-
-void
-ingame_loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
-            WaterAudioSystem& water_audio, StaticRenderers& static_renderers, DrawState& ds,
-            FrameTime const& ft)
-{
-
-  auto& lm = state.level_manager;
-  auto& zs = lm.active();
-  auto& es = state.engine_state;
-  auto fs = FrameState::from_camera(es, zs, camera);
-
-  update_everything(es, lm, rng, fs, camera, static_renderers, water_audio, engine.window, ft);
-  {
-    RenderState rstate{fs, ds};
-    render_scene(rstate, lm, ds, camera, rng, ft, static_renderers);
-  }
-
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_ingame_ui) {
-    ui_ingame::draw(es, lm, camera, ds);
-  }
-}
-
-void
-game_loop(Engine& engine, GameState& state, StaticRenderers& static_renderers,
-          RNG& rng, Camera& camera, FrameTime const& ft)
-{
-  auto& es        = state.engine_state;
   auto& logger      = es.logger;
-  auto& lm        = state.level_manager;
+  auto& zs          = lm.active();
+  auto& gfx_state   = zs.gfx_state;
+  auto& sps         = gfx_state.sps;
+  auto& ttable      = gfx_state.texture_table;
+  auto& water_audio = gs.water_audio();
 
-  auto& zs        = lm.active();
-  auto& gfx_state = zs.gfx_state;
-  auto& sps       = gfx_state.sps;
-  auto& ttable    = gfx_state.texture_table;
+  DrawState ds{es.wireframe_override};
 
-  auto& io = es.imgui;
+  auto&      io       = es.imgui;
+  auto const viewport = engine.window_viewport();
 
-  auto& registry = zs.registry;
-  auto& player = find_player(registry);
-
-  static bool set_camera_once = false;
-  if (!set_camera_once) {
-    camera.set_target(player.head_world_object());
-    set_camera_once = true;
-  }
-
-  static auto water_audio = WaterAudioSystem::create()
-    .expect_moveout("Water Audio System");
-  water_audio.set_volume(es.ui_state.debug.buffers.audio.ambient);
-
-  DrawState ds;
-
+  auto const& fr = es.frustum;
   if (es.main_menu.show) {
+    SDL_SetRelativeMouseMode(SDL_FALSE);
+
     // Enable keyboard shortcuts
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-    io.MouseDrawCursor = true;
 
     // clear the screen before rending the main menu
-    render::clear_screen(LOC::BLACK);
+    render::clear_screen(LOC4::BLACK);
+    render::set_viewport_and_scissor(viewport, fr.height());
 
-    auto const& dimensions = engine.dimensions();
-    auto const size_v      = ImVec2(dimensions.right(), dimensions.bottom());
-    auto& skybox_renderer  = static_renderers.skybox;
-    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, size_v, water_audio);
+    auto& skybox_renderer = srs.skybox;
+    main_menu::draw(es, engine.window, camera, skybox_renderer, ds, lm, viewport, water_audio);
   }
   else {
+    {
+      bool const fps_mode      = camera.mode() == CameraMode::FPS;
+      auto const relative_mode = fps_mode ? SDL_TRUE : SDL_FALSE;
+      assert(0 == SDL_SetRelativeMouseMode(relative_mode));
+    }
+
     // Disable keyboard shortcuts
     io.ConfigFlags &= ~ImGuiConfigFlags_NavEnableKeyboard;
 
-    IO_SDL::read_devices(SDLReadDevicesArgs{state, engine.controllers, camera, ft});
+    IO_SDL::read_devices(SDLReadDevicesArgs{gs, engine.controllers, camera, ft});
+    SDL_SetCursor(es.device_states.cursors.active());
 
-    bool const fps = camera.mode() == CameraMode::FPS;
-    io.MouseDrawCursor = fps ? false : true;
-    ingame_loop(engine, state, rng, camera, water_audio, static_renderers, ds, ft);
-  }
-
-  auto& ui_state = es.ui_state;
-  if (ui_state.draw_debug_ui) {
-    auto& lm = state.level_manager;
-    ui_debug::draw(es, lm, camera, ft);
+    auto fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), fr);
+    update_everything(es, lm, rng, fs, camera, srs, water_audio, engine.window, ft);
+    draw_everything(gs, fs, lm, rng, camera, srs, ds, ft);
   }
 }
 

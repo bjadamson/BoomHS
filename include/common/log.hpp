@@ -58,7 +58,8 @@ struct LogFactory
   LogFactory() = delete;
 
 public:
-  static impl::LogWriter make_default(char const*);
+  static Logger make_default(char const*);
+  static Logger make_stderr();
 };
 
 } // namespace common

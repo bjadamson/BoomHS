@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 
 #include <imgui/imgui.h>
 #include <imgui/imgui_impl_sdl_gl3.h>
@@ -126,6 +126,37 @@ with_stylevars(FN const& fn, Args&&... args)
   ImGui::PushStyleVar(FORWARD(args));
   fn();
   ImGui::PopStyleVar();
+}
+
+struct GridInfo
+{
+  // The number of rows/columns in the grid.
+  int row_count, col_count;
+};
+
+template <typename FN, typename ...Args>
+void
+draw_grid(int const total, int const col_width, FN const& fn, Args&&... args)
+{
+  if (0 == total) {
+    return;
+  }
+  assert(col_width > 0);
+
+  bool const is_square = total % col_width == 0;
+  auto row_count       = total / col_width;
+  if (!is_square) {
+    ++row_count;
+  }
+
+  FORI(i, total)
+  {
+    if (i > 0 && ((i % col_width) == 0)) {
+      ImGui::NewLine();
+    }
+    fn(i, FORWARD(args));
+    ImGui::SameLine();
+  }
 }
 
 template <typename FN, typename... Args>

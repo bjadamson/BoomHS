@@ -17,6 +17,7 @@
 #include <iostream>
 #include <functional>
 #include <type_traits>
+#include <string>
 
 namespace types {
     template<typename T>
@@ -710,12 +711,20 @@ struct Result {
         return expect_impl(std::is_same<T, void>());
     }
 
+    T expect(std::string const& str) const {
+      return expect(str.c_str());
+    }
+
     T expect_moveout(const char* str) {
       if (!isOk()) {
           std::fprintf(stderr, "%s\n", str);
           std::terminate(); 
       }
       return expect_moveout_impl(std::is_same<T, void>());
+    }
+
+    T expect_moveout(std::string const& str) {
+      return expect_moveout(str.c_str());
     }
 
     template<typename Func,

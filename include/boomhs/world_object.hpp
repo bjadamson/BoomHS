@@ -11,15 +11,21 @@ namespace boomhs
 {
 class Camera;
 
+struct WorldOrientation
+{
+  glm::vec3 forward, up;
+
+  glm::vec3 right() const { return glm::cross(forward, up); }
+};
+
 class WorldObject
 {
-  EntityID        eid_      = EntityIDMAX;
-  EntityRegistry* registry_ = nullptr;
-
-  glm::vec3 forward_, up_;
+  EntityID          eid_;
+  EntityRegistry*   registry_;
+  WorldOrientation const* world_orientation_;
 
 public:
-  WorldObject(EntityID, EntityRegistry&, glm::vec3 const&, glm::vec3 const&);
+  WorldObject(EntityID, EntityRegistry&, WorldOrientation const&);
   NO_COPY(WorldObject);
   MOVE_DEFAULT(WorldObject);
 
@@ -36,13 +42,13 @@ public:
 
   // The "world" vectors are the the 3 Axis unit vector (X_UNIT_VECTOR, Y_UNIT_VECTOR,
   // Z_UNIT_VECTOR) translated to the object's position.
-  glm::vec3 world_forward() const { return forward_; }
-  glm::vec3 world_up() const { return up_; }
-  glm::vec3 world_backward() const { return -world_forward(); }
+  //glm::vec3 world_forward() const { return forward_; }
+  //glm::vec3 world_up() const { return up_; }
+  //glm::vec3 world_backward() const { return -world_forward(); }
 
-  glm::vec3 world_left() const { return -world_right(); }
-  glm::vec3 world_right() const { return glm::normalize(glm::cross(world_forward(), world_up())); }
-  glm::vec3 world_down() const { return -world_up(); }
+  //glm::vec3 world_left() const { return -world_right(); }
+  //glm::vec3 world_right() const { return glm::normalize(glm::cross(world_forward(), world_up())); }
+  //glm::vec3 world_down() const { return -world_up(); }
 
   std::string display() const;
 

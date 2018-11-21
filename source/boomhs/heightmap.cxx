@@ -47,13 +47,14 @@ Heightmap::to_string() const
   return fmt::sprintf("width: %i", width_);
 }
 
-} // ns boomhs
+} // namespace boomhs
 
 namespace boomhs::heightmap
 {
 
 HeightmapResult
-load_fromtable(common::Logger &logger, TextureTable const& ttable, std::string const& heightmap_path)
+load_fromtable(common::Logger& logger, TextureTable const& ttable,
+               std::string const& heightmap_path)
 {
   auto const* p_heightmap = ttable.lookup_nickname(heightmap_path);
   if (!p_heightmap) {
@@ -70,11 +71,11 @@ load_fromtable(common::Logger &logger, TextureTable const& ttable, std::string c
 
 ObjVertices
 generate_normals(int const x_length, int const z_length, bool const invert_normals,
-    Heightmap const& heightmap)
+                 Heightmap const& heightmap)
 {
-  int constexpr NUM_COMPONENTS     = 3; // xn, yn, zn
-  size_t const        num_vertices = NUM_COMPONENTS * x_length * z_length;
-  ObjVertices normals;
+  int constexpr NUM_COMPONENTS = 3; // xn, yn, zn
+  size_t const num_vertices    = NUM_COMPONENTS * x_length * z_length;
+  ObjVertices  normals;
   normals.resize(num_vertices);
 
   //
@@ -95,41 +96,35 @@ generate_normals(int const x_length, int const z_length, bool const invert_norma
   // xzScale denotes the same for the x, z axes. If you have different scale factors
   // for x, z then the formula becomes
   // normal[y*width+x].set(-sx*yScale, 2*xScale, xScalesy*xScale*yScale/zScale);
-  float constexpr yScale = 0.1f;
+  float constexpr yScale  = 0.1f;
   float constexpr xzScale = yScale;
   float constexpr x0 = 0.0f, y0 = 0.0f;
 
-  auto const width = x_length, height = z_length;
-  auto const& h = [&](auto const x, auto const y)
-  {
-    return heightmap.data(y, x);
-  };
+  auto const  width = x_length, height = z_length;
+  auto const& h = [&](auto const x, auto const y) { return heightmap.data(y, x); };
   FORI(y, height)
   {
     FORI(x, width)
     {
       // The ? : and ifs are necessary for the border cases.
-      float sx = h(x<width-1 ? x+1 : x, y) - h(x0 ? x-1 : x, y);
-      if (x == 0 || x == width-1)
-      {
+      float sx = h(x < width - 1 ? x + 1 : x, y) - h(x0 ? x - 1 : x, y);
+      if (x == 0 || x == width - 1) {
         sx *= 2;
       }
 
-      float sy = h(x, y<height-1 ? y+1 : y) - h(x, y0 ?  y-1 : y);
-      if (y == 0 || y == height -1)
-      {
+      float sy = h(x, y < height - 1 ? y + 1 : y) - h(x, y0 ? y - 1 : y);
+      if (y == 0 || y == height - 1) {
         sy *= 2;
       }
 
-      auto const normal = glm::normalize(glm::vec3{-sx*yScale, 2*xzScale, sy*yScale});
-      size_t const index = 3 * ((y * width) + x);
-      auto const xn = index + 0;
-      auto const yn = index + 1;
-      auto const zn = index + 2;
+      auto const   normal = glm::normalize(glm::vec3{-sx * yScale, 2 * xzScale, sy * yScale});
+      size_t const index  = 3 * ((y * width) + x);
+      auto const   xn     = index + 0;
+      auto const   yn     = index + 1;
+      auto const   zn     = index + 2;
       assert(zn < num_vertices);
 
-      auto const set = [&](auto &component, float const value)
-      {
+      auto const set = [&](auto& component, float const value) {
         component = invert_normals ? -value : value;
       };
       set(normals[xn], normal.x);
@@ -152,13 +147,12 @@ parse(ImageData const& image)
   size_t const num_pixels = num_pixels_in_image;
   heightmap.reserve(num_pixels);
   auto const num_bytes = num_pixels * 4;
-  for(auto i = 0u; i < num_bytes; i += 4)
-  {
-    auto const& data = image.data.get();
-    auto const red   = data[i+0];
-    auto const green = data[i+1];
-    auto const blue  = data[i+2];
-    auto const alpha = data[i+3];
+  for (auto i = 0u; i < num_bytes; i += 4) {
+    auto const& data  = image.data.get();
+    auto const  red   = data[i + 0];
+    auto const  green = data[i + 1];
+    auto const  blue  = data[i + 2];
+    auto const  alpha = data[i + 3];
     assert(red == green);
     assert(red == blue);
     assert(255 == alpha);
@@ -170,7 +164,7 @@ parse(ImageData const& image)
 }
 
 HeightmapResult
-parse(common::Logger &logger, char const* path)
+parse(common::Logger& logger, char const* path)
 {
   LOG_TRACE_SPRINTF("Loading Heightmap Data from file %s", path);
   auto const data = TRY_MOVEOUT(texture::load_image(logger, path, GL_RGBA));
@@ -179,7 +173,7 @@ parse(common::Logger &logger, char const* path)
 }
 
 HeightmapResult
-parse(common::Logger &logger, std::string const& path)
+parse(common::Logger& logger, std::string const& path)
 {
   return parse(logger, path.c_str());
 }
@@ -193,13 +187,13 @@ calculate_number_vertices(int const num_components, TerrainConfig const& tc)
 
 void
 update_vertices_from_heightmap(common::Logger& logger, TerrainConfig const& tc,
-                               Heightmap const& heightmap, ObjVertices &buffer)
+                               Heightmap const& heightmap, ObjVertices& buffer)
 {
   LOG_TRACE("Updating vertices from heightmap");
 
   auto const num_vertexes_along_one_side = tc.num_vertexes_along_one_side;
   auto const x_length = num_vertexes_along_one_side, z_length = num_vertexes_along_one_side;
-  size_t offset = 0;
+  size_t     offset = 0;
   FOR(z, z_length)
   {
     FOR(x, x_length)
@@ -210,7 +204,7 @@ update_vertices_from_heightmap(common::Logger& logger, TerrainConfig const& tc,
       assert(height >= 0.0f);
 
       float const height_normalized = height / 255.0f;
-      auto const ypos = height_normalized * tc.height_multiplier;
+      auto const  ypos              = height_normalized * tc.height_multiplier;
 
       LOG_TRACE_SPRINTF("TERRAIN HEIGHT: %f (raw: %u), ypos: %f", height_normalized, height, ypos);
       buffer[offset++] = ypos;
@@ -223,4 +217,4 @@ update_vertices_from_heightmap(common::Logger& logger, TerrainConfig const& tc,
   LOG_TRACE("Finished updating vertices from heightmap");
 }
 
-} // ns boomhs::heightmap
+} // namespace boomhs::heightmap

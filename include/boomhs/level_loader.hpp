@@ -3,8 +3,8 @@
 #include <boomhs/material.hpp>
 #include <boomhs/obj_store.hpp>
 
+#include <boomhs/color.hpp>
 #include <boomhs/lighting.hpp>
-#include <boomhs/colors.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
 

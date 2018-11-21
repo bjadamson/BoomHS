@@ -2,9 +2,11 @@
 #include <boomhs/frame.hpp>
 #include <boomhs/terrain.hpp>
 
+#include <boomhs/color.hpp>
 #include <boomhs/lighting.hpp>
+
+#include <opengl/shader.hpp>
 #include <common/log.hpp>
-#include <boomhs/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <string>
@@ -12,15 +14,15 @@
 
 namespace boomhs
 {
-struct ScreenDimensions;
-class EntityRegistry;
-class FrameTime;
-class Frustum;
-class HandleManager;
-class LevelManager;
-class Material;
+class  Viewport;
+class  EntityRegistry;
+class  FrameTime;
+struct Frustum;
+class  HandleManager;
+class  LevelManager;
+struct Material;
 struct EngineState;
-class Player;
+class  Player;
 struct Transform;
 struct ZoneState;
 } // namespace boomhs
@@ -28,7 +30,6 @@ struct ZoneState;
 namespace opengl
 {
 class DrawInfo;
-class ShaderProgram;
 class ShaderPrograms;
 struct TextureInfo;
 
@@ -37,7 +38,10 @@ struct DrawState
   size_t num_vertices;
   size_t num_drawcalls;
 
+  bool const draw_wireframes;
+
   DrawState();
+  DrawState(bool);
 
   std::string to_string() const;
 };
@@ -98,6 +102,10 @@ struct BlendState
   glEnable(GL_BLEND);                                                                              \
   glBlendFunc(GL_SRC_ALPHA, GL_ONE);
 
+#define ENABLE_SCISSOR_TEST_UNTIL_SCOPE_EXIT()                                                     \
+  glEnable(GL_SCISSOR_TEST);                                                                       \
+  ON_SCOPE_EXIT([]() { glDisable(GL_SCISSOR_TEST); })
+
 namespace opengl::render
 {
 
@@ -114,7 +122,7 @@ void
 set_blendstate(BlendState const&);
 
 void
-init(common::Logger&, boomhs::ScreenDimensions const&);
+init(common::Logger&);
 
 void
 clear_screen(boomhs::Color const&);
@@ -142,7 +150,20 @@ draw_3dlit_shape(RenderState&, GLenum, glm::vec3 const&, glm::mat4 const&, Shade
 
 // TODO: move rest to sub-renderers or something
 void
-draw(RenderState&, GLenum, ShaderProgram&, DrawInfo&);
+draw(common::Logger&, DrawState&, GLenum, ShaderProgram&, DrawInfo&);
+
+//////////
+// Direct drawing API
+void
+draw_2delements(common::Logger&, GLenum, ShaderProgram&, GLuint, DrawState&);
+
+void
+draw_2delements(common::Logger&, GLenum, ShaderProgram&, TextureInfo&, GLuint, DrawState&);
+
+void
+draw_elements(common::Logger&, GLenum, ShaderProgram&, GLuint, DrawState&);
+
+//////////
 
 void
 draw_arrow(RenderState&, glm::vec3 const&, glm::vec3 const&, boomhs::Color const&);
@@ -165,4 +186,15 @@ set_modelmatrix(common::Logger&, glm::mat4 const&, ShaderProgram&);
 void
 set_mvpmatrix(common::Logger&, glm::mat4 const&, glm::mat4 const&, ShaderProgram&);
 
+void
+set_scissor(boomhs::Viewport const&, int);
+
+void
+set_viewport(boomhs::Viewport const&, int);
+
+void
+set_viewport_and_scissor(boomhs::Viewport const&, int);
+
 } // namespace opengl::render
+
+namespace OR = opengl::render;

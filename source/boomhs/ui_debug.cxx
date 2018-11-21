@@ -3,6 +3,7 @@
 #include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/tree.hpp>
@@ -14,22 +15,23 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace
 {
 
 void
-draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, Camera& camera,
-                   glm::mat4 const& view_mat, glm::mat4 const& proj_mat)
+draw_entity_editor(char const* prefix, int const window_flags, EngineState& es, LevelManager& lm,
+                   EntityRegistry& registry, Camera& camera, glm::mat4 const& view_mat,
+                   glm::mat4 const& proj_mat)
 {
-  auto& logger    = es.logger;
-  auto& zs        = lm.active();
-  auto& gfx_state = zs.gfx_state;
+  auto& logger       = es.logger;
+  auto& zs           = lm.active();
+  auto& gfx_state    = zs.gfx_state;
   auto& draw_handles = gfx_state.draw_handles;
-  auto& sps       = gfx_state.sps;
+  auto& sps          = gfx_state.sps;
 
-  auto& uistate   = es.ui_state.debug;
+  auto& uistate = es.ui_state.debug;
 
   auto const draw = [&]() {
     std::optional<EntityID> selected;
@@ -55,17 +57,17 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     }
 
     if (registry.has<AABoundingBox>(eid) && registry.has<Transform>(eid)) {
-      auto const& tr = registry.get<Transform>(eid);
+      auto const& tr   = registry.get<Transform>(eid);
       auto const& bbox = registry.get<AABoundingBox>(eid);
 
       // TODO: view/proj matrix
-      bool const bbox_inside = ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox);
-      std::string const msg = fmt::sprintf("In ViewFrustum: %i", bbox_inside);
+      bool const        bbox_inside = ViewFrustum::bbox_inside(view_mat, proj_mat, tr, bbox);
+      std::string const msg         = fmt::sprintf("In ViewFrustum: %i", bbox_inside);
       ImGui::Text("%s", msg.c_str());
     }
     if (ImGui::Button("Inhabit Selected")) {
       auto& transform = registry.get<Transform>(eid);
-      //camera.set_target(transform);
+      // camera.set_target(transform);
     }
 
     if (registry.has<Name>(eid)) {
@@ -117,7 +119,7 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
                      [&tc](auto const i) { return tc.leaf_color(i).data(); });
 
       auto& sn = registry.get<ShaderName>(eid);
-      auto& va = sps.ref_sp(sn.value).va();
+      auto& va = sps.ref_sp(logger, sn.value).va();
 
       auto& dinfo = draw_handles.lookup_entity(logger, eid);
       Tree::update_colors(logger, va, dinfo, tc);
@@ -162,10 +164,9 @@ draw_entity_editor(EngineState& es, LevelManager& lm, EntityRegistry& registry, 
     }
   };
 
-  imgui_cxx::with_window(draw, "Entity Editor Window");
+  auto const title = std::string{prefix} + ":Entity Editor Window";
+  imgui_cxx::with_window(draw, title.c_str(), nullptr, window_flags);
 }
-
-
 
 } // namespace
 
@@ -173,20 +174,21 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState& es, LevelManager& lm, Camera& camera, FrameTime const& ft)
+draw(char const* prefix, int const window_flags, EngineState& es, LevelManager& lm, Camera& camera,
+     FrameTime const& ft)
 {
-  auto& uistate        = es.ui_state.debug;
-  auto& zs             = lm.active();
-  auto& registry       = zs.registry;
-  auto& ldata          = zs.level_data;
+  auto& uistate  = es.ui_state.debug;
+  auto& zs       = lm.active();
+  auto& registry = zs.registry;
+  auto& ldata    = zs.level_data;
 
   auto& player = find_player(registry);
 
   if (uistate.show_entitywindow) {
-    auto const fs = FrameState::from_camera(es, zs, camera);
+    auto const fs = FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
     auto const& view_mat = fs.view_matrix();
     auto const& proj_mat = fs.projection_matrix();
-    draw_entity_editor(es, lm, registry, camera, view_mat, proj_mat);
+    draw_entity_editor(prefix, window_flags, es, lm, registry, camera, view_mat, proj_mat);
   }
 }
 

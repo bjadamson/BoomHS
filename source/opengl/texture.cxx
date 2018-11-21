@@ -1,7 +1,6 @@
-#include <opengl/texture.hpp>
-
+#include <gl_sdl/gl_sdl_log.hpp>
 #include <opengl/global.hpp>
-#include <gfx/gl_sdl_log.hpp>
+#include <opengl/texture.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/tuple.hpp>
@@ -11,10 +10,10 @@
 #include <extlibs/soil.hpp>
 
 #include <algorithm>
-#include <string>
 #include <sstream>
-#include <vector>
+#include <string>
 #include <utility>
+#include <vector>
 
 using namespace opengl;
 
@@ -22,14 +21,14 @@ namespace
 {
 
 Result<ImageData, std::string>
-upload_image_gpu(common::Logger &logger, std::string const& path, GLenum const target,
+upload_image_gpu(common::Logger& logger, std::string const& path, GLenum const target,
                  GLenum const format)
 {
   auto image_data = TRY_MOVEOUT(texture::load_image(logger, path.c_str(), format));
 
-  auto const width = image_data.width;
-  auto const height = image_data.height;
-  auto const* data = image_data.data.get();
+  auto const  width  = image_data.width;
+  auto const  height = image_data.height;
+  auto const* data   = image_data.data.get();
 
   // The "internal" format and the data format should match so opengl doesn't need to do runtime
   // conversions.
@@ -45,7 +44,7 @@ upload_image_gpu(common::Logger &logger, std::string const& path, GLenum const t
   return OK_MOVE(image_data);
 }
 
-} // ns anon
+} // namespace
 
 namespace opengl
 {
@@ -53,12 +52,12 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureInfo
 TextureInfo::TextureInfo()
-  : target(GL_TEXTURE_2D)
+    : target(GL_TEXTURE_2D)
 {
 }
 
 void
-TextureInfo::gen_texture(common::Logger &logger, GLsizei const num)
+TextureInfo::gen_texture(common::Logger& logger, GLsizei const num)
 {
   glGenTextures(num, &id);
   LOG_ANY_GL_ERRORS(logger, "glGenTextures");
@@ -108,14 +107,14 @@ TextureInfo::set_fieldi(GLenum const name, GLint const value)
 std::string
 TextureInfo::to_string() const
 {
-  return fmt::sprintf("(TextureInfo) id: %u, target: %i, (w, h) : (%i, %i), uv_max: %f",
-      id, target, width, height, uv_max);
+  return fmt::sprintf("(TextureInfo) id: %u, target: %i, (w, h) : (%i, %i), uv_max: %f", id, target,
+                      width, height, uv_max);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // TextureTable
 void
-TextureTable::add_texture(TextureFilenames &&tf, Texture &&ta)
+TextureTable::add_texture(TextureFilenames&& tf, Texture&& ta)
 {
   auto pair = std::make_pair(MOVE(tf), MOVE(ta));
   data_.emplace(MOVE(pair));
@@ -186,21 +185,21 @@ TextureTable::find(std::string const& name) const
 
 #undef FIND_TF
 
-} // ns opengl
+} // namespace opengl
 
 namespace opengl::texture
 {
 
 ImageResult
-load_image(common::Logger &logger, char const* path, GLenum const format)
+load_image(common::Logger& logger, char const* path, GLenum const format)
 {
   int w = 0, h = 0;
 
-  int const soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
-  unsigned char *pimage = SOIL_load_image(path, &w, &h, 0, soil_format);
+  int const      soil_format = format == GL_RGBA ? SOIL_LOAD_RGBA : SOIL_LOAD_RGB;
+  unsigned char* pimage      = SOIL_load_image(path, &w, &h, 0, soil_format);
   if (nullptr == pimage) {
-    auto const fmt = fmt::sprintf("image at path '%s' failed to load, reason '%s'", path,
-        SOIL_last_result());
+    auto const fmt =
+        fmt::sprintf("image at path '%s' failed to load, reason '%s'", path, SOIL_last_result());
     return Err(fmt);
   }
   ImageDataPointer image_data{pimage, &SOIL_free_image_data};
@@ -229,12 +228,12 @@ wrap_mode_from_string(char const* name)
 }
 
 TextureResult
-upload_2d_texture(common::Logger &logger, std::string const& filename, TextureInfo&& ti)
+upload_2d_texture(common::Logger& logger, std::string const& filename, TextureInfo&& ti)
 {
   GLenum const format = ti.format;
-  GLint const uv_max = ti.uv_max;
+  GLint const  uv_max = ti.uv_max;
 
-  assert(ANYOF(format == GL_RGB, format == GL_RGBA));
+  assert(common::or_all(format == GL_RGB, format == GL_RGBA));
 
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_2D;
@@ -253,8 +252,8 @@ upload_2d_texture(common::Logger &logger, std::string const& filename, TextureIn
     BIND_UNTIL_END_OF_SCOPE(logger, ti);
 
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, ti.target, format));
-    ti.height = image_data.height;
-    ti.width = image_data.width;
+    ti.height             = image_data.height;
+    ti.width              = image_data.width;
 
     ti.uv_max = uv_max;
 
@@ -266,18 +265,18 @@ upload_2d_texture(common::Logger &logger, std::string const& filename, TextureIn
 }
 
 TextureResult
-upload_3dcube_texture(common::Logger &logger, std::vector<std::string> const& paths, TextureInfo&& ti)
+upload_3dcube_texture(common::Logger& logger, std::vector<std::string> const& paths,
+                      TextureInfo&& ti)
 {
   auto const format = ti.format;
   assert(paths.size() == 6);
-  assert(ANYOF(format == GL_RGB, format == GL_RGBA));
+  assert(common::or_all(format == GL_RGB, format == GL_RGBA));
 
   ti.gen_texture(logger, 1);
   ti.target = GL_TEXTURE_CUBE_MAP;
 
-  auto const upload_fn = [&](std::string const& filename, GLenum const target)
-    -> Result<common::none_t, std::string>
-  {
+  auto const upload_fn = [&](std::string const& filename,
+                             GLenum const       target) -> Result<common::none_t, std::string> {
     auto const image_data = TRY_MOVEOUT(upload_image_gpu(logger, filename, target, format));
 
     // Either the height is unset (0) or all height/width are the same.
@@ -285,24 +284,24 @@ upload_3dcube_texture(common::Logger &logger, std::vector<std::string> const& pa
     assert(ti.width == 0 || ti.width == image_data.width);
 
     ti.height = image_data.height;
-    ti.width = image_data.width;
+    ti.width  = image_data.width;
 
     return OK_NONE;
   };
-  auto const paths_tuple = std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
+  auto const paths_tuple =
+      std::make_tuple(paths[0], paths[1], paths[2], paths[3], paths[4], paths[5]);
 
   auto const fn = [&]() {
-
     static constexpr auto CUBE_3D_TARGETS = {
-      GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
-      GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
-      GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, // front
-      GL_TEXTURE_CUBE_MAP_NEGATIVE_X, // left
-      GL_TEXTURE_CUBE_MAP_POSITIVE_Y, // top
-      GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Z, // back
+        GL_TEXTURE_CUBE_MAP_POSITIVE_X, // right
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Z, // front
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_X, // left
+        GL_TEXTURE_CUBE_MAP_POSITIVE_Y, // top
+        GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, // bottom
     };
 
-    common::zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
+    common::tuple_zip(upload_fn, CUBE_3D_TARGETS.begin(), paths_tuple);
 
     glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     LOG_ANY_GL_ERRORS(logger, "glGenerateMipmap");
@@ -312,4 +311,4 @@ upload_3dcube_texture(common::Logger &logger, std::vector<std::string> const& pa
   return Ok(Texture{MOVE(ti)});
 }
 
-} // ns opengl::texture
+} // namespace opengl::texture

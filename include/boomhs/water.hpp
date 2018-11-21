@@ -2,7 +2,7 @@
 #include <boomhs/entity.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/obj.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
@@ -12,10 +12,10 @@
 
 namespace opengl
 {
-class DrawInfo;
-class TextureInfo;
-class TextureTable;
-class ShaderPrograms;
+class  DrawInfo;
+class  ShaderPrograms;
+struct TextureInfo;
+class  TextureTable;
 } // namespace opengl
 
 namespace boomhs
@@ -23,7 +23,7 @@ namespace boomhs
 class EntityRegistry;
 
 opengl::ShaderProgram&
-graphics_mode_to_water_shader(boomhs::GameGraphicsMode, opengl::ShaderPrograms&);
+graphics_mode_to_water_shader(common::Logger&, boomhs::GameGraphicsMode, opengl::ShaderPrograms&);
 
 struct WaterInfo
 {
@@ -33,8 +33,8 @@ struct WaterInfo
   glm::vec2    dimensions;
   unsigned int num_vertexes;
 
-  Color mix_color     = LOC::SLATE_BLUE;
-  float         mix_intensity = 0.25f;
+  ColorRGBA mix_color     = LOC4::SLATE_BLUE;
+  float     mix_intensity = 0.25f;
 
   float     wave_offset    = 0.0f;
   float     wave_strength  = 0.01f;

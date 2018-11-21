@@ -1,8 +1,8 @@
 #include <boomhs/obj.hpp>
-#include <opengl/buffer.hpp>
-#include <opengl/vertex_attribute.hpp>
 #include <common/algorithm.hpp>
 #include <common/log.hpp>
+#include <opengl/buffer.hpp>
+#include <opengl/vertex_attribute.hpp>
 
 #include <extlibs/fmt.hpp>
 #include <ostream>
@@ -28,15 +28,15 @@ BufferFlags::from_va(VertexAttribute const& va)
 std::string
 BufferFlags::to_string() const
 {
-  return fmt::sprintf("{vertices: %i, normals: %i, colors: %i, uvs: %i}", vertices, normals,
-      colors, uvs);
+  return fmt::sprintf("{vertices: %i, normals: %i, colors: %i, uvs: %i}", vertices, normals, colors,
+                      uvs);
 }
 
 bool
 operator==(BufferFlags const& a, BufferFlags const& b)
 {
   // clang-format off
-  return ALLOF(
+  return common::and_all(
     a.vertices == b.vertices,
     a.normals == b.normals,
     b.colors == a.colors,
@@ -66,7 +66,7 @@ VertexBuffer::VertexBuffer(BufferFlags const& f)
 
 VertexBuffer
 VertexBuffer::create_interleaved(common::Logger& logger, ObjData const& data,
-                                        BufferFlags const& flags)
+                                 BufferFlags const& flags)
 {
   LOG_TRACE_SPRINTF("Creating interleaved buffer with flags: %s", flags.to_string());
   VertexBuffer buffer{flags};
@@ -85,9 +85,7 @@ VertexBuffer::create_interleaved(common::Logger& logger, ObjData const& data,
   auto num_colors   = data.colors.size();
   auto num_uvs      = data.uvs.size();
 
-  auto const keep_going = [&]() {
-    return num_vertexes > 0;
-  };
+  auto const keep_going = [&]() { return num_vertexes > 0; };
 
   size_t a = 0, b = 0, c = 0, d = 0;
   while (keep_going()) {
@@ -142,9 +140,7 @@ VertexBuffer::set_colors(Color const& color)
     assert(flags.vertices);
     i += 3; // x, y, z
 
-    auto const assert_i = [&]() {
-      assert(i <= vertices.size());
-    };
+    auto const assert_i = [&]() { assert(i <= vertices.size()); };
 
     // skip over other attributes
     if (flags.normals) {
@@ -171,4 +167,4 @@ VertexBuffer::to_string() const
   return fmt::sprintf("{vertices size: %u, indices size: %u}", vertices.size(), indices.size());
 }
 
-} // ns opengl
+} // namespace opengl

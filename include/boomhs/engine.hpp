@@ -3,13 +3,15 @@
 #include <boomhs/game_config.hpp>
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/mouse.hpp>
-#include <boomhs/time.hpp>
+#include <boomhs/viewport.hpp>
 #include <boomhs/ui_state.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <common/log.hpp>
+#include <common/time.hpp>
 #include <common/type_macros.hpp>
 
 struct ALCdevice_struct;
@@ -23,6 +25,7 @@ struct DeviceStates
 {
   ControllerStates controller;
   MouseStates      mouse;
+  CursorManager    cursors;
 };
 
 struct MovementState
@@ -36,13 +39,14 @@ struct MovementState
 
 struct EngineState
 {
-  common::Logger&        logger;
-  ALCdevice_struct&      al_device;
-  ImGuiIO&               imgui;
-  ScreenDimensions const dimensions;
-  MainMenuState          main_menu;
-  Time                   time;
-  PlayerBehaviors        behaviors;
+  common::Logger&   logger;
+  ALCdevice_struct& al_device;
+  ImGuiIO&          imgui;
+
+  Frustum         frustum;
+  MainMenuState   main_menu;
+  common::Time    time;
+  PlayerBehaviors behaviors;
 
   bool                 quit                  = false;
   bool                 game_running          = false;
@@ -50,11 +54,20 @@ struct EngineState
   GameGraphicsSettings graphics_settings     = {};
 
   DeviceStates        device_states = {};
-  window::WindowState window_state  = {};
+  gl_sdl::WindowState window_state  = {};
   UiState             ui_state      = {};
 
   // Current player movement vector
   MovementState movement_state = {};
+
+  // While the user has "pressed" a mouse button down and held it, this value holds the origin of
+  // where the user began holding down the mouse button.
+  //
+  // This field is useful for drawing things relative to where a user clicks and holds down/drags
+  // the mouse.
+  //
+  // ie: Unit selection from a top-down perspective.
+  MouseClickPositions mouse_click_origin;
 
   bool disable_controller_input;
   bool player_collision;
@@ -78,33 +91,39 @@ struct EngineState
   bool show_player_localspace_vectors;
   bool show_player_worldspace_vectors;
 
-  bool show_grid_lines;
-  bool show_yaxis_lines;
+  struct GridLinesInfo
+  {
+    bool      show = false;
+    glm::vec3 dimensions = VEC3{10, 1, 10};
+  };
+
+  GridLinesInfo grid_lines;
+
+  // Draw *Everything* with a wireframe drawing mode.
   bool wireframe_override;
 
   // Constructors
   NO_COPY_OR_MOVE(EngineState);
-  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, ScreenDimensions const&);
+  EngineState(common::Logger&, ALCdevice_struct&, ImGuiIO&, Frustum const& frustum);
 };
 
 using EntityRegistries = std::vector<EntityRegistry>;
 
 struct Engine
 {
-  window::SDLWindow window;
+  gl_sdl::SDLWindow window;
   SDLControllers    controllers;
 
   EntityRegistries registries = {};
 
   Engine() = delete;
-  explicit Engine(window::SDLWindow&&, SDLControllers&&);
+  explicit Engine(gl_sdl::SDLWindow&&, SDLControllers&&);
 
   // We mark this as no-move/copy so the registries data never moves, allowing the rest of the
   // program to store references into the data owned by registries.
   NO_COPY_OR_MOVE(Engine);
 
-  ScreenDimensions dimensions() const;
-  ScreenSize       screen_size() const;
+  Viewport window_viewport() const;
 };
 
 } // namespace boomhs

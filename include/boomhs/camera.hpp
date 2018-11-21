@@ -8,15 +8,19 @@
 #include <common/log.hpp>
 #include <common/type_macros.hpp>
 
-namespace window
+// TODO
+#include <iostream>
+
+namespace gl_sdl
 {
 class SDLWindow;
-} // namespace window
+} // namespace gl_sdl
 
 namespace boomhs
 {
-class FrameTime;
-class ScreenDimensions;
+class  FrameTime;
+struct ScreenSize;
+class  Viewport;
 
 class AspectRatio
 {
@@ -34,11 +38,10 @@ public:
   float const* data() const { return nd_.data(); }
 };
 
-struct Viewport
+struct ViewSettings
 {
   AspectRatio aspect_ratio;
   float       field_of_view;
-  Frustum     frustum;
 };
 
 class CameraTarget
@@ -78,22 +81,45 @@ struct CameraState
   bool flip_x = false;
 };
 
+#define CAMERA_TARGET_BODY_IMPL assert(target_); return *target_;
+#define CAMERA_CLASS_TARGET_IMPL                                                                   \
+  auto& target() { CAMERA_TARGET_BODY_IMPL }                                                       \
+  auto const& target() const { CAMERA_TARGET_BODY_IMPL }
+
+using CameraPosition = glm::vec3;
+using CameraCenter   = glm::vec3;
+using CameraForward  = glm::vec3;
+using CameraUp       = glm::vec3;
+
+/*
+ * Explicit copy method.
+ *
+ * Rationale: It is easy to accidentally take a reference to a copy of an instance of this class.
+ * To make it more unlikely, force the user to call clone().
+*/
+#define CLONE_CAMERA_IMPL                                                                          \
+auto clone() const { return *this; }
+
 class CameraFPS
 {
-  glm::vec3 forward_, up_;
-  float xrot_, yrot_;
+  float            xrot_, yrot_;
+  WorldOrientation orientation_;
 
-  CameraTarget& target_;
-  Viewport&     viewport_;
+  CameraTarget* target_;
+
+  CAMERA_CLASS_TARGET_IMPL
+
+  auto&       transform() { return target().get().transform(); }
+  auto const& transform() const { return target().get().transform(); }
+
+  auto eye_forward() const { return orientation_.forward * transform().rotation; }
+  auto const& eye_up() const { return orientation_.up; }
 
   friend class Camera;
-
-  auto&       transform() { return target_.get().transform(); }
-  auto const& transform() const { return target_.get().transform(); }
-
+  COPY_DEFAULT(CameraFPS);
 public:
-  CameraFPS(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
-  MOVE_CONSTRUCTIBLE_ONLY(CameraFPS);
+  CameraFPS(WorldOrientation const&);
+  MOVE_DEFAULT(CameraFPS);
 
   // fields
   CameraState cs;
@@ -101,74 +127,109 @@ public:
   // methods
   CameraFPS& rotate_radians(float, float, FrameTime const&);
 
-  glm::vec3 world_position() const;
-  glm::mat4 compute_projectionmatrix() const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+  glm::vec3      position() const;
+  CameraMatrices calc_cm(ViewSettings const&, Frustum const&, glm::vec3 const&) const;
+
+  CLONE_CAMERA_IMPL
 };
 
 class CameraORTHO
 {
-  glm::vec3 forward_, up_;
+  WorldOrientation orientation_;
 
-  CameraTarget& target_;
-  Viewport&     viewport_;
+  glm::vec2 zoom_;
+  void zoom(glm::vec2 const&, FrameTime const&);
+
+  COPY_DEFAULT(CameraORTHO);
   friend class Camera;
 
 public:
-  CameraORTHO(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
-  MOVE_CONSTRUCTIBLE_ONLY(CameraORTHO);
+  CameraORTHO(WorldOrientation const&, glm::vec3 const&);
+  MOVE_DEFAULT(CameraORTHO);
 
-  glm::mat4 compute_projectionmatrix() const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+  // fields
+  glm::vec3 position;
+  bool flip_rightv = false;
+
+  // methods
+  CameraMatrices calc_cm(Frustum const&, ScreenSize const&) const;
+
+  auto const& eye_forward() const { return orientation_.forward; }
+  auto const& eye_up() const { return orientation_.up; }
+
+  void zoom_in(glm::vec2 const&, FrameTime const&);
+  void zoom_out(glm::vec2 const&, FrameTime const&);
+
+  void scroll(glm::vec2 const&);
+  auto const& zoom() const { return zoom_; }
+
+  // Compute the projection-matrix.
+  static glm::mat4 compute_pm(Frustum const&, ScreenSize const&, CameraPosition const&,
+                              glm::ivec2 const&);
+
+  // Compute the view-matrix.
+  static glm::mat4 compute_vm(CameraPosition const&, CameraCenter const&, CameraUp const&, bool);
 };
 
 class CameraArcball
 {
-  glm::vec3 forward_, up_;
-
-  CameraTarget& target_;
-  Viewport&     viewport_;
-
+  CameraTarget*        target_;
   SphericalCoordinates coordinates_;
 
+  bool up_inverted_;
+  glm::vec3            world_up_;
+
+  // methods
   void zoom(float, FrameTime const&);
+  glm::vec3 local_position() const;
+
+  auto eye_forward() const {
+    return glm::normalize(position() - target_position());
+  }
+  auto eye_up() const { return up_inverted_ ? -world_up_ : world_up_; }
+
+  CAMERA_CLASS_TARGET_IMPL
+#undef CAMERA_CLASS_TARGET_IMPL
+#undef CAMERA_TARGET_BODY_IMPL
 
   friend class Camera;
+  COPY_DEFAULT(CameraArcball);
 
 public:
-  CameraArcball(glm::vec3 const&, glm::vec3 const&, CameraTarget&, Viewport&);
-  MOVE_CONSTRUCTIBLE_ONLY(CameraArcball);
+  CameraArcball(glm::vec3 const&);
+  MOVE_DEFAULT(CameraArcball);
 
   // fields
-  CameraState   cs;
+  CameraState cs;
 
   // methods
   SphericalCoordinates spherical_coordinates() const { return coordinates_; }
   void                 set_coordinates(SphericalCoordinates const& sc) { coordinates_ = sc; }
 
-  void decrease_zoom(float, FrameTime const&);
-  void increase_zoom(float, FrameTime const&);
+  void zoom_out(float, FrameTime const&);
+  void zoom_in(float, FrameTime const&);
 
   CameraArcball& rotate_radians(float, float, FrameTime const&);
 
-  glm::vec3 local_position() const;
-  glm::vec3 world_position() const;
+  glm::vec3 position() const;
 
   glm::vec3 target_position() const;
 
-  glm::mat4 compute_projectionmatrix() const;
-  glm::mat4 compute_viewmatrix(glm::vec3 const&) const;
+  CameraMatrices calc_cm(ViewSettings const&, Frustum const&, glm::vec3 const&) const;
+
+  CLONE_CAMERA_IMPL
 };
 
 class Camera
 {
-  CameraTarget target_;
-  Viewport     viewport_;
-  CameraMode   mode_;
+  CameraTarget            target_;
+  ViewSettings            view_settings_;
+  CameraMode              mode_;
 
+  COPY_DEFAULT(Camera);
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(Camera);
-  Camera(Viewport&&, glm::vec3 const&, glm::vec3 const&);
+  MOVE_DEFAULT(Camera);
+  Camera(CameraMode, ViewSettings&&, CameraArcball&&, CameraFPS&&, CameraORTHO&&);
 
   // public fields
   CameraArcball arcball;
@@ -181,6 +242,7 @@ public:
   auto mode() const { return mode_; }
   void set_mode(CameraMode);
   void next_mode();
+
   bool is_firstperson() const { return CameraMode::FPS == mode(); }
   bool is_thirdperson() const { return CameraMode::ThirdPerson == mode(); }
 
@@ -188,26 +250,30 @@ public:
 
   glm::vec3 eye_forward() const;
   glm::vec3 eye_backward() const { return -eye_forward(); }
-  glm::vec3 eye_up() const { return world_up() * get_target().orientation(); }
+  glm::vec3 eye_up() const;
 
   glm::vec3 eye_left() const { return -eye_right(); }
   glm::vec3 eye_right() const { return glm::normalize(glm::cross(eye_forward(), eye_up())); }
 
-  glm::vec3 world_forward() const;
-  glm::vec3 world_up() const;
-  glm::vec3 world_position() const;
+  glm::vec3 position() const;
 
-  auto const& viewport_ref() const { return viewport_; }
-  auto&       viewport_ref() { return viewport_; }
-
-  auto const& frustum_ref() const { return viewport_.frustum; }
-  auto&       frustum_ref() { return viewport_.frustum; }
+  auto const& view_settings_ref() const { return view_settings_; }
+  auto&       view_settings_ref() { return view_settings_; }
 
   Camera& rotate_radians(float, float, FrameTime const&);
   void    set_target(WorldObject&);
 
+  CameraMatrices calc_cm(ViewSettings const&, Frustum const&, ScreenSize const&, glm::vec3 const&) const;
+
+  void zoom_out(float, FrameTime const&);
+  void zoom_in(float, FrameTime const&);
+
+  CLONE_CAMERA_IMPL
+
   // static fns
-  static Camera make_default(ScreenDimensions const&);
+  static Camera make_default(CameraMode, WorldOrientation const&, WorldOrientation const&);
 };
+
+#undef CLONE_CAMERA_IMPL
 
 } // namespace boomhs

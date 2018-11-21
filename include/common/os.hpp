@@ -61,7 +61,7 @@ write_file(std::experimental::filesystem::path const& path, Text const&... text)
   auto const   write_line = [&os](auto const& text) { os << text; };
 
   auto const tuple_view = std::make_tuple(text...);
-  common::for_each(tuple_view, write_line);
+  common::tuple_for_each(tuple_view, write_line);
 }
 
 } // namespace common

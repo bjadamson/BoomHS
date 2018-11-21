@@ -1,24 +1,23 @@
-#include <boomhs/engine.hpp>
 #include <boomhs/controller.hpp>
+#include <boomhs/engine.hpp>
 
-#include <window/sdl_window.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
 
-using namespace window;
-
+using namespace gl_sdl;
 
 namespace boomhs
 {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // EngineState
-EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDimensions const& d)
+EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, Frustum const& f)
     : logger(l)
     , al_device(al)
     , imgui(i)
-    , dimensions(d)
+    , frustum(f)
     , disable_controller_input(true)
     , player_collision(false)
     , mariolike_edges(false)
@@ -35,8 +34,6 @@ EngineState::EngineState(common::Logger& l, ALCdevice& al, ImGuiIO& i, ScreenDim
     , show_global_axis(false)
     , show_player_localspace_vectors(false)
     , show_player_worldspace_vectors(false)
-    , show_grid_lines(false)
-    , show_yaxis_lines(false)
     , wireframe_override(false)
 {
   behaviors.active = &behaviors.player_playing_behavior;
@@ -51,17 +48,10 @@ Engine::Engine(SDLWindow&& w, SDLControllers&& c)
   registries.resize(50);
 }
 
-ScreenDimensions
-Engine::dimensions() const
+Viewport
+Engine::window_viewport() const
 {
-  return window.get_dimensions();
-}
-
-ScreenSize
-Engine::screen_size() const
-{
-  auto const d = dimensions();
-  return ScreenSize{d.right(), d.bottom()};
+  return window.view_rect();
 }
 
 } // namespace boomhs

@@ -3,13 +3,14 @@
 
 namespace boomhs
 {
-class FrameState;
+class Viewport;
 
 struct Raycast
 {
   Raycast() = delete;
 
-  static glm::vec3 calculate_ray(FrameState&);
+  static glm::vec3
+  calculate_ray_into_screen(glm::vec2 const&, glm::mat4 const&, glm::mat4 const&, Viewport const&);
 };
 
 } // namespace boomhs

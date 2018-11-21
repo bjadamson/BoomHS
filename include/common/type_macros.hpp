@@ -1,19 +1,32 @@
 #pragma once
+#include <type_traits>
 #include <utility>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // MISC
 #define MOVE(a) std::move(a)
 #define FORWARD(a) std::forward<decltype(a)>(a)...
+#define TYPES_MATCH(A, B) std::is_same<A, B>::value
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// BASIC
 #define DEFAULT_CONSTRUCTIBLE(CLASSNAME) CLASSNAME() = default;
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// COPY/MOVE
+#define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
+#define COPY_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = default;
+
+#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME&&) = default;
+#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
+
+#define MOVE_CONSTRUCTIBLE_NOEXCEPT(CLASSNAME) CLASSNAME(CLASSNAME&&) noexcept = default;
+#define MOVE_ASSIGNABLE_NOEXCEPT(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) noexcept = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // COPY
 #define NO_COPY_ASSIGN(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = delete;
 #define NO_COPY_CONSTRUTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = delete;
-
-#define COPY_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME const&) = default;
-#define COPY_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME const&) = default;
 
 #define COPY_DEFAULT(CLASSNAME)                                                                    \
   COPY_CONSTRUCTIBLE(CLASSNAME)                                                                    \
@@ -42,9 +55,6 @@
   CLASSNAME(CLASSNAME&&)       = delete;                                                           \
   CLASSNAME(CLASSNAME const&&) = delete;
 
-#define MOVE_CONSTRUCTIBLE(CLASSNAME) CLASSNAME(CLASSNAME&&) = default;
-#define MOVE_ASSIGNABLE(CLASSNAME) CLASSNAME& operator=(CLASSNAME&&) = default;
-
 #define MOVE_DEFAULT(CLASSNAME)                                                                    \
   MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
   MOVE_ASSIGNABLE(CLASSNAME)
@@ -54,7 +64,7 @@
   NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
   MOVE_CONSTRUCTIBLE(CLASSNAME)
 
-#define MOVE_ONLY(CLASSNAME)                                                                       \
+#define MOVE_DEFAULT_ONLY(CLASSNAME)                                                               \
   NO_COPY(CLASSNAME)                                                                               \
   MOVE_DEFAULT(CLASSNAME)
 
@@ -68,9 +78,20 @@
   COPY_DEFAULT(CLASSNAME)                                                                          \
   MOVE_DEFAULT(CLASSNAME)
 
+#define COPYMOVE_CONSTRUCTIBLE_NO_COPYASSIGN(CLASSNAME)                                            \
+  MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  COPY_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  NO_MOVE_ASSIGN(CLASSNAME)                                                                        \
+  NO_COPY_ASSIGN(CLASSNAME)
+
 #define NO_COPY_OR_MOVE(CLASSNAME)                                                                 \
   NO_COPY(CLASSNAME)                                                                               \
   NO_MOVE(CLASSNAME)
+
+#define NOCOPY_MOVE_DEFAULT(CLASSNAME)                                                             \
+  MOVE_CONSTRUCTIBLE(CLASSNAME)                                                                    \
+  MOVE_ASSIGNABLE(CLASSNAME)                                                                       \
+  NO_COPY(CLASSNAME)
 
 // alias
 #define NO_MOVE_OR_COPY(CLASSNAME) NO_COPY_OR_MOVE(CLASSNAME)
@@ -99,9 +120,14 @@
     return CONTAINER[i];                                                                           \
   }
 
-#define COMMON_WRAPPING_CONTAINER_FNS(CONTAINER)                                                   \
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Define common container-like forwarding functions.
+#define DEFINE_ARRAY_LIKE_WRAPPER_FNS(CONTAINER)                                                   \
   INDEX_OPERATOR_FNS(CONTAINER)                                                                    \
   BEGIN_END_FORWARD_FNS(CONTAINER)                                                                 \
+                                                                                                   \
+using CONTAINER_T = decltype(CONTAINER);                                                           \
+using VALUE_T     = typename decltype(CONTAINER)::value_type;                                      \
                                                                                                    \
   auto& back()                                                                                     \
   {                                                                                                \
@@ -124,25 +150,22 @@
     return CONTAINER.front();                                                                      \
   }                                                                                                \
   auto empty() const { return CONTAINER.empty(); }                                                 \
+  auto size() const { return CONTAINER.size(); }                                                   \
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// Define common vector-like forwarding functions.
+#define DEFINE_VECTOR_LIKE_WRAPPER_FNS(VEC_LIKE_CONTAINER)                                         \
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(VEC_LIKE_CONTAINER);                                               \
                                                                                                    \
-  auto size() const { return CONTAINER.size(); }
-
-// TODO: document
-// BEGIN Function-defining macros
-#define DEFINE_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                         \
-  template <typename... P>                                                                         \
-  decltype(auto) FN_NAME(P&&... p)                                                                 \
-  {                                                                                                \
-    return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
-  }
-
-#define DEFINE_STATIC_WRAPPER_FUNCTION(FN_NAME, FUNCTION_TO_WRAP)                                  \
-  template <typename... P>                                                                         \
-  static decltype(auto) FN_NAME(P&&... p)                                                          \
-  {                                                                                                \
-    return FUNCTION_TO_WRAP(FORWARD(p));                                                           \
-  }
-// END Function-defining macros
+  auto clear() { VEC_LIKE_CONTAINER.clear(); }                                                     \
+                                                                                                   \
+  void push_back(VALUE_T&& item) {                                                                 \
+    VEC_LIKE_CONTAINER.push_back(MOVE(item));                                                      \
+  }                                                                                                \
+  template<class... Args>                                                                          \
+  void emplace_back(Args&&... args) {                                                              \
+    VEC_LIKE_CONTAINER.emplace_back(FORWARD(args));                                                \
+  }                                                                                                \
 
 namespace common
 {
@@ -221,7 +244,7 @@ public:
 template <typename T, typename DF>
 using ImplicitelyCastableMovableWrapper = impl::ICMW<T, DF>;
 
-// Macros and helper-macros for the DO_EFFECT() macro.
+// Macros and helper-macros
 #define ON_SCOPE_EXIT_CONSTRUCT_IN_PLACE(VAR, fn)                                                  \
   ::common::impl::DestroyFN<decltype((fn))> const VAR{fn};
 #define ON_SCOPE_EXIT_MOVE_EXPR_INTO_VAR(VAR, expr)                                                \

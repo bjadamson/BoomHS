@@ -1,5 +1,5 @@
-#include <opengl/vao.hpp>
 #include <extlibs/fmt.hpp>
+#include <opengl/vao.hpp>
 
 namespace opengl
 {
@@ -7,7 +7,7 @@ namespace opengl
 VAO&
 VAO::operator=(VAO&& other)
 {
-  vao_       = other.vao_;
+  vao_        = other.vao_;
   debug_check = MOVE(other.debug_check);
 
   other.vao_ = 0;
@@ -17,9 +17,7 @@ VAO::operator=(VAO&& other)
 std::string
 VAO::to_string() const
 {
-  return fmt::sprintf("(VAO) NUM_BUFFERS: %li, raw: %u",
-      VAO::NUM_BUFFERS,
-      gl_raw_value());
+  return fmt::sprintf("(VAO) NUM_BUFFERS: %li, raw: %u", VAO::NUM_BUFFERS, gl_raw_value());
 }
 
 std::ostream&
@@ -29,4 +27,4 @@ operator<<(std::ostream& stream, VAO const& vao)
   return stream;
 }
 
-} // ns opengl
+} // namespace opengl

@@ -1,7 +1,7 @@
 #pragma once
+#include <boomhs/color.hpp>
 #include <boomhs/entity.hpp>
 #include <common/type_macros.hpp>
-#include <boomhs/colors.hpp>
 
 #include <extlibs/glm.hpp>
 #include <vector>
@@ -24,7 +24,7 @@ struct Material
 
   //
   // The alpha value for the colors is truncated.
-  Material(Color const&, Color const&, Color const&, float const);
+  Material(ColorRGB const&, ColorRGB const&, ColorRGB const&, float const);
 };
 
 struct NameMaterial
@@ -51,7 +51,7 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-std::vector<EntityID>
+EntityArray
 find_materials(EntityRegistry&);
 
 } // namespace boomhs

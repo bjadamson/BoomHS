@@ -96,7 +96,6 @@ struct UiDebugState
   // primitive buffers
   int       eid_buffer = 0;
   glm::vec3 euler_angle_buffer;
-  glm::vec3 last_mouse_clicked_pos;
 
   // window display state
   bool lock_debugselected           = false;

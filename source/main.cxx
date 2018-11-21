@@ -2,74 +2,61 @@
 #include <boomhs/camera.hpp>
 #include <boomhs/controller.hpp>
 #include <boomhs/entity.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/io_behavior.hpp>
 #include <boomhs/io_sdl.hpp>
 #include <boomhs/main_menu.hpp>
+#include <boomhs/random.hpp>
+#include <boomhs/scene_renderer.hpp>
 #include <boomhs/state.hpp>
 
-#include <opengl/renderer.hpp>
-
+#include <common/timer.hpp>
 #include <common/log.hpp>
-#include <boomhs/random.hpp>
+#include <common/time.hpp>
 
-#include <window/sdl_window.hpp>
-#include <boomhs/clock.hpp>
+#include <gl_sdl/common.hpp>
+#include <opengl/renderer.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/openal.hpp>
 
 using namespace boomhs;
-using namespace window;
+using namespace boomhs::math;
+using namespace common;
+using namespace gl_sdl;
 
 namespace
 {
 
-bool
-is_quit_event(SDL_Event& event)
-{
-  bool is_quit = false;
-
-  switch (event.type) {
-  case SDL_QUIT: {
-    is_quit = true;
-    break;
-  }
-  }
-  return is_quit;
-}
-
-template <typename FN>
 void
-loop_events(SDLEventProcessArgs&& epa, FN const& fn)
+loop_events(GameState& state, Camera& camera, bool const show_mainmenu, bool& quit,
+            FrameTime const& ft)
 {
-  auto& es    = epa.game_state.engine_state;
-  auto& event = epa.event;
-
-  while ((!es.quit) && (0 != SDL_PollEvent(&event))) {
-    ImGui_ImplSdlGL3_ProcessEvent(&event);
-    fn(MOVE(epa));
-  }
-}
-
-void
-loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
-     FrameTime const& ft)
-{
-  auto& es     = state.engine_state;
-  auto& logger = es.logger;
-
-  // Reset Imgui for next game frame.
-  auto& window = engine.window;
-  ImGui_ImplSdlGL3_NewFrame(window.raw());
-
-  auto const& event_fn = es.main_menu.show ? &main_menu::process_event : &IO_SDL::process_event;
+  auto const& fn = show_mainmenu
+    ? &main_menu::process_event
+    : &IO_SDL::process_event;
 
   SDL_Event event;
-  loop_events(SDLEventProcessArgs{state, event, camera, ft}, event_fn);
-  es.quit |= is_quit_event(event);
+  while ((!quit) && (0 != SDL_PollEvent(&event))) {
+    ImGui_ImplSdlGL3_ProcessEvent(&event);
+    fn(SDLEventProcessArgs{state, event, camera, ft});
+    quit |= event.type == SDL_QUIT;
+  }
+}
 
-  static auto renderers = make_static_renderers(es, state.level_manager);
-  boomhs::game_loop(engine, state, renderers, rng, camera, ft);
+void
+loop(Engine& engine, GameState& gs, RNG& rng, Camera& camera, FrameTime const& ft)
+{
+  auto& es     = gs.engine_state();
+  auto& logger = es.logger;
+
+  auto& window = engine.window;
+
+  // Reset Imgui for next game frame.
+  ImGui_ImplSdlGL3_NewFrame(window.raw());
+
+  loop_events(gs, camera, es.main_menu.show, es.quit, ft);
+  boomhs::game_loop(engine, gs, rng, camera, ft);
 
   // Render Imgui UI
   ImGui::Render();
@@ -80,21 +67,21 @@ loop(Engine& engine, GameState& state, RNG& rng, Camera& camera,
 }
 
 void
-timed_game_loop(Engine& engine, GameState& state, Camera& camera, RNG& rng)
+timed_game_loop(Engine& engine, GameState& gs, Camera& camera, RNG& rng)
 {
-  Clock         clock;
-  FrameCounter  counter;
+  Timer timer;
+  FrameCounter fcounter;
 
-  auto& logger = state.engine_state.logger;
-  while (!state.engine_state.quit) {
-    auto const ft = clock.frame_time();
-    loop(engine, state, rng, camera, ft);
+  auto& es = gs.engine_state();
+  while (!es.quit) {
+    auto const ft = FrameTime::from_timer(timer);
+    loop(engine, gs, rng, camera, ft);
 
-    if ((counter.frames_counted % 60 == 0)) {
-      state.engine_state.time.add_hours(1);
+    if ((fcounter.frames_counted % 60 == 0)) {
+      es.time.add_hours(1);
     }
-    clock.update();
-    counter.update(logger, clock);
+    timer.update();
+    fcounter.update();
   }
 }
 
@@ -113,8 +100,7 @@ start(common::Logger& logger, Engine& engine)
   auto& registries = engine.registries;
 
   // Initialize opengl
-  auto const dimensions = engine.dimensions();
-  opengl::render::init(logger, dimensions);
+  OR::init(logger);
 
   // Initialize openAL
   ALCdevice* al_device = alcOpenDevice(nullptr);
@@ -132,17 +118,37 @@ start(common::Logger& logger, Engine& engine)
   });
   alcMakeContextCurrent(ctx);
 
-  // Configure Imgui
-  auto& io           = ImGui::GetIO();
-  io.MouseDrawCursor = true;
-  io.DisplaySize     = ImVec2{static_cast<float>(dimensions.right()), static_cast<float>(dimensions.bottom())};
-
   // Construct game state
-  EngineState es{logger, *al_device, io, dimensions};
-  auto        camera = Camera::make_default(dimensions);
+  auto constexpr NEAR   = 0.001f;
+  auto constexpr FAR    = 5000.0f;
+  auto const window_viewport = engine.window_viewport();
+  auto const frustum = Frustum::from_rect_and_nearfar(window_viewport.rect(), NEAR, FAR);
+
+  auto& io = ImGui::GetIO();
+
+  // Disable ImGui's Software cursor
+  //
+  // Instead we'll use the system hardware cursor (using SDL).
+  io.MouseDrawCursor = false;
+
+  EngineState es{logger, *al_device, io, frustum};
+
+  // camera-look at origin
+  // cameraspace "up" is === "up" in worldspace.
+  auto const PERS_FORWARD = -constants::Z_UNIT_VECTOR;
+  auto constexpr PERS_UP  =  constants::Y_UNIT_VECTOR;
+  WorldOrientation const wo_3dperspective{PERS_FORWARD, PERS_UP};
+
+  auto const ORTHO_FORWARD = -constants::Y_UNIT_VECTOR;
+  auto constexpr ORTHO_UP  =  constants::Z_UNIT_VECTOR;
+  WorldOrientation const wo_2dorthographic{ORTHO_FORWARD, ORTHO_UP};
+  auto              camera = Camera::make_default(CameraMode::ThirdPerson, wo_3dperspective,
+                                                  wo_2dorthographic);
+  camera.ortho.flip_rightv = true;
 
   RNG rng;
-  auto gs = TRY_MOVEOUT(boomhs::init(engine, es, camera, rng));
+  auto gs = TRY_MOVEOUT(boomhs::create_gamestate(engine, es, wo_3dperspective, camera, rng));
+  boomhs::init_gamestate_inplace(gs, camera);
 
   // Start game in a timed loop
   timed_game_loop(engine, gs, camera, rng);
@@ -154,41 +160,32 @@ start(common::Logger& logger, Engine& engine)
 
 } // namespace
 
-using WindowResult = Result<SDLWindow, std::string>;
-WindowResult
-make_window(common::Logger& logger, bool const fullscreen, float const width, float const height)
-{
-  // Select windowing library as SDL.
-  LOG_DEBUG("Initializing window library globals");
-  DO_EFFECT(window::sdl_library::init(logger));
-
-  LOG_DEBUG("Instantiating window instance.");
-  return window::sdl_library::make_window(logger, fullscreen, height, width);
-}
-
 int
 main(int argc, char* argv[])
 {
+  bool constexpr FULLSCREEN = false;
+  char const* TITLE         = "BoomHS";
+
   auto const time_result = Time::get_time_now();
   if (!time_result) {
     return EXIT_FAILURE;
   }
-  std::string const log_name = time_result.unwrap() + "-BoomHS.log";
+  std::string const log_name = time_result.unwrap() + "-" + std::string{TITLE} + ".log";
   auto              logger   = common::LogFactory::make_default(log_name.c_str());
-
-  LOG_DEBUG("Creating window ...");
-  bool constexpr FULLSCREEN = false;
 
   auto const on_error = [&logger](auto const& error) {
     LOG_ERROR(error);
     return EXIT_FAILURE;
   };
-  TRY_OR_ELSE_RETURN(auto window, make_window(logger, FULLSCREEN, 1024, 768), on_error);
-  TRY_OR_ELSE_RETURN(auto controller, SDLControllers::find_attached_controllers(logger), on_error);
-  Engine engine{MOVE(window), MOVE(controller)};
+
+  LOG_DEBUG("Initializing OpenGL context and SDL window.");
+  auto gl_sdl = TRY_OR(GlSdl::make_default(logger, TITLE, FULLSCREEN, 1024, 768), on_error);
+
+  auto controller = TRY_OR(SDLControllers::find_attached_controllers(logger), on_error);
+  Engine engine{MOVE(gl_sdl.window), MOVE(controller)};
 
   LOG_DEBUG("Starting game loop");
-  TRY_OR_ELSE_RETURN(auto _, start(logger, engine), on_error);
+  TRY_OR(start(logger, engine), on_error);
 
   LOG_DEBUG("Game loop finished successfully! Ending program now.");
   return EXIT_SUCCESS;

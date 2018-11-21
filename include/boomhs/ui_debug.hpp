@@ -1,5 +1,4 @@
 #pragma once
-#include <boomhs/clock.hpp>
 
 namespace boomhs
 {
@@ -12,6 +11,6 @@ namespace boomhs::ui_debug
 {
 
 void
-draw(EngineState&, LevelManager&, Camera&, FrameTime const&);
+draw(char const*, int, EngineState&, LevelManager&, Camera&, FrameTime const&);
 
 } // namespace boomhs::ui_debug

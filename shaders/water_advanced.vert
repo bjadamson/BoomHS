@@ -13,7 +13,7 @@ uniform Fog u_fog;
 uniform mat4 u_viewmatrix;
 uniform mat4 u_modelmatrix;
 
-uniform mat4 u_mvpmatrix;
+uniform mat4 u_mv;
 uniform vec4 u_clipPlane;
 uniform vec3 u_camera_position;
 
@@ -22,7 +22,7 @@ const float TILING = 4.0;
 void main()
 {
   v_position = vec4(a_position, 1.0);
-  v_clipspace = u_mvpmatrix * v_position;
+  v_clipspace = u_mv * v_position;
   gl_Position = v_clipspace;
   v_textureuv = a_textureuv;
 

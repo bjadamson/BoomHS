@@ -1,10 +1,10 @@
-#include <boomhs/item_factory.hpp>
 #include <boomhs/game_config.hpp>
 #include <boomhs/heightmap.hpp>
-#include <boomhs/math.hpp>
-#include <boomhs/npc.hpp>
+#include <boomhs/item_factory.hpp>
 #include <boomhs/leveldata.hpp>
 #include <boomhs/lighting.hpp>
+#include <boomhs/math.hpp>
+#include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/random.hpp>
 #include <boomhs/start_area_generator.hpp>
@@ -27,11 +27,11 @@ namespace
 {
 
 void
-place_item_on_ground(common::Logger& logger, TerrainGrid& terrain, Transform &transform,
-    glm::vec2 const& pos)
+place_item_on_ground(common::Logger& logger, TerrainGrid& terrain, Transform& transform,
+                     glm::vec2 const& pos)
 {
   float const x = pos.x, z = pos.y;
-  auto const y = terrain.get_height(logger, x, z);
+  auto const  y         = terrain.get_height(logger, x, z);
   transform.translation = glm::vec3{x, y, z};
 }
 
@@ -55,13 +55,12 @@ place_monsters(common::Logger& logger, TerrainGrid const& terrain, EntityRegistr
 
 void
 place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& terrain,
-             MaterialTable const& material_table, EntityRegistry& registry)
+             MaterialTable const& material_table, EntityRegistry& registry,
+             WorldOrientation const& world_orientation)
 {
   auto const eid = registry.create();
 
-  auto const FWD     = -Z_UNIT_VECTOR;
-  auto constexpr UP  =  Y_UNIT_VECTOR;
-  auto& player = registry.assign<Player>(eid, logger, eid, registry, sps, FWD, UP);
+  auto& player = registry.assign<Player>(eid, logger, eid, registry, sps, world_orientation);
   player.level = 14;
   player.name  = "BEN";
   player.speed = 460;
@@ -70,7 +69,7 @@ place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& ter
 
   {
     float const x = 8, z = 8;
-    auto const y = terrain.get_height(logger, x, z);
+    auto const  y         = terrain.get_height(logger, x, z);
     transform.translation = glm::vec3{x, y, z};
   }
 
@@ -78,25 +77,25 @@ place_player(common::Logger& logger, ShaderPrograms& sps, TerrainGrid const& ter
   registry.assign<ShaderName>(eid, "3d_pos_normal_color");
   registry.assign<MeshRenderable>(eid, "at");
 
-  auto& cc = registry.assign<Color>(eid);
-  cc.set(LOC::WHITE);
+  auto& cc = registry.assign<ColorRGBA>(eid);
+  cc.set(LOC4::WHITE);
 
   registry.assign<Material>(eid) = material_table.find("player");
 }
 
 void
 place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& registry,
-            TextureTable& ttable, RNG& rng)
+             TextureTable& ttable, RNG& rng)
 {
-  auto& water_sp  = graphics_mode_to_water_shader(GameGraphicsMode::Basic, sps);
+  auto& water_sp = graphics_mode_to_water_shader(logger, GameGraphicsMode::Basic, sps);
 
   auto const place = [&](glm::vec2 const& pos, unsigned int count) {
     auto const eid = registry.create();
 
-    auto& wi        = WaterFactory::make_default(logger, sps, ttable, eid, registry);
-    wi.mix_color    = Color::random(rng);
+    auto& wi     = WaterFactory::make_default(logger, sps, ttable, eid, registry);
+    wi.mix_color = color::random(rng);
 
-    auto& tr = registry.get<Transform>(eid);
+    auto& tr         = registry.get<Transform>(eid);
     tr.translation.x = pos.x;
     tr.translation.z = pos.y;
 
@@ -105,8 +104,10 @@ place_waters(common::Logger& logger, ShaderPrograms& sps, EntityRegistry& regist
   };
 
   int count = 0;
-  FOR(i, 4) {
-    FOR(j, 4) {
+  FOR(i, 4)
+  {
+    FOR(j, 4)
+    {
       auto const pos = glm::vec2{i * 25, j * 25};
       place(pos, count);
       ++count;
@@ -120,16 +121,16 @@ namespace boomhs
 {
 
 LevelGeneratedData
-StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
-                              RNG& rng, ShaderPrograms& sps, TextureTable& ttable,
-                              MaterialTable const& material_table,
-                              Heightmap const& heightmap)
+StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry, RNG& rng,
+                              ShaderPrograms& sps, TextureTable& ttable,
+                              MaterialTable const& material_table, Heightmap const& heightmap,
+                              WorldOrientation const& world_orientation)
 {
   LOG_TRACE("Generating Starting Area");
 
   LOG_TRACE("Generating Terrain");
   TerrainConfig const tc;
-  auto& sp     = sps.ref_sp(tc.shader_name);
+  auto&               sp = sps.ref_sp(logger, tc.shader_name);
 
   TerrainGridConfig tgc;
   tgc.num_rows = 2;
@@ -140,7 +141,7 @@ StartAreaGenerator::gen_level(common::Logger& logger, EntityRegistry& registry,
   place_torch(logger, terrain, registry, ttable, glm::vec2{2, 2});
 
   LOG_TRACE("Placing Player");
-  place_player(logger, sps, terrain, material_table, registry);
+  place_player(logger, sps, terrain, material_table, registry, world_orientation);
 
   LOG_TRACE("placing monsters ...\n");
   place_monsters(logger, terrain, registry, rng);

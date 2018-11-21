@@ -11,49 +11,36 @@
 
 #define FOR(q, n) for (unsigned int q = 0u; q < n; ++q)
 #define FORI(q, n) for (int q = 0; q < n; ++q)
-#define PAIR(...) std::make_pair(__VA_ARGS__)
-
-namespace common::anyof_detail
-{
-
-inline bool
-orcombo()
-{
-  return false;
-}
-
-template <typename First, typename... Rest>
-bool
-orcombo(First const& first, Rest&&... rest)
-{
-  return first || orcombo(FORWARD(rest));
-}
-
-} // namespace common::anyof_detail
-
-namespace common::allof_detail
-{
-
-inline bool
-allcombo()
-{
-  return true;
-}
-
-template <typename First, typename... Rest>
-bool
-allcombo(First const& first, Rest&&... rest)
-{
-  return first && allcombo(FORWARD(rest));
-}
-
-} // namespace common::allof_detail
-
-#define ALLOF(a, ...) ::common::allof_detail::allcombo(a, ##__VA_ARGS__)
-#define ANYOF(a, ...) ::common::anyof_detail::orcombo(a, ##__VA_ARGS__)
+#define PAIR(...) std::pair{__VA_ARGS__}
+#define BREAK_THIS_LOOP_IF(v) if (v) { break; }
 
 namespace common
 {
+
+template <typename ...Ts>
+bool constexpr and_all(Ts... ts) noexcept { return (... && ts); }
+
+template <typename ...Ts>
+bool constexpr or_all(Ts... ts) noexcept { return (... || ts); }
+
+template <typename F, typename... Args>
+void constexpr
+for_each(F f, Args&&... args) noexcept
+{
+  (f(std::forward<Args>(args)), ...);
+}
+
+template <class Target = void, class... Args>
+constexpr auto
+concat(Args&&... args) noexcept
+{
+  auto constexpr fn = [](auto&& first, auto&&... rest) {
+    using T =
+        std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
+    return std::array<T, (sizeof...(rest) + 1)>{{decltype(first)(first), decltype(rest)(rest)...}};
+  };
+  return std::apply(fn, std::tuple_cat(FORWARD(args)));
+}
 
 inline bool
 cstrcmp(char const* a, char const* b)
@@ -64,13 +51,6 @@ cstrcmp(char const* a, char const* b)
 inline void
 memzero(void* const dest, size_t const count)
 {
-  // TODO: move these into a proper test... such a hack
-  assert(ANYOF(true, false));
-  assert(!ANYOF(false, false));
-  assert(ANYOF(false, true));
-  assert(!(ANYOF(false)));
-  assert(ANYOF(true));
-
   std::memset(dest, 0, count);
 }
 
@@ -83,26 +63,43 @@ combine_vectors(std::vector<T>&& a, std::vector<T>&& b)
 
   dest.insert(dest.end(), a.cbegin(), a.cend());
   dest.insert(dest.end(), b.cbegin(), b.cend());
-  return MOVE(dest);
+  return dest;
 }
 
-// Combines tuples/arrays at compile time into a user defined type.
-template <class Target = void, class... TupleLike>
-constexpr auto
-concat(TupleLike&&... tuples)
+template <typename T, size_t N>
+auto
+vec_from_array(std::array<T, N> const& array)
 {
-  auto constexpr fn = [](auto&& first, auto&&... rest) {
-    using T =
-        std::conditional_t<!std::is_void<Target>::value, Target, std::decay_t<decltype(first)>>;
-    return std::array<T, (sizeof...(rest) + 1)>{{decltype(first)(first), decltype(rest)(rest)...}};
-  };
-  return std::apply(fn, std::tuple_cat(std::forward<TupleLike>(tuples)...));
+  return std::vector<T>{array.cbegin(), array.cend()};
+}
+
+template <typename T, size_t N>
+auto
+vec_from_array(std::array<T, N> &&array)
+{
+  return std::vector<T>{array.cbegin(), array.cend()};
 }
 
 } // namespace common
 
 namespace common
 {
+
+// Given a reference to a value, and a pair of two values, return a reference to the item in the
+// pair that is not the same as the value passed in.
+//
+// ie:
+//
+// auto a = 5, b = 10;
+//
+// assert(other_of(a, PAIR(a, b)) == b);
+// assert(other_of(b, PAIR(a, b)) == a);
+template <typename T>
+constexpr T const&
+other_of_two(T const& value, std::pair<T, T> const& pair)
+{
+  return value == pair.first ? pair.second : pair.first;
+}
 
 template <typename T, size_t N, class... Args>
 constexpr auto
@@ -119,12 +116,60 @@ make_array(Args&&... args)
   return make_array<T, N>(FORWARD(args));
 }
 
+// Invoke a function 'F' with variadic argument list 'Args'
+//
+// Any return value from the function 'F' is discarded.
+template <typename F, typename...Args>
+void constexpr
+invoke_fn(F&& f, Args&&...args)
+{
+  (static_cast<void>(f(std::forward<Args>(args))), ...);
+}
+
+// Construct an array with 'N' elements from a function 'F' using arguments 'Args'.
+//
+// Construct an array of N elements, each element constructed by passing the function F all of the
+// arguments Args.
+template <size_t N, typename F, typename...Args>
+auto constexpr
+make_array_from(F&& fn, Args&&...pack)
+{
+  using T = decltype(fn(FORWARD(pack)));
+
+  std::array<T, N> arr;
+  FOR(i, N) {
+    arr[i] = fn(FORWARD(pack));
+  }
+  return arr;
+}
+
+// Construct an array of 'N' elements invoking a function 'F' 'N' times.
+//
+// The function 'F' should accept a single index parameter 'i'. This function 'F' will forward the
+// index value 'i' during the array construction to each 'F' invocation.
+//
+// The parameter 'i' is the current index of the array being constructed.
+// ie: 0, 1, 2, ... up to N-1
+template <size_t N, typename F>
+auto constexpr
+make_array_from_fn_forwarding_index(F&& fn)
+{
+  using T = decltype(fn(N));
+  std::array<T, N> arr;
+  FOR(i, N) {
+    arr[i] = fn(i);
+  }
+
+  return arr;
+}
+
+// Construct a std::vector<T> with 'n' size.
 template <typename T>
 auto
-vec_with_size(size_t const s)
+vec_with_size(size_t const n)
 {
   std::vector<T> buffer;
-  buffer.resize(s);
+  buffer.resize(n);
   return buffer;
 }
 
@@ -229,26 +274,15 @@ concat_string()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // zip
-template <typename FirstBegin, typename FirstEnd, typename SecondBegin, typename FN>
+template <typename FirstBegin, typename FirstEnd, typename OutputBegin, typename FN>
 void
-zip(FirstBegin fb, FirstEnd fe, SecondBegin sb, FN const& fn)
+zip(FirstBegin fb, FirstEnd fe, OutputBegin ob, FN const& fn)
 {
-  // Assumes length(sb) > length(fe - fb)
-  auto it = sb;
+  // Assumes length(ob) > length(fe - fb)
+  auto it = ob;
   for (auto i{fb}; i < fe; ++i, ++it) {
     fn(*i, *it);
   }
-}
-
-template <typename ContainerIter, typename FN, typename... T>
-void
-zip(FN const& fn, ContainerIter it, std::tuple<T...> const& tuple)
-{
-  auto const zip_fn = [&fn, &it](auto const& value) {
-    fn(value, *it);
-    it++;
-  };
-  common::for_each(tuple, zip_fn);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -347,6 +381,23 @@ trim_copy(std::string s)
 {
   trim(s);
   return s;
+}
+
+// Convert an array to a string.
+template <typename T>
+std::string
+stringify(T const& array)
+{
+  std::string result = "{";
+  FOR(i, array.size())
+  {
+    if (i > 0) {
+      result += ", ";
+    }
+    auto const& v = array[i];
+    result += std::to_string(v);
+  }
+  return result + "}";
 }
 
 } // namespace common

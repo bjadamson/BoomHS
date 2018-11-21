@@ -3,7 +3,7 @@
 #include <boomhs/engine.hpp>
 #include <boomhs/frame.hpp>
 #include <boomhs/level_manager.hpp>
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <opengl/bind.hpp>
 #include <opengl/framebuffer.hpp>
@@ -19,6 +19,7 @@
 namespace boomhs
 {
 class FrameTime;
+class LevelManager;
 class RNG;
 } // namespace boomhs
 
@@ -31,42 +32,39 @@ static glm::vec4 constexpr BENEATH_VECTOR = {0, 1, 0, -CUTOFF_HEIGHT};
 
 class SilhouetteWaterRenderer
 {
-  common::Logger&        logger_;
-  opengl::ShaderProgram& sp_;
+  opengl::ShaderProgram* sp_;
 
 public:
   SilhouetteWaterRenderer(common::Logger&, opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(SilhouetteWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 class BasicWaterRenderer
 {
-  common::Logger&        logger_;
-  opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   diffuse_;
-  opengl::TextureInfo&   normal_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   diffuse_;
+  opengl::TextureInfo*   normal_;
 
 public:
   BasicWaterRenderer(common::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                      opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(BasicWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(BasicWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
 
 class MediumWaterRenderer
 {
-  common::Logger&        logger_;
-  opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   diffuse_;
-  opengl::TextureInfo&   normal_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   diffuse_;
+  opengl::TextureInfo*   normal_;
 
 public:
   MediumWaterRenderer(common::Logger&, opengl::TextureInfo&, opengl::TextureInfo&,
                       opengl::ShaderProgram&);
-  MOVE_CONSTRUCTIBLE_ONLY(MediumWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(MediumWaterRenderer);
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
 };
@@ -77,10 +75,9 @@ struct ReflectionBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  ReflectionBuffers(common::Logger&, boomhs::ScreenSize const&);
+  ReflectionBuffers(common::Logger&);
 
-  NO_COPY(ReflectionBuffers);
-  MOVE_DEFAULT(ReflectionBuffers);
+  NOCOPY_MOVE_DEFAULT(ReflectionBuffers);
 };
 
 struct RefractionBuffers
@@ -89,18 +86,17 @@ struct RefractionBuffers
   opengl::TextureInfo tbo;
   opengl::TextureInfo dbo;
 
-  RefractionBuffers(common::Logger&, boomhs::ScreenSize const&);
+  RefractionBuffers(common::Logger&);
 
-  NO_COPY(RefractionBuffers);
-  MOVE_DEFAULT(RefractionBuffers);
+  NOCOPY_MOVE_DEFAULT(RefractionBuffers);
 };
 
 class AdvancedWaterRenderer
 {
-  opengl::ShaderProgram& sp_;
-  opengl::TextureInfo&   diffuse_;
-  opengl::TextureInfo&   dudv_;
-  opengl::TextureInfo&   normal_;
+  opengl::ShaderProgram* sp_;
+  opengl::TextureInfo*   diffuse_;
+  opengl::TextureInfo*   dudv_;
+  opengl::TextureInfo*   normal_;
 
   ReflectionBuffers reflection_;
   RefractionBuffers refraction_;
@@ -139,10 +135,10 @@ class AdvancedWaterRenderer
   }
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(AdvancedWaterRenderer);
+  NOCOPY_MOVE_DEFAULT(AdvancedWaterRenderer);
 
-  explicit AdvancedWaterRenderer(common::Logger&, boomhs::ScreenSize const&, ShaderProgram&,
-                                 TextureInfo&, TextureInfo&, TextureInfo&);
+  explicit AdvancedWaterRenderer(common::Logger&, boomhs::Viewport const&,
+                                 ShaderProgram&, TextureInfo&, TextureInfo&, TextureInfo&);
 
   template <typename TerrainRenderer, typename EntityRenderer>
   void render_reflection(boomhs::EngineState& es, DrawState& ds, boomhs::LevelManager& lm,
@@ -161,10 +157,11 @@ public:
     // By inverting the camera's Y position before computing the view matrices, we can render the
     // world as if the camera was beneath the water's surface. This is how computing the reflection
     // texture works.
-    glm::vec3 camera_pos = camera.world_position();
+    glm::vec3 camera_pos = camera.position();
     camera_pos.y         = -camera_pos.y;
 
-    auto fs   = boomhs::FrameState::from_camera_withposition(es, zs, camera, camera_pos);
+    auto fs = boomhs::FrameState::from_camera_withposition(
+        es, zs, camera, camera.view_settings_ref(), es.frustum, camera_pos);
     RenderState rstate{fs, ds};
 
     with_reflection_fbo(logger,
@@ -182,7 +179,8 @@ public:
     auto&       registry  = zs.registry;
     auto const& fog_color = ldata.fog.color;
 
-    auto fs   = boomhs::FrameState::from_camera(es, zs, camera);
+    auto fs =
+        boomhs::FrameState::from_camera(es, zs, camera, camera.view_settings_ref(), es.frustum);
     RenderState rstate{fs, ds};
 
     with_refraction_fbo(logger,
@@ -190,6 +188,20 @@ public:
   }
 
   void render_water(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::FrameTime const&);
+};
+
+struct WaterRenderers
+{
+  NOCOPY_MOVE_DEFAULT(WaterRenderers);
+
+  opengl::BasicWaterRenderer    basic;
+  opengl::MediumWaterRenderer   medium;
+  opengl::AdvancedWaterRenderer advanced;
+
+  opengl::SilhouetteWaterRenderer silhouette;
+
+  void
+  render(RenderState&, DrawState&, boomhs::LevelManager&, boomhs::Camera&, boomhs::FrameTime const&, bool);
 };
 
 } // namespace opengl

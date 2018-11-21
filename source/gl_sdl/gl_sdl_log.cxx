@@ -1,7 +1,7 @@
-#include <gfx/gl_sdl_log.hpp>
+#include <gl_sdl/gl_sdl_log.hpp>
 
-#include <extlibs/fmt.hpp>
 #include <common/log.hpp>
+#include <extlibs/fmt.hpp>
 
 #include <extlibs/sdl.hpp>
 #include <iostream>
@@ -40,7 +40,7 @@ retrieve(GLuint const handle, void (*f)(GLuint, GLsizei, GLsizei*, GLchar*))
 
 } // namespace
 
-namespace gfx
+namespace gl_sdl
 {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,4 +163,4 @@ log_any_gl_errors(common::Logger& logger, std::string const& prefix, int const l
   }
 }
 
-} // namespace gfx
+} // namespace gl_sdl

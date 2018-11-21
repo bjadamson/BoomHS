@@ -5,15 +5,15 @@
 #include <opengl/texture.hpp>
 
 #include <boomhs/engine.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/zone_state.hpp>
 
 #include <cassert>
-#include <boomhs/clock.hpp>
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // SkyboxRenderer
@@ -22,11 +22,11 @@ SkyboxRenderer::SkyboxRenderer(common::Logger& logger, DrawInfo&& dinfo, Texture
     : dinfo_(MOVE(dinfo))
     , day_(&day)
     , night_(&night)
-    , sp_(sp)
+    , sp_(&sp)
 {
-  sp_.while_bound(logger, [&]() {
-    sp_.set_uniform_int1(logger, "u_cube_sampler1", 0);
-    sp_.set_uniform_int1(logger, "u_cube_sampler1", 1);
+  sp_->while_bound(logger, [&]() {
+    shader::set_uniform(logger, *sp_, "u_cube_sampler1", 0);
+    shader::set_uniform(logger, *sp_, "u_cube_sampler1", 1);
   });
 
   auto const set_fields = [&](auto& ti, GLenum const tunit) {
@@ -85,21 +85,21 @@ SkyboxRenderer::render(RenderState& rstate, DrawState& ds, FrameTime const& ft)
   view_matrix[3][1] = 0.0f;
   view_matrix[3][2] = 0.0f;
 
-  auto const proj_matrix  = fstate.projection_matrix();
-  auto const draw_fn = [&]() { render::draw_2d(rstate, GL_TRIANGLES, sp_, dinfo_); };
-  sp_.while_bound(logger, [&]() {
+  auto const proj_matrix = fstate.projection_matrix();
+  auto const draw_fn     = [&]() { render::draw_2d(rstate, GL_TRIANGLES, *sp_, dinfo_); };
+  sp_->while_bound(logger, [&]() {
     {
-      auto const& skybox     = ldata.skybox;
-      auto const& transform  = skybox.transform();
+      auto const& skybox    = ldata.skybox;
+      auto const& transform = skybox.transform();
 
       auto const model_matrix = transform.model_matrix();
       auto const mvp_matrix   = math::compute_mvp_matrix(model_matrix, view_matrix, proj_matrix);
-      sp_.set_uniform_matrix_4fv(logger, "u_mvpmatrix", mvp_matrix);
+      shader::set_uniform(logger, *sp_, "u_mv", mvp_matrix);
     }
-    sp_.set_uniform_color(logger, "u_fog.color", fog.color);
+    shader::set_uniform(logger, *sp_, "u_fog.color", fog.color);
 
     auto const blend = calculate_blend();
-    sp_.set_uniform_float1(logger, "u_blend_factor", blend);
+    shader::set_uniform(logger, *sp_, "u_blend_factor", blend);
 
     dinfo_.while_bound(logger, draw_fn);
   });

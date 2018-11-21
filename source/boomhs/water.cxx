@@ -1,5 +1,5 @@
-#include <boomhs/camera.hpp>
 #include <boomhs/bounding_object.hpp>
+#include <boomhs/camera.hpp>
 #include <boomhs/components.hpp>
 #include <boomhs/entity.hpp>
 #include <boomhs/level_manager.hpp>
@@ -11,10 +11,8 @@
 #include <opengl/gpu.hpp>
 #include <opengl/shader.hpp>
 
-#include <boomhs/clock.hpp>
-
-#include <common/log.hpp>
 #include <boomhs/random.hpp>
+#include <common/log.hpp>
 
 #include <cassert>
 #include <extlibs/fmt.hpp>
@@ -22,25 +20,26 @@
 
 using namespace boomhs;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace boomhs
 {
 
 ShaderProgram&
-graphics_mode_to_water_shader(GameGraphicsMode const dwo, opengl::ShaderPrograms& sps)
+graphics_mode_to_water_shader(common::Logger& logger, GameGraphicsMode const dwo,
+                              ShaderPrograms& sps)
 {
   ShaderProgram* sp = nullptr;
 
   switch (dwo) {
   case GameGraphicsMode::Basic:
-    sp = &sps.ref_sp("water_basic");
+    sp = &sps.ref_sp(logger, "water_basic");
     break;
   case GameGraphicsMode::Medium:
-    sp = &sps.ref_sp("water_medium");
+    sp = &sps.ref_sp(logger, "water_medium");
     break;
   case GameGraphicsMode::Advanced:
-    sp = &sps.ref_sp("water_advanced");
+    sp = &sps.ref_sp(logger, "water_advanced");
     break;
   default:
     std::abort();
@@ -73,7 +72,7 @@ WaterFactory::generate_water_data(common::Logger& logger, glm::vec2 const& dimen
 
 WaterInfo&
 WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureTable& ttable,
-    EntityID const eid, EntityRegistry& registry)
+                           EntityID const eid, EntityRegistry& registry)
 {
   LOG_TRACE("Generating water");
 
@@ -89,8 +88,8 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   });
   LOG_TRACE("Finished generating water");
 
-  auto& wi = registry.assign<WaterInfo>(eid);
-  wi.tinfo = &ti;
+  auto& wi        = registry.assign<WaterInfo>(eid);
+  wi.tinfo        = &ti;
   wi.dimensions   = glm::vec2{20};
   wi.num_vertexes = 4;
 
@@ -100,12 +99,12 @@ WaterFactory::make_default(common::Logger& logger, ShaderPrograms& sps, TextureT
   // hack
   tr.translation.y = 0.05f;
 
-  auto const xdim = wi.dimensions.x;
-  auto const zdim = wi.dimensions.y;
+  auto const xdim             = wi.dimensions.x;
+  auto const zdim             = wi.dimensions.y;
   auto constexpr WATER_HEIGHT = 0.005f;
 
-  auto const min = glm::vec3{0,    -WATER_HEIGHT, 0};
-  auto const max = glm::vec3{xdim, WATER_HEIGHT,  zdim};
+  auto const min = glm::vec3{0, -WATER_HEIGHT, 0};
+  auto const max = glm::vec3{xdim, WATER_HEIGHT, zdim};
   AABoundingBox::add_to_entity(logger, sps, eid, registry, min, max);
 
   return wi;

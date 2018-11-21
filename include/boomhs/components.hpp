@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 
 #include <boomhs/entity.hpp>
 #include <boomhs/lighting.hpp>
@@ -110,7 +110,10 @@ struct IsRenderable
   bool hidden = false;
 
   IsRenderable() = default;
-  explicit IsRenderable(bool const h) : hidden(h) {}
+  explicit IsRenderable(bool const h)
+      : hidden(h)
+  {
+  }
 };
 
 struct Torch
@@ -123,7 +126,7 @@ struct LightFlicker
   float base_speed    = 0.0f;
   float current_speed = 0.0f;
 
-  std::array<Color, 2> colors;
+  std::array<ColorRGB, 2> colors = {{LOC3::NO_ALPHA, LOC3::NO_ALPHA}};
 };
 
 struct JunkEntityFromFILE
@@ -159,5 +162,18 @@ find_orbital_bodies(EntityRegistry& registry)
 {
   return find_all_entities_with_component<OrbitalBody>(registry);
 }
+
+// combined components
+struct CubeTransform
+{
+  Cube      const& cube;
+  Transform const& transform;
+};
+
+struct RectTransform
+{
+  RectFloat   const& rect;
+  Transform2D const& transform;
+};
 
 } // namespace boomhs

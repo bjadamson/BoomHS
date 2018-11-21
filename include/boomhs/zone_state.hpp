@@ -5,8 +5,8 @@
 #include <boomhs/nearby_targets.hpp>
 #include <boomhs/world_object.hpp>
 
+#include <boomhs/color.hpp>
 #include <boomhs/lighting.hpp>
-#include <boomhs/colors.hpp>
 #include <opengl/draw_info.hpp>
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
@@ -28,8 +28,7 @@ struct GfxState
   {
   }
 
-  NO_COPY(GfxState);
-  MOVE_DEFAULT(GfxState);
+  MOVE_CONSTRUCTIBLE_ONLY(GfxState);
 };
 
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
@@ -45,8 +44,7 @@ struct ZoneState
       , registry(reg)
   {
   }
-  NO_COPY(ZoneState);
-  MOVE_DEFAULT(ZoneState);
+  MOVE_CONSTRUCTIBLE_ONLY(ZoneState);
 };
 // This lives here, and not in zone.hpp, to avoid circular include cyle.
 using ZoneStates = std::vector<ZoneState>;

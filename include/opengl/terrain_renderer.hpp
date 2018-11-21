@@ -10,10 +10,10 @@
 
 namespace boomhs
 {
-class EntityRegistry;
-class FrameTime;
-class MaterialTable;
-class Terrain;
+class  EntityRegistry;
+class  FrameTime;
+struct MaterialTable;
+class  Terrain;
 } // namespace boomhs
 
 namespace opengl
@@ -25,7 +25,7 @@ class TextureTable;
 class DefaultTerrainRenderer
 {
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(DefaultTerrainRenderer);
+  NOCOPY_MOVE_DEFAULT(DefaultTerrainRenderer);
   DefaultTerrainRenderer() = default;
 
   // fields
@@ -44,10 +44,10 @@ public:
 
 class SilhouetteTerrainRenderer
 {
-  opengl::ShaderProgram& sp_;
+  opengl::ShaderProgram* sp_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(SilhouetteTerrainRenderer);
+  NOCOPY_MOVE_DEFAULT(SilhouetteTerrainRenderer);
   SilhouetteTerrainRenderer(opengl::ShaderProgram&);
 
   // methods

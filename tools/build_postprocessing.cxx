@@ -1,15 +1,16 @@
-#include <experimental/filesystem>
 #include <common/algorithm.hpp>
 #include <common/optional.hpp>
 #include <common/os.hpp>
+#include <opengl/global.hpp>
 
-#include <boost/algorithm/string/predicate.hpp>
 #include <cstdlib>
 #include <iostream>
 #include <string>
 #include <vector>
+#include <filesystem>
+#include <boost/algorithm/string/predicate.hpp>
 
-namespace fs = std::experimental::filesystem;
+namespace fs = std::filesystem;
 using OptionalString = std::optional<std::string>;
 
 namespace
@@ -139,8 +140,9 @@ copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdi
 
   // Iterate over the directory
   //
-  // first, collect all the shared code between vertex and fragment shaders (struct definitions,
-  // version info, etc...)
+  // first, collect all the shared code into two strings (one per vert/frag shader) each prefixed
+  // with the expected contents.
+  char const* PREFIX_STRING = opengl::glsl::prefix_string();
   auto const both_libcode_pair = get_library_code(path_to_shaders, ".glsl_both");
   bool result = both_libcode_pair.first;
 
@@ -152,9 +154,9 @@ copy_shaders_to_outdir(fs::path const& path_to_shaders, std::string const& outdi
   auto const frag_libcode_pair = get_library_code(path_to_shaders, ".glsl_frag");
   result |= frag_libcode_pair.first;
 
-  auto const& both_libcode = both_libcode_pair.second;
-  auto const frag_libcode = both_libcode + frag_libcode_pair.second;
-  auto const vert_libcode = both_libcode + vert_libcode_pair.second;
+  auto const prefix_both_libcode = PREFIX_STRING       + both_libcode_pair.second;
+  auto const frag_libcode        = prefix_both_libcode + frag_libcode_pair.second;
+  auto const vert_libcode        = prefix_both_libcode + vert_libcode_pair.second;
 
   // Copy the shaders (prepended with their shared code) to the output directories.
   result |= iter_directories(path_to_shaders, copy_files, frag_libcode, ".vert");

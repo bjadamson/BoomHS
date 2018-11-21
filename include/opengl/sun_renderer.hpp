@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/screen_info.hpp>
+#include <boomhs/viewport.hpp>
 
 #include <opengl/framebuffer.hpp>
 #include <opengl/renderbuffer.hpp>
@@ -18,8 +18,8 @@ class LevelManager;
 
 namespace opengl
 {
-class DrawState;
-class RenderState;
+struct DrawState;
+struct RenderState;
 
 struct SunshaftBuffers
 {
@@ -27,21 +27,20 @@ struct SunshaftBuffers
   opengl::TextureInfo  tbo;
   opengl::RenderBuffer rbo;
 
-  SunshaftBuffers(common::Logger&, boomhs::ScreenSize const&);
+  SunshaftBuffers(common::Logger&);
 
-  NO_COPY(SunshaftBuffers);
-  MOVE_DEFAULT(SunshaftBuffers);
+  NOCOPY_MOVE_DEFAULT(SunshaftBuffers);
 };
 
 class SunshaftRenderer
 {
-  opengl::ShaderProgram& sp_;
   SunshaftBuffers        buffers_;
+  opengl::ShaderProgram* sp_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(SunshaftRenderer);
+  NOCOPY_MOVE_DEFAULT(SunshaftRenderer);
 
-  explicit SunshaftRenderer(common::Logger&, boomhs::ScreenSize const&, opengl::ShaderProgram&);
+  explicit SunshaftRenderer(common::Logger&, boomhs::Viewport const&, opengl::ShaderProgram&);
 
   auto& texture_info() { return buffers_.tbo; }
 

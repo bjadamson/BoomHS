@@ -36,7 +36,7 @@ public:
   bool contains(char const*) const;
   bool contains(std::string const&) const;
 
-  COMMON_WRAPPING_CONTAINER_FNS(values_);
+  DEFINE_ARRAY_LIKE_WRAPPER_FNS(values_);
 };
 
 struct Item
@@ -71,7 +71,7 @@ public:
 inline auto
 find_items(EntityRegistry& registry)
 {
-  std::vector<EntityID> items;
+  EntityArray items;
   auto                  view = registry.view<Item>();
   for (auto const eid : view) {
     items.emplace_back(eid);

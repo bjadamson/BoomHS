@@ -3,19 +3,18 @@
 #include <boomhs/controller.hpp>
 #include <boomhs/engine.hpp>
 #include <boomhs/frame.hpp>
-#include <boomhs/io_sdl.hpp>
 #include <boomhs/io_behavior.hpp>
+#include <boomhs/io_sdl.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/npc.hpp>
 #include <boomhs/player.hpp>
 #include <boomhs/state.hpp>
 #include <boomhs/world_object.hpp>
 
-#include <window/sdl_window.hpp>
-#include <boomhs/clock.hpp>
+#include <gl_sdl/sdl_window.hpp>
 
-#include <common/log.hpp>
 #include <boomhs/math.hpp>
+#include <common/log.hpp>
 
 #include <extlibs/imgui.hpp>
 #include <extlibs/sdl.hpp>
@@ -25,71 +24,68 @@ using namespace boomhs;
 using namespace boomhs::math;
 using namespace boomhs::math::constants;
 using namespace opengl;
-using namespace window;
+using namespace gl_sdl;
 
 namespace boomhs
 {
 
 void
-IO_SDL::process_event(SDLEventProcessArgs &&epa)
+IO_SDL::process_event(SDLEventProcessArgs&& epa)
 {
-  auto& state    = epa.game_state;
-  auto& event    = epa.event;
-  auto& camera   = epa.camera;
-  auto const& ft = epa.frame_time;
+  auto&       state  = epa.game_state;
+  auto&       event  = epa.event;
+  auto&       camera = epa.camera;
+  auto const& ft     = epa.frame_time;
 
-  auto& es     = state.engine_state;
+  auto& es     = state.engine_state();
   auto& logger = es.logger;
 
-  auto& lm     = state.level_manager;
-  auto& active = lm.active();
+  auto& lm       = state.level_manager();
+  auto& active   = lm.active();
   auto& registry = active.registry;
 
-  auto& player = find_player(registry);
+  auto& player    = find_player(registry);
   auto& player_wo = player.world_object();
 
-  auto& ui     = es.ui_state;
-  auto& ingame = ui.ingame;
-  auto& chat_buffer = ingame.chat_buffer;
+  auto& ui                = es.ui_state;
+  auto& ingame            = ui.ingame;
+  auto& chat_buffer       = ingame.chat_buffer;
   auto& currently_editing = ingame.chat_state.currently_editing;
 
   auto const type               = event.type;
   bool const event_type_keydown = type == SDL_KEYDOWN;
   auto const key_pressed        = event.key.keysym.sym;
 
-
   if (event_type_keydown) {
     switch (key_pressed) {
-      case SDLK_F10:
-        es.quit = true;
-        return;
+    case SDLK_F10:
+      es.quit = true;
+      return;
     case SDLK_F8:
-        es.behaviors.active = &es.behaviors.player_playing_behavior;
-        break;
-      case SDLK_F9:
-        es.behaviors.active = &es.behaviors.terminal_behavior;
-        break;
+      es.behaviors.active = &es.behaviors.player_playing_behavior;
+      break;
+    case SDLK_F9:
+      es.behaviors.active = &es.behaviors.terminal_behavior;
+      break;
 
-      case SDLK_ESCAPE:
-        {
-          auto& ldata  = active.level_data;
-          auto& nbt = ldata.nearby_targets;
-          if (currently_editing) {
-            chat_buffer.clear();
-            currently_editing = false;
-          }
-          else if (player.is_attacking) {
-            player.is_attacking = false;
-          }
-          else if (nbt.selected()) {
-            nbt.clear();
-          }
-          else {
-            es.main_menu.show ^= true;
-          }
-          return;
-        }
-        break;
+    case SDLK_ESCAPE: {
+      auto& ldata = active.level_data;
+      auto& nbt   = ldata.nearby_targets;
+      if (currently_editing) {
+        chat_buffer.clear();
+        currently_editing = false;
+      }
+      else if (player.is_attacking) {
+        player.is_attacking = false;
+      }
+      else if (nbt.selected()) {
+        nbt.clear();
+      }
+      else {
+        es.main_menu.show ^= true;
+      }
+      return;
+    } break;
     }
   }
 
@@ -128,14 +124,14 @@ IO_SDL::process_event(SDLEventProcessArgs &&epa)
 }
 
 void
-IO_SDL::read_devices(SDLReadDevicesArgs &&rda)
+IO_SDL::read_devices(SDLReadDevicesArgs&& rda)
 {
-  auto& state             = rda.game_state;
+  auto&       state       = rda.game_state;
   auto const& controllers = rda.controllers;
-  auto& camera            = rda.camera;
+  auto&       camera      = rda.camera;
   auto const& ft          = rda.frame_time;
 
-  auto& es         = state.engine_state;
+  auto& es         = state.engine_state();
   auto& uistate    = es.ui_state;
   auto& ingame     = uistate.ingame;
   auto& chat_state = ingame.chat_state;
@@ -144,10 +140,10 @@ IO_SDL::read_devices(SDLReadDevicesArgs &&rda)
     return;
   }
 
-  auto& zs = state.level_manager.active();
+  auto& zs       = state.level_manager().active();
   auto& registry = zs.registry;
 
-  auto& player = find_player(registry);
+  auto& player    = find_player(registry);
   auto& player_wo = player.world_object();
 
   auto& behaviors = es.behaviors;

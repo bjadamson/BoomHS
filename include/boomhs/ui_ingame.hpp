@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 
 #include <common/algorithm.hpp>
 #include <common/type_macros.hpp>
@@ -9,14 +9,14 @@
 
 namespace opengl
 {
-class DrawState;
+struct DrawState;
 } // namespace opengl
 
 namespace boomhs
 {
-class Camera;
-struct EngineState;
-class LevelManager;
+class  Camera;
+class  FrameState;
+struct StaticRenderers;
 
 class ChatBuffer
 {
@@ -37,9 +37,9 @@ public:
 using ChannelId = uint32_t;
 struct Channel
 {
-  ChannelId     id;
-  std::string   name;
-  Color color;
+  ChannelId   id;
+  std::string name;
+  Color       color;
 };
 
 struct ChatState
@@ -93,6 +93,6 @@ void
 reset_active_imguiwindow_yscroll_position(int);
 
 void
-draw(EngineState&, LevelManager&, Camera&, opengl::DrawState&);
+draw(FrameState&, Camera&, StaticRenderers&, opengl::DrawState&);
 
 } // namespace boomhs::ui_ingame

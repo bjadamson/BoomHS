@@ -14,12 +14,12 @@ class RNG;
 
 namespace opengl
 {
-class RenderState;
+struct RenderState;
 
 class DebugRenderer
 {
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(DebugRenderer);
+  NOCOPY_MOVE_DEFAULT(DebugRenderer);
   DebugRenderer() = default;
 
   void render_scene(RenderState&, boomhs::LevelManager&, boomhs::Camera&, boomhs::RNG&,
@@ -29,7 +29,7 @@ public:
 class BlackSceneRenderer
 {
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(BlackSceneRenderer);
+  NOCOPY_MOVE_DEFAULT(BlackSceneRenderer);
   BlackSceneRenderer() = default;
 
   void render_scene(RenderState&, boomhs::LevelManager&, boomhs::Camera&, boomhs::RNG&,

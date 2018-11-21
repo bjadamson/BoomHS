@@ -1,6 +1,6 @@
-#include <extlibs/fmt.hpp>
-#include <common/algorithm.hpp>
 #include <boomhs/controller.hpp>
+#include <common/algorithm.hpp>
+#include <extlibs/fmt.hpp>
 
 using namespace boomhs;
 

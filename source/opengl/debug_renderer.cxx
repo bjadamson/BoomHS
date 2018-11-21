@@ -1,18 +1,18 @@
 #include <opengl/debug_renderer.hpp>
-#include <opengl/factory.hpp>
 #include <opengl/gpu.hpp>
 #include <opengl/renderer.hpp>
 
-#include <boomhs/components.hpp>
 #include <boomhs/camera.hpp>
+#include <boomhs/components.hpp>
 #include <boomhs/engine.hpp>
+#include <boomhs/frame_time.hpp>
 #include <boomhs/level_manager.hpp>
 #include <boomhs/math.hpp>
 #include <boomhs/player.hpp>
+#include <boomhs/vertex_factory.hpp>
 
 #include <boomhs/random.hpp>
 
-#include <boomhs/clock.hpp>
 #include <extlibs/glm.hpp>
 
 using namespace boomhs;
@@ -30,20 +30,20 @@ struct WorldOriginArrows
 };
 
 WorldOriginArrows
-create_axis_arrows(common::Logger &logger, VertexAttribute const& va)
+create_axis_arrows(common::Logger& logger, VertexAttribute const& va)
 {
   auto constexpr ORIGIN = constants::ZERO;
-  ArrowCreateParams constexpr acx{LOC::RED,   ORIGIN, constants::X_UNIT_VECTOR};
-  ArrowCreateParams constexpr acy{LOC::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
-  ArrowCreateParams constexpr acz{LOC::BLUE,  ORIGIN, constants::Z_UNIT_VECTOR};
+  ArrowTemplate constexpr acx{LOC4::RED, ORIGIN, constants::X_UNIT_VECTOR};
+  ArrowTemplate constexpr acy{LOC4::GREEN, ORIGIN, constants::Y_UNIT_VECTOR};
+  ArrowTemplate constexpr acz{LOC4::BLUE, ORIGIN, constants::Z_UNIT_VECTOR};
 
-  auto const avx = ArrowFactory::create_vertices(acx);
-  auto const avy = ArrowFactory::create_vertices(acy);
-  auto const avz = ArrowFactory::create_vertices(acz);
+  auto const avx = VertexFactory::build(acx);
+  auto const avy = VertexFactory::build(acy);
+  auto const avz = VertexFactory::build(acz);
 
-  auto x = OG::copy_arrow(logger, va, avx);
-  auto y = OG::copy_arrow(logger, va, avy);
-  auto z = OG::copy_arrow(logger, va, avz);
+  auto x = OG::copy(logger, va, avx);
+  auto y = OG::copy(logger, va, avy);
+  auto z = OG::copy(logger, va, avz);
   return WorldOriginArrows{MOVE(x), MOVE(y), MOVE(z)};
 }
 
@@ -57,7 +57,7 @@ draw_axis(RenderState& rstate, glm::vec3 const& pos)
 
   auto& logger = es.logger;
 
-  auto& sp           = sps.ref_sp("3d_pos_color");
+  auto& sp           = sps.ref_sp(logger, "3d_pos_color");
   auto  world_arrows = create_axis_arrows(logger, sp.va());
 
   auto const& ldata = zs.level_data;
@@ -82,7 +82,7 @@ draw_axis(RenderState& rstate, glm::vec3 const& pos)
 void
 conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 {
-  auto& fstate = rstate.fs;
+  auto& fstate   = rstate.fs;
   auto& es       = fstate.es;
   auto& zs       = fstate.zs;
   auto& registry = zs.registry;
@@ -95,15 +95,15 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
     //
     // eye-forward
     auto const fwd = wo.eye_forward();
-    render::draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC::PURPLE);
+    render::draw_arrow(rstate, pos, pos + (2.0f * fwd), LOC4::PURPLE);
 
     // eye-up
     auto const up = wo.eye_up();
-    render::draw_arrow(rstate, pos, pos + up, LOC::YELLOW);
+    render::draw_arrow(rstate, pos, pos + up, LOC4::YELLOW);
 
     // eye-right
     auto const right = wo.eye_right();
-    render::draw_arrow(rstate, pos, pos + right, LOC::ORANGE);
+    render::draw_arrow(rstate, pos, pos + right, LOC4::ORANGE);
   };
 
   if (es.show_player_localspace_vectors) {
@@ -119,52 +119,48 @@ conditionally_draw_player_vectors(RenderState& rstate, Player const& player)
 void
 draw_frustum(RenderState& rstate, Frustum const& frustum, glm::mat4 const& model)
 {
-  auto& fstate     = rstate.fs;
-  auto const proj  = fstate.projection_matrix();
-  auto const view  = fstate.view_matrix();
+  auto&      fstate = rstate.fs;
+  auto const proj   = fstate.projection_matrix();
+  auto const view   = fstate.view_matrix();
 
-  auto const mvp = math::compute_mvp_matrix(model, view, proj);
+  auto const      mvp          = math::compute_mvp_matrix(model, view, proj);
   glm::mat4 const inv_viewproj = glm::inverse(mvp);
 
-  glm::vec4 const f[8u] =
-  {
-      // near face
-      {-1, -1, frustum.near, 1.0f},
-      { 1, -1, frustum.near, 1.0f},
-      { 1,  1, frustum.near, 1.0f},
-      {-1,  1, frustum.near, 1.0f},
+  glm::vec4 const f[8u] = {// near face
+                           {-1, -1, frustum.near, 1.0f},
+                           {1, -1, frustum.near, 1.0f},
+                           {1, 1, frustum.near, 1.0f},
+                           {-1, 1, frustum.near, 1.0f},
 
-      // far face
-      {-1, -1, frustum.far, 1.0f},
-      { 1, -1, frustum.far, 1.0f},
-      { 1,  1, frustum.far, 1.0f},
-      {-1,  1, frustum.far, 1.0f}
-  };
+                           // far face
+                           {-1, -1, frustum.far, 1.0f},
+                           {1, -1, frustum.far, 1.0f},
+                           {1, 1, frustum.far, 1.0f},
+                           {-1, 1, frustum.far, 1.0f}};
 
   glm::vec3 v[8u];
-  for (int i = 0; i < 8; i++)
-  {
+  for (int i = 0; i < 8; i++) {
     glm::vec4 const ff = inv_viewproj * f[i];
-    v[i].x = ff.x / ff.w;
-    v[i].y = ff.y / ff.w;
-    v[i].z = ff.z / ff.w;
+    v[i].x             = ff.x / ff.w;
+    v[i].y             = ff.y / ff.w;
+    v[i].z             = ff.z / ff.w;
   }
 
-  render::draw_line(rstate, v[0], v[1], LOC::BLUE);
-  render::draw_line(rstate, v[1], v[2], LOC::BLUE);
-  render::draw_line(rstate, v[2], v[3], LOC::BLUE);
-  render::draw_line(rstate, v[3], v[0], LOC::BLUE);
+  render::draw_line(rstate, v[0], v[1], LOC4::BLUE);
+  render::draw_line(rstate, v[1], v[2], LOC4::BLUE);
+  render::draw_line(rstate, v[2], v[3], LOC4::BLUE);
+  render::draw_line(rstate, v[3], v[0], LOC4::BLUE);
 
-  render::draw_line(rstate, v[4], v[5], LOC::GREEN);
-  render::draw_line(rstate, v[5], v[6], LOC::GREEN);
-  render::draw_line(rstate, v[6], v[7], LOC::GREEN);
-  render::draw_line(rstate, v[7], v[4], LOC::GREEN);
+  render::draw_line(rstate, v[4], v[5], LOC4::GREEN);
+  render::draw_line(rstate, v[5], v[6], LOC4::GREEN);
+  render::draw_line(rstate, v[6], v[7], LOC4::GREEN);
+  render::draw_line(rstate, v[7], v[4], LOC4::GREEN);
 
   // connecting lines
-  render::draw_line(rstate, v[0], v[4], LOC::RED);
-  render::draw_line(rstate, v[1], v[5], LOC::RED);
-  render::draw_line(rstate, v[2], v[6], LOC::RED);
-  render::draw_line(rstate, v[3], v[7], LOC::RED);
+  render::draw_line(rstate, v[0], v[4], LOC4::RED);
+  render::draw_line(rstate, v[1], v[5], LOC4::RED);
+  render::draw_line(rstate, v[2], v[6], LOC4::RED);
+  render::draw_line(rstate, v[3], v[7], LOC4::RED);
 }
 
 } // namespace
@@ -175,8 +171,8 @@ namespace opengl
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // DebugRenderer
 void
-DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camera,
-                                   RNG& rng, FrameTime const& ft)
+DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camera, RNG& rng,
+                            FrameTime const& ft)
 {
   auto& fstate = rstate.fs;
   auto& es     = fstate.es;
@@ -186,7 +182,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   auto& registry = zs.registry;
   auto& ldata    = zs.level_data;
 
-  if (es.show_grid_lines) {
+  if (es.grid_lines.show) {
     render::draw_grid_lines(rstate);
   }
 
@@ -196,11 +192,11 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
   }
 
   Transform camera_transform;
-  camera_transform.translation = camera.world_position();
-  auto const model = camera_transform.model_matrix();
+  camera_transform.translation = camera.position();
+  auto const model             = camera_transform.model_matrix();
 
   if (es.draw_view_frustum) {
-    draw_frustum(rstate, camera.frustum_ref(), model);
+    draw_frustum(rstate, es.frustum, model);
   }
 
   // if checks happen inside fn
@@ -210,8 +206,7 @@ DebugRenderer::render_scene(RenderState& rstate, LevelManager& lm, Camera& camer
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // BlackSceneRenderer
 void
-BlackSceneRenderer::render_scene(RenderState&, LevelManager&, Camera&, RNG&,
-               FrameTime const&)
+BlackSceneRenderer::render_scene(RenderState&, LevelManager&, Camera&, RNG&, FrameTime const&)
 {
 }
 

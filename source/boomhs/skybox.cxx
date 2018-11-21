@@ -1,12 +1,11 @@
+#include <boomhs/frame_time.hpp>
+#include <boomhs/math.hpp>
 #include <boomhs/skybox.hpp>
 
 #include <opengl/shader.hpp>
 #include <opengl/texture.hpp>
-#include <boomhs/math.hpp>
 
 #include <cassert>
-#include <boomhs/clock.hpp>
-
 
 namespace boomhs
 {

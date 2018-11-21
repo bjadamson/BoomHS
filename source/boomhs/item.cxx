@@ -34,7 +34,7 @@ PreviousOwners::contains(std::string const& v) const
 bool
 PreviousOwners::contains(char const* v) const
 {
-  //return values_.cend() != std::find(values.cbegin(), values_.cend(), Name{v});
+  // return values_.cend() != std::find(values.cbegin(), values_.cend(), Name{v});
   bool found = false;
   for (auto const& it : values_) {
     if (it.value == v) {

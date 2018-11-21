@@ -1,21 +1,25 @@
 #pragma once
+#include <boomhs/math.hpp>
 #include <common/type_macros.hpp>
-#include <extlibs/glm.hpp>
 
 #include <array>
 
 namespace boomhs
 {
-class Camera;
-class EngineState;
-class Frustum;
-class ZoneState;
+class  Camera;
+struct EngineState;
+struct Frustum;
+struct ZoneState;
+struct ViewSettings;
 
 enum class CameraMode
 {
   ThirdPerson = 0,
-  Ortho,
   FPS,
+
+  Ortho,
+  Fullscreen_2DUI,
+
   FREE_FLOATING,
   MAX
 };
@@ -34,14 +38,20 @@ struct CameraModes
   static std::vector<std::string> string_list();
 };
 
+struct CameraMatrices
+{
+  glm::mat4 proj, view;
+};
+
 struct CameraFrameState
 {
   glm::vec3 const camera_world_position;
-  glm::mat4 const projection_matrix;
-  glm::mat4 const view_matrix;
-  Frustum  const& frustum;
+  CameraMatrices const camera_matrices;
+  Frustum const&  frustum;
 
   CameraMode const mode;
+
+  MOVE_CONSTRUCTIBLE_ONLY(CameraFrameState);
 };
 
 class FrameState
@@ -55,18 +65,25 @@ public:
   EngineState& es;
   ZoneState&   zs;
 
-  glm::vec3 camera_world_position() const;
+  glm::mat4 const& projection_matrix() const;
+  glm::mat4 const& view_matrix() const;
+
   Frustum const& frustum() const;
-  glm::mat4 camera_matrix() const;
-  glm::mat4 projection_matrix() const;
-  glm::mat4 view_matrix() const;
+  glm::mat4      camera_matrix() const;
+
+  glm::vec3  camera_world_position() const;
   CameraMode camera_mode() const;
 
   static FrameState from_camera_withposition(EngineState&, ZoneState&, Camera const&,
-                                             glm::vec3 const&);
-  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode);
+                                             ViewSettings const&, Frustum const&, glm::vec3 const&);
+  static FrameState from_camera_with_mode(EngineState&, ZoneState&, Camera const&, CameraMode,
+                                          ViewSettings const&, Frustum const&);
 
-  static FrameState from_camera(EngineState&, ZoneState&, Camera const&);
+  static FrameState
+  from_camera(EngineState&, ZoneState&, Camera const&, ViewSettings const&, Frustum const&);
+
+  static FrameState from_camera_for_2dui_overlay(EngineState&, ZoneState&, Camera const&,
+                                                 ViewSettings const&, Frustum const&);
 };
 
 } // namespace boomhs

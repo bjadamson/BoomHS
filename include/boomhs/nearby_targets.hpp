@@ -1,6 +1,6 @@
 #pragma once
+#include <boomhs/color.hpp>
 #include <boomhs/entity.hpp>
-#include <boomhs/colors.hpp>
 #include <optional>
 #include <vector>
 
@@ -22,7 +22,7 @@ enum class CycleDirection
 
 class NearbyTargets
 {
-  std::vector<EntityID> targets_ = {};
+  EntityArray targets_ = {};
 
   uint64_t                      millis_when_last_target_changed = 0;
   std::optional<SelectedTarget> selected_                       = std::nullopt;

@@ -4,7 +4,6 @@
 #include <extlibs/glm.hpp>
 
 #include <string>
-#include <vector>
 
 namespace boomhs
 {
@@ -35,7 +34,7 @@ struct BillboardRenderable
 inline auto
 find_billboards(EntityRegistry& registry)
 {
-  std::vector<EntityID> bboards;
+  EntityArray bboards;
   auto                  view = registry.view<BillboardRenderable>();
   for (auto const eid : view) {
     assert(registry.has<Transform>(eid));

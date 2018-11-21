@@ -3,8 +3,8 @@
 #include <boomhs/item_factory.hpp>
 #include <boomhs/lighting.hpp>
 #include <boomhs/material.hpp>
-#include <opengl/texture.hpp>
 #include <boomhs/random.hpp>
+#include <opengl/texture.hpp>
 
 using namespace boomhs;
 using namespace opengl;
@@ -14,8 +14,7 @@ namespace
 
 EntityID
 create_item(EntityRegistry& registry, TextureTable& ttable, char const* entity_name,
-            char const* ui_name, char const* mesh_name, char const* texture,
-            char const* shader)
+            char const* ui_name, char const* mesh_name, char const* texture, char const* shader)
 {
   auto eid = ItemFactory::create_empty(registry, ttable);
 
@@ -46,7 +45,7 @@ namespace boomhs
 EntityID
 ItemFactory::create_empty(EntityRegistry& registry, TextureTable& ttable)
 {
-  auto eid                         = registry.create();
+  auto eid = registry.create();
   registry.assign<Name>(eid, "Empty Item");
 
   Item& item       = registry.assign<Item>(eid);
@@ -64,14 +63,13 @@ ItemFactory::create_empty(EntityRegistry& registry, TextureTable& ttable)
 }
 
 EntityID
-ItemFactory::create_book(EntityRegistry& registry,
-                         TextureTable& ttable)
+ItemFactory::create_book(EntityRegistry& registry, TextureTable& ttable)
 {
   auto eid = create_item(registry, ttable, "Book EID", "BookUI", "B", "container", "3dtexture");
   registry.assign<Book>(eid);
   registry.assign<Material>(eid);
 
-  auto& item    = registry.get<Item>(eid);
+  auto& item   = registry.get<Item>(eid);
   item.name    = "Book";
   item.tooltip = "This is a book";
 
@@ -81,11 +79,12 @@ ItemFactory::create_book(EntityRegistry& registry,
 EntityID
 ItemFactory::create_spear(EntityRegistry& registry, opengl::TextureTable& ttable)
 {
-  auto eid = create_item(registry, ttable, "Spear EID", "SpearUI", "hashtag", "container", "3dtexture");
+  auto eid =
+      create_item(registry, ttable, "Spear EID", "SpearUI", "hashtag", "container", "3dtexture");
   registry.assign<Weapon>(eid);
   registry.assign<Material>(eid);
 
-  auto& item    = registry.get<Item>(eid);
+  auto& item   = registry.get<Item>(eid);
   item.name    = "Spear";
   item.tooltip = "A mighty slaying spear!";
 
@@ -93,25 +92,24 @@ ItemFactory::create_spear(EntityRegistry& registry, opengl::TextureTable& ttable
 }
 
 EntityID
-ItemFactory::create_torch(EntityRegistry& registry,
-                          TextureTable& ttable)
+ItemFactory::create_torch(EntityRegistry& registry, TextureTable& ttable)
 {
   auto eid = create_item(registry, ttable, "Torch EID", "TorchUI", "star", "Lava", "torch");
   registry.assign<Torch>(eid);
 
-  auto& item    = registry.get<Item>(eid);
+  auto& item   = registry.get<Item>(eid);
   item.name    = "Torch";
   item.tooltip = "This is a torch";
 
   auto& pointlight         = registry.assign<PointLight>(eid);
-  pointlight.light.diffuse = LOC::YELLOW;
+  pointlight.light.diffuse = LOC3::YELLOW;
 
   auto& flicker         = registry.assign<LightFlicker>(eid);
   flicker.base_speed    = 1.0f;
   flicker.current_speed = flicker.base_speed;
 
-  flicker.colors[0] = LOC::RED;
-  flicker.colors[1] = LOC::YELLOW;
+  flicker.colors[0] = LOC3::RED;
+  flicker.colors[1] = LOC3::YELLOW;
 
   auto& att     = pointlight.attenuation;
   att.constant  = 1.0f;

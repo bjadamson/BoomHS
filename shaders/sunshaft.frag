@@ -8,7 +8,7 @@ uniform DirectionalLight u_dirlight;
 // The width of the blur (the smaller it is the further each pixel is going to sample)
 const float blurWidth = -0.85;
 
-#define NUM_SAMPLES 100
+#define NUM_SAMPLES 50
 
 out vec4 fragment_color;
 

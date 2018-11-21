@@ -1,4 +1,9 @@
 #pragma once
+#define GLM_FORCE_CTOR_INIT
+#define GLM_ENABLE_EXPERIMENTAL
+#define GLM_FORCE_PURE
+#define GLM_EXT_INCLUDED
+#include <glm/ext/quaternion_common.hpp>
 #include <glm/ext.hpp>
 #include <glm/glm.hpp>
 
@@ -17,6 +22,14 @@
 #include <glm/gtx/vector_query.hpp>
 
 #include <ostream>
+
+#define VEC2 glm::vec2
+#define VEC3 glm::vec3
+#define VEC4 glm::vec4
+
+#define IVEC2 glm::ivec2
+#define IVEC3 glm::ivec3
+#define IVEC4 glm::ivec4
 
 namespace glm
 {

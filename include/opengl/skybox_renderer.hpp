@@ -6,7 +6,7 @@
 namespace boomhs
 {
 class FrameTime;
-} // ns boomhs
+} // namespace boomhs
 
 namespace opengl
 {
@@ -21,10 +21,10 @@ class SkyboxRenderer
 
   opengl::TextureInfo*   day_;
   opengl::TextureInfo*   night_;
-  opengl::ShaderProgram& sp_;
+  opengl::ShaderProgram* sp_;
 
 public:
-  MOVE_CONSTRUCTIBLE_ONLY(SkyboxRenderer);
+  NOCOPY_MOVE_DEFAULT(SkyboxRenderer);
   SkyboxRenderer(common::Logger&, opengl::DrawInfo&&, opengl::TextureInfo&, opengl::TextureInfo&,
                  opengl::ShaderProgram&);
 

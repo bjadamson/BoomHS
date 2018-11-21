@@ -1,5 +1,5 @@
 #pragma once
-#include <boomhs/colors.hpp>
+#include <boomhs/color.hpp>
 
 #include <common/log.hpp>
 #include <common/result.hpp>
@@ -33,9 +33,6 @@ class ObjData
   COPY_DEFAULT(ObjData);
 
 public:
-  using ObjVertices = ObjVertices;
-  using ObjIndices  = ObjIndices;
-
   unsigned int num_vertexes;
   ObjVertices  vertices;
   ObjVertices  colors;
