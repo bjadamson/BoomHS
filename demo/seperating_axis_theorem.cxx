@@ -65,7 +65,7 @@ using namespace demo;
 using namespace gl_sdl;
 using namespace opengl;
 
-static int constexpr NUM_CUBES = 1;
+static int constexpr NUM_CUBES = 2;
 static int constexpr NUM_RECTS = 1;
 
 static int constexpr WIDTH     = 1024;
@@ -82,6 +82,13 @@ static bool MIDDLE_MOUSE_BUTTON_PRESSED = false;
 static MouseCursorInfo MOUSE_INFO;
 
 static Color CLICK_COLOR;
+
+// (camera related)
+namespace WO           = opengl::world_orientation;
+static auto CAMERA_POS = constants::ZERO;
+
+static auto CAMERA_VIEW_FWD = WO::FORWARDZ_FORWARD;
+static auto CAMERA_VIEW_UP  = WO::FORWARDZ_UP;
 
 struct PmRect
 {
@@ -130,7 +137,7 @@ something_3d2d(T& transform, F const& fn, glm::vec3 const& delta)
 
 bool
 process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_rects,
-                Transform2D& controlled_tr, CubeEntities& cube_ents)
+                PmRect& controlled_rect, CubeEntities& cube_ents, CubeEntity& controlled_cube)
 {
   auto constexpr SCALE_AMOUNT = 0.2;
 
@@ -149,7 +156,8 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
       }
     }
     else {
-      fn(controlled_tr, FORWARD(args));
+      fn(controlled_rect.transform, FORWARD(args));
+      fn(controlled_cube.transform(), FORWARD(args));
     }
   };
 
@@ -172,12 +180,44 @@ process_keydown(common::Logger& logger, SDL_Keycode const keycode, PmRects& vp_r
     auto const scale_fn = [](auto& tr, auto const& d) { tr.scale += d; };
     invoke_on_entities(scale_fn, delta);
   };
+  auto const on_nonquit_fkey_press = [&](char const* name, auto const& pos, auto const& wo) {
+    CAMERA_POS = constants::ZERO;
+
+    CAMERA_VIEW_FWD = wo.forward;
+    CAMERA_VIEW_UP  = wo.up;
+
+    auto const pos_s = glm::to_string(CAMERA_POS);
+    auto const fwd_s = glm::to_string(CAMERA_VIEW_FWD);
+    auto const up_s  = glm::to_string(CAMERA_VIEW_UP);
+    LOG_INFO_SPRINTF("Camera %s: %s %s %s", name, pos_s, fwd_s, up_s);
+  };
   switch (keycode)
   {
     case SDLK_F10:
     case SDLK_ESCAPE:
       return true;
       break;
+
+    case SDLK_F1:
+      on_nonquit_fkey_press("FORWARDZ", constants::ZERO, WO::FORWARDZ);
+      break;
+    case SDLK_F2:
+      on_nonquit_fkey_press("REVERSEZ", constants::ZERO, WO::REVERSEZ);
+      break;
+    case SDLK_F3:
+      on_nonquit_fkey_press("FORWARDX", constants::ZERO, WO::FORWARDX);
+      break;
+    case SDLK_F4:
+      on_nonquit_fkey_press("REVERSEX", constants::ZERO, WO::REVERSEX);
+      break;
+
+    case SDLK_F5:
+      on_nonquit_fkey_press("TOPDOWN", VEC3{0, 0, 0}, WO::TOPDOWN);
+      break;
+    case SDLK_F6:
+      on_nonquit_fkey_press("BOTTOMUP", VEC3{0, 0, 0}, WO::BOTTOMUP);
+      break;
+
 
     // translation
     case SDLK_d:
@@ -276,6 +316,33 @@ update(common::Logger& logger, PmRects& vp_rects, CubeEntities& cube_ents)
     a.color = a.mouse_selected ? CLICK_COLOR
       : (overlap ? LOC4::RED : LOC4::LIGHT_SEAGREEN);
   }
+
+  auto const ce_to_obb = [](CubeEntity const& ce) {
+    auto const& c = ce.cube();
+    auto const& t = ce.transform();
+    return OBB::from_cube_transform(c, t);
+  };
+
+  for (auto& b : cube_ents)
+  {
+    bool overlap = false;
+    for (auto& a : cube_ents) {
+      if (overlap || &a == &b) continue;
+
+      auto const obb0 = ce_to_obb(a);
+      auto const obb1 = ce_to_obb(b);
+
+      bool const obb_overlap = collision::overlap(obb0, obb1);
+      if (obb_overlap) {
+        a.overlap_color = LOC4::PINK;
+        b.overlap_color = LOC4::PINK;
+      }
+      else {
+        a.overlap_color = {};
+        b.overlap_color = {};
+      }
+    }
+  }
 }
 
 void
@@ -330,13 +397,14 @@ process_mousemotion(Args&&... args)
 bool
 process_event(common::Logger& logger, SDL_Event& event, PmRects& vp_rects,
               CubeEntities& cube_ents, ProjMatrix const& proj, ViewMatrix const& view,
-              Transform2D& controlled_tr, FrameTime const& ft)
+              PmRect& controlled_rect, CubeEntity& controlled_cube, FrameTime const& ft)
 {
   bool const event_type_keydown = event.type == SDL_KEYDOWN;
 
   if (event_type_keydown) {
     SDL_Keycode const key_pressed = event.key.keysym.sym;
-    if (process_keydown(logger, key_pressed, vp_rects, controlled_tr, cube_ents)) {
+    if (process_keydown(logger, key_pressed, vp_rects, controlled_rect, cube_ents,
+                        controlled_cube)) {
       return true;
     }
   }
@@ -474,14 +542,6 @@ main(int argc, char **argv)
   auto constexpr ZOOM   = glm::ivec2{0};
   ProjMatrix const proj = CameraORTHO::compute_pm(frustum, VIEWPORT.size(), constants::ZERO, ZOOM);
 
-
-  auto const& CAMERA_POS = constants::ZERO;
-
-  namespace WO = opengl::world_orientation;
-  auto const& VIEW_FWD   = WO::FORWARDZ_FORWARD;
-  auto const& VIEW_UP    = WO::FORWARDZ_UP;
-  ViewMatrix const view  = glm::lookAtRH(CAMERA_POS, VIEW_FWD, VIEW_UP);
-
   auto ui_renderer = UiRenderer::create(logger, VIEWPORT);
 
   FrameCounter fcounter;
@@ -491,9 +551,15 @@ main(int argc, char **argv)
   Timer timer;
   while (!quit) {
     auto const ft = FrameTime::from_timer(timer);
+    ViewMatrix const view  = glm::lookAtRH(CAMERA_POS, CAMERA_VIEW_FWD, CAMERA_VIEW_UP);
+
+
+
     while ((!quit) && (0 != SDL_PollEvent(&event))) {
-      auto& controlled_tr = vp_rects.rects.back().transform;
-      quit = process_event(logger, event, vp_rects, cube_ents, proj, view, controlled_tr, ft);
+      auto& controlled_2drect = vp_rects.rects.back();
+      auto& controlled_3dcube = cube_ents.back();
+      quit = process_event(logger, event, vp_rects, cube_ents, proj, view, controlled_2drect,
+                           controlled_3dcube, ft);
     }
 
     update(logger, vp_rects, cube_ents);

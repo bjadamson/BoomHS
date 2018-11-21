@@ -63,23 +63,34 @@ namespace opengl::world_orientation
 {
 
 // -Z is pointing FORWARD into the scene, +Y is pointing UP on the screen.
-auto const/*expr*/     FORWARDZ_FORWARD = -boomhs::math::constants::Z_UNIT_VECTOR;
-auto const/*expr*/     FORWARDZ_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
-auto const/*expr*/     FORWARDZ         = boomhs::WorldOrientation{FORWARDZ_FORWARD, FORWARDZ_UP};
+auto constexpr FORWARDZ_FORWARD = -boomhs::math::constants::Z_UNIT_VECTOR;
+auto constexpr FORWARDZ_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto constexpr FORWARDZ         = boomhs::WorldOrientation{FORWARDZ_FORWARD, FORWARDZ_UP};
 
 // +Z is pointing BACKWARD into the scene, +Y is pointing UP on the screen.
-auto const/*expr*/     REVERSEZ_FORWARD = +boomhs::math::constants::Z_UNIT_VECTOR;
-auto const/*expr*/     REVERSEZ_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
-auto const/*expr*/     REVERSEZ         = boomhs::WorldOrientation{REVERSEZ_FORWARD, REVERSEZ_UP};
+auto constexpr REVERSEZ_FORWARD = +boomhs::math::constants::Z_UNIT_VECTOR;
+auto constexpr REVERSEZ_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto constexpr REVERSEZ         = boomhs::WorldOrientation{REVERSEZ_FORWARD, REVERSEZ_UP};
 
 // -Y is pointing FORWARD into the scene, +Z is pointing UP on the screen.
-auto const/*expr*/     TOPDOWN_FORWARD  = -boomhs::math::constants::Y_UNIT_VECTOR;
-auto const/*expr*/     TOPDOWN_UP       = +boomhs::math::constants::Z_UNIT_VECTOR;
-auto const/*expr*/     TOPDOWN          = boomhs::WorldOrientation{TOPDOWN_FORWARD, TOPDOWN_UP};
+auto constexpr TOPDOWN_FORWARD  = -boomhs::math::constants::Y_UNIT_VECTOR;
+auto constexpr TOPDOWN_UP       = +boomhs::math::constants::Z_UNIT_VECTOR;
+auto constexpr TOPDOWN          = boomhs::WorldOrientation{TOPDOWN_FORWARD, TOPDOWN_UP};
 
 // +Y is pointing FORWARD into the scene, +Z is pointing UP on the screen.
-auto const/*expr*/     BOTTOMUP_FORWARD = +boomhs::math::constants::Y_UNIT_VECTOR;
-auto const/*expr*/     BOTTOMUP_UP      = +boomhs::math::constants::Z_UNIT_VECTOR;
-auto const/*expr*/     BOTTOMUP         = boomhs::WorldOrientation{BOTTOMUP_FORWARD, BOTTOMUP_UP};
+auto constexpr BOTTOMUP_FORWARD = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto constexpr BOTTOMUP_UP      = +boomhs::math::constants::Z_UNIT_VECTOR;
+auto constexpr BOTTOMUP         = boomhs::WorldOrientation{BOTTOMUP_FORWARD, BOTTOMUP_UP};
+
+// -X is pointing FORWARD into the scene, +Y is pointing UP on the screen.
+auto constexpr FORWARDX_FORWARD = -boomhs::math::constants::X_UNIT_VECTOR;
+auto constexpr FORWARDX_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto constexpr FORWARDX         = boomhs::WorldOrientation{FORWARDX_FORWARD, FORWARDX_UP};
+
+// +X is pointing FORWARD into the scene, +Y is pointing UP on the screen.
+// lol
+auto constexpr REVERSEX_FORWARD = +boomhs::math::constants::X_UNIT_VECTOR;
+auto constexpr REVERSEX_UP      = +boomhs::math::constants::Y_UNIT_VECTOR;
+auto constexpr REVERSEX         = boomhs::WorldOrientation{REVERSEX_FORWARD, REVERSEX_UP};
 
 } // namespace opengl::world_orientation

@@ -83,7 +83,8 @@ public:
   {
   }
 
-  bool selected = false;
+  bool selected                      = false;
+  std::optional<boomhs::Color> overlap_color;
 
   auto const& cube() const { return cube_; }
   auto& cube() { return cube_; }

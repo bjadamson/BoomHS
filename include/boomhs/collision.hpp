@@ -24,6 +24,23 @@ struct Ray
   explicit Ray(glm::vec3 const&, glm::vec3 const&);
 };
 
+// Oriented Bounding Box
+//
+// Contains the necessary information to perform a collision detection test in 3 dimensions.
+struct OBB
+{
+  glm::vec3 const                right;
+  glm::vec3 const                up;
+  glm::vec3 const                forward;
+  std::array<glm::vec3, 8> const vertices;
+
+  OBB(glm::vec3 const&, glm::vec3 const&, glm::quat const&);
+
+  // Create an OBB from a Cube and a Transform instance.
+  static OBB
+  from_cube_transform(Cube const&, Transform const&);
+};
+
 } // namespace boomhs
 
 namespace boomhs::collision
@@ -63,5 +80,9 @@ overlap(RectFloat const&, RectTransform const&, Viewport const&, bool);
 // the seperating axis theorem is used.
 bool
 overlap(RectTransform const&, RectTransform const&);
+
+// Determine if two OBBs (3D cube) overlap.
+bool
+overlap(OBB const&, OBB const&);
 
 } // namespace boomhs::collision

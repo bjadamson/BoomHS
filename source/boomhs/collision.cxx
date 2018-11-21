@@ -10,7 +10,9 @@
 
 using namespace boomhs;
 using namespace boomhs::math;
-using namespace boomhs::math::constants;
+
+static auto constexpr FLOAT_MIN = std::numeric_limits<float>::max();
+static auto constexpr FLOAT_MAX = std::numeric_limits<float>::min();
 
 namespace
 {
@@ -190,11 +192,8 @@ template <typename V, size_t N>
 bool
 overlap_polygon(PolygonVertices<V, N> const& a, PolygonVertices<V, N> const& b)
 {
-  static auto constexpr MIN = std::numeric_limits<float>::max();
-  static auto constexpr MAX = std::numeric_limits<float>::min();
-
   auto const calc_minmax = [](auto const& polygon, auto const& normal) {
-    float min = MIN, max = MAX;
+    float min = FLOAT_MIN, max = FLOAT_MAX;
     for (auto const& p : polygon) {
       auto const projected = (normal.x * p.x) + (normal.y * p.y);
       if (projected < min) {
@@ -221,16 +220,6 @@ overlap_polygon(PolygonVertices<V, N> const& a, PolygonVertices<V, N> const& b)
     return !(max_a < min_b || max_b < min_a);
   };
 
-  auto const any_projected_vertices_overlap = [&](auto const& polygon) {
-    auto const polygon_vertex_count = polygon.size();
-    FOR(i, polygon_vertex_count)
-    {
-      if (!projected_axis_overlap(polygon, i)) {
-        return false;
-      }
-    }
-  };
-
   std::array<PolygonVertices<V, N>, 2> const rects{{a, b}};
   for (auto const& polygon : rects) {
     auto const polygon_vertex_count = polygon.size();
@@ -245,17 +234,94 @@ overlap_polygon(PolygonVertices<V, N> const& a, PolygonVertices<V, N> const& b)
   return true;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// 3D OBB Collision helper code.
+using SeperatedVertices = std::array<glm::vec3, 8>;
+bool
+is_separated(SeperatedVertices const& vertsA, SeperatedVertices const& vertsB, glm::vec3 const& axis)
+{
+  // Handles the cross product = {0,0,0} case
+  if (axis == constants::ZERO) {
+    return false;
+  }
+
+  auto aMin = FLOAT_MIN;
+  auto aMax = FLOAT_MAX;
+  auto bMin = FLOAT_MIN;
+  auto bMax = FLOAT_MAX;
+
+  // Define two intervals, a and b. Calculate their min and max values
+  assert(8 == vertsA.size());
+  assert(8 == vertsB.size());
+
+  FOR(i, 8)
+  {
+    auto const aDist = glm::dot(vertsA[i], axis);
+
+    aMin = aDist < aMin ? aDist : aMin;
+    aMax = aDist > aMax ? aDist : aMax;
+
+    auto const bDist = glm::dot(vertsB[i], axis);
+
+    bMin = bDist < bMin ? bDist : bMin;
+    bMax = bDist > bMax ? bDist : bMax;
+  }
+
+  // One-dimensional intersection test between a and b
+  auto const longSpan = glm::max(aMax, bMax) - glm::min(aMin, bMin);
+  auto const sumSpan = aMax - aMin + bMax - bMin;
+  return longSpan >= sumSpan; // > to treat touching as intersection
+}
+
+auto
+compute_obb_vertices(glm::vec3 const& center, glm::vec3 const& size, glm::quat const& rot)
+{
+  auto const max = size / 2;
+  auto const min = -max;
+
+  return common::make_array<glm::vec3>(
+    center + rot * min,
+    center + rot * glm::vec3{max.x, min.y, min.z},
+    center + rot * glm::vec3{min.x, max.y, min.z},
+    center + rot * glm::vec3{max.x, max.y, min.z},
+    center + rot * glm::vec3{min.x, min.y, max.z},
+    center + rot * glm::vec3{max.x, min.y, max.z},
+    center + rot * glm::vec3{min.x, max.y, max.z},
+    center + rot * max
+    );
+}
+
 } // namespace
 
 namespace boomhs
 {
-
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Ray
 Ray::Ray(glm::vec3 const& o, glm::vec3 const& d)
     : origin(o)
     , direction(d)
     , invdir(1.0f / direction)
     , sign(common::make_array<int>(invdir.x < 0, invdir.y < 0, invdir.z < 0))
 {
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// OBB
+OBB::OBB(glm::vec3 const& center, glm::vec3 const& size, glm::quat const& rot)
+    : right(rot * constants::X_UNIT_VECTOR)
+    , up(rot * constants::Y_UNIT_VECTOR)
+    , forward(rot * constants::Z_UNIT_VECTOR)
+    , vertices(compute_obb_vertices(center, size, rot))
+{
+}
+
+OBB
+OBB::from_cube_transform(Cube const& cube, Transform const& tr)
+{
+  auto const cpos = tr.translation + cube.center();
+  auto const& rot = tr.rotation;
+  auto const ssize = cube.scaled_dimensions(tr);
+  return OBB{cpos, ssize, rot};
 }
 
 } // namespace boomhs
@@ -276,7 +342,7 @@ bool
 intersects(common::Logger& logger, Ray const& ray, Transform const& tr, Cube const& cube,
            float& distance)
 {
-  bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == ONE);
+  bool const can_use_simple_test = (tr.rotation == glm::quat{}) && (tr.scale == constants::ONE);
 
   bool       intersects       = false;
   auto const log_intersection = [&](char const* test_name) {
@@ -392,6 +458,44 @@ overlap(RectTransform const& a, RectTransform const& b)
   constexpr auto N = 4;
   return simple_test ? overlap_axis_aligned(ra, rb)
                      : overlap_polygon<glm::vec2, N>(a_points, b_points);
+}
+
+// Determine if two OBB's overlap.
+//
+// algorithm modified from source:
+// https://gamedev.stackexchange.com/a/165158/24796
+bool
+overlap(OBB const& a, OBB const& b)
+{
+
+// Define helper macro for hiding this repeated logic
+// RF_IF => "return false if"
+#define RF_IF_SEPARATED(...) if (is_separated(__VA_ARGS__)) { return false; }
+  RF_IF_SEPARATED(a.vertices, b.vertices, a.right);
+
+  RF_IF_SEPARATED(a.vertices, b.vertices, a.right);
+  RF_IF_SEPARATED(a.vertices, b.vertices, a.up);
+  RF_IF_SEPARATED(a.vertices, b.vertices, a.forward);
+
+  RF_IF_SEPARATED(a.vertices, b.vertices, b.right);
+  RF_IF_SEPARATED(a.vertices, b.vertices, b.up);
+  RF_IF_SEPARATED(a.vertices, b.vertices, b.forward);
+
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.right, b.right));
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.right, b.up));
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.right, b.forward));
+
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.up, b.right));
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.up, b.up));
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.up, b.forward));
+
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.forward, b.right));
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.forward, b.up));
+  RF_IF_SEPARATED(a.vertices, b.vertices, glm::cross(a.forward, b.forward));
+#undef RF_IF_SEPARATED
+
+  // None of the axis are seperated, the two OBB's must overlap.
+  return true;
 }
 
 } // namespace boomhs::collision

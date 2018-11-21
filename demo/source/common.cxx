@@ -91,12 +91,16 @@ draw_bboxes(common::Logger& logger, CameraMatrices const& cm,
             CubeEntities& cube_ents, ShaderProgram& sp,
             DrawState& ds)
 {
-  for (auto &cube_tr : cube_ents) {
-    auto const& tr      = cube_tr.transform();
-    auto &dinfo         = cube_tr.draw_info();
-    bool const selected = cube_tr.selected;
+  for (auto &ce : cube_ents) {
+    auto const& tr      = ce.transform();
+    auto &dinfo         = ce.draw_info();
+    bool const mouse_selected = ce.selected;
+    bool const overlap  = ce.overlap_color.has_value();
 
-    auto const& wire_color = selected ? LOC4::LIGHT_GOLDENROD_YELLOW : LOC4::DARKRED;
+    auto wire_color = overlap ? *ce.overlap_color : LOC4::BLUE;
+    if (mouse_selected) {
+      wire_color = LOC4::RED;
+    }
     draw_bbox(logger, cm, sp, tr, dinfo, wire_color, ds);
   }
 }
