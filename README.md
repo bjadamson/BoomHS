@@ -2,7 +2,7 @@
 
 A sandbox online roleplaying game focusing on emergent gameplay through player interaction. Playing with others is a core design goal. All development focuses on creating an immersive environment for players to play a game in without all the modern day game features that ruin immersion *(cash-shops, loot boxes.., pay-to-win, etc...)*
 
-`This project is in active development.`
+![cone](C:\Users\adams\Desktop\github\BoomHS\assets\cone.png)`Under Construction! This project and README file are in active development.`
 
 ## Table of contents
   * [Project Information](#project-information)
@@ -14,7 +14,7 @@ A sandbox online roleplaying game focusing on emergent gameplay through player i
       + [Screenshots](./screenshots/)
       + [FAQ](#gameplay-faq)
       + [Roadmap](#gameplay-roadmap)
-      
+
   * [Developer Information](#developer-information)
       + [Building the Game](#getting-started)
       + [Install Dependencies](#install-dependencies)
@@ -22,7 +22,7 @@ A sandbox online roleplaying game focusing on emergent gameplay through player i
        + [Command-Line Arguments](#command-line-arguments)
       + [Compiling](#compiling-the-project)
       + [Run the Project](#run-the-project)
-      + [Other Information](#other-information)
+      + [Developer Guidelines](#developer-guidelines)
       + [Helpful Scripts](#helpful-scripts)
 
 ## Project Information
@@ -260,9 +260,20 @@ scripts/build-and-run.bash
 ### Helpful Scripts
 There are helpful scripts in the [scripts/](./scripts/) directory that do lots of helpful things (from code formatting to executing the debugger after setting up environment variables).
 
-## Other Information
-  + Source-code formatting is done by invoking this script. The script looks for the
-    clang-formatter tool installed locally on your machine.
+## Developer Guidelines
+
+- Limit the code exposed through header files, try and put as much code as possible inside translation units. <u>If a function is never called outside of a translation unit, do not expose it in a header file</u>. This makes it easier to re-organize the code or change the project architecture as new development proceeds.
+  - For testing purposes, consider separating code into smaller functions/objects so the absolute minimum interface is exposed via header.
+  - Templates make this difficult. Use a nested namespace (ie: detail) namespaces to limit exposed interfaces. Detail namespaces are assumed to not be called outside of the header file where the interface is exposed.
+  - Use the anonymous namespace inside a translation unit when possible, this separates the header implementation from the algorithm implementation.
+- Use composition over inheritance, except when necessary to promote DRY. This will keep objects decoupled.
+  - So far neither virtual inheritance or multiple inheritance have not been necessary in any manner (not including code in external libraries/dependencies). Keep it this way, it prevents a large class of possible bugs/confusion and makes debugging easier.
+  - Sometimes a macro inside a translation unit is a better choice than inheriting from a base class.
+- Limit heap usage.
+  - Use the stack for your objects.
+  - So far invoking raw "new" has not been necessary, this should be maintained moving forward unless a discussion results in it being considered necessary.
+
+  + Source-code formatting is done by invoking clang-format, use the format script inside the scripts/ directory.
 ```bash
 scripts/code-format.bash
 ```
