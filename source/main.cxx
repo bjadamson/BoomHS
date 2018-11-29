@@ -118,6 +118,31 @@ start(common::Logger& logger, Engine& engine)
   });
   alcMakeContextCurrent(ctx);
 
+  // Initialize PortAudio
+  auto const get_pa_error = [](auto const& err) {
+    return fmt::sprintf("Port-audio error: %s", Pa_GetErrorText(err));
+  };
+
+  auto err = Pa_Initialize();
+  if (err != paNoError) {
+    return Err(get_pa_error(err));
+  }
+
+  auto const pa_exit_handler = [&]() {
+    err = Pa_Terminate();
+    if (err != paNoError) {
+      LOG_ERROR_SPRINTF(get_pa_error(err));
+    }
+    else {
+      LOG_ERROR("NO PA ERROR BOIII");
+    }
+  };
+  ON_SCOPE_EXIT(pa_exit_handler);
+
+  if (err != paNoError) {
+    return Err(get_pa_error(err));
+  }
+
   // Construct game state
   auto constexpr NEAR   = 0.001f;
   auto constexpr FAR    = 5000.0f;

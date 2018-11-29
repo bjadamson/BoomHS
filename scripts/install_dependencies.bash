@@ -83,6 +83,9 @@ conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-co
 
 # Install basic dependencies
 apt-get install libc++-dev
+apt-get install libasound-dev
+apt-get install portaudio19-dev
+
 
 # dev-version of standard libaries (for GDB)
 # The following versions were in use on my dev pc, so I grabbed dev versions of them all

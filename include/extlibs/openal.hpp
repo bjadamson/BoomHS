@@ -2,3 +2,5 @@
 #include <AL/al.h>
 #include <AL/alc.h>
 #include <audio/wave.h>
+
+#include <portaudio.h>

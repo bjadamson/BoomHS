@@ -106,6 +106,7 @@ find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(SOIL REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(PortAudio REQUIRED)
 
 ###################################################################################################
 ## Setup basic c++ flags.
@@ -163,6 +164,7 @@ target_include_directories(PROJECT_SOURCE_CODE PUBLIC
   ${EXTERNAL_INCLUDE_DIRS}
   ${GLEW_INCLUDE_DIRS}
   ${LIBAUDIO_INCLUDE_DIRS}
+  ${PORTAUDIO_INCLUDE_DIRS}
   ${OPENGL_INDLUDE_DIRS}
   ${SDL2_INCLUDE_DIRS}
   ${SDL2IMAGE_INCLUDE_DIRS}
@@ -190,6 +192,7 @@ set(EXTERNAL_LIBS
   ${SDL2_LIBRARIES}
   ${SDL2IMAGE_LIBRARIES}
   ${OPENGL_LIBRARIES}
+  ${PORTAUDIO_LIBRARIES}
   ${GLEW_LIBRARIES}
   ${SOIL_LIBRARIES}
   ${ZLIB_LIBRARIES}
