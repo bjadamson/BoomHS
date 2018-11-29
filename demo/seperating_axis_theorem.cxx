@@ -522,7 +522,7 @@ main(int argc, char **argv)
     return EXIT_FAILURE;
   };
 
-  auto gl_sdl = TRY_OR(GlSdl::make_default(logger, TITLE, FULLSCREEN, WIDTH, HEIGHT), on_error);
+  TRY_OR(auto gl_sdl, GlSdl::make_default(logger, TITLE, FULLSCREEN, WIDTH, HEIGHT), on_error);
   OR::init(logger);
   auto& window           = gl_sdl.window;
   auto const window_rect = window.view_rect();
