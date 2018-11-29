@@ -2,7 +2,7 @@
 
 A sandbox online roleplaying game focusing on emergent gameplay through player interaction. Playing with others is a core design goal. All development focuses on creating an immersive environment for players to play a game in without all the modern day game features that ruin immersion *(cash-shops, loot boxes.., pay-to-win, etc...)*
 
-![cone](C:\Users\adams\Desktop\github\BoomHS\assets\cone.png)`Under Construction! This project and README file are in active development.`
+![cone](./assets/cone.png?raw=true)`Under Construction! This project and README file are in active development.`
 
 ## Table of contents
   * [Project Information](#project-information)
