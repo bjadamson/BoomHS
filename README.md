@@ -15,66 +15,26 @@ The project will intentionally be developed in the direction the original creato
 
 The aim is to build a sandbox role-playing game that can be played both in a casual or competitive mindset/mode. The game will reward players whom learn how to play the game well, those who learn the systems and how to use them to their advantages better than others. Players who play poorly will be punished using these same systems (ie: death penalty can be substantial).
 
-### Design Goals
-
-1. Emergent behavior driven from the sandbox nature of the game.
-2. Encourage, but do not require group gameplay.
-3. Recognize player (or NPC) organizations such that territory can be understood as owned by a specific group of players, giving them advantages/disadvantages for *taking/loosing* territory.
-4. Allow players to build in the world (mostly) wherever they choose.
-5. Each game world (hosted either locally or remotely) will eventually come to a conclusion. Players should carry-through some of their advancements to their character to the new session. (This does not include some of the more hardcore competitive modes).
-6. Easy to learn, difficult to master. The game should allow a large range of skill, meaning players will want to keep playing to get better. Players who play poorly should
-
-- Weird. The world should be weird, and have weird things occur because of this weirdness. **example? Do players have option to select a "weird" narrative to follow (Fallout series)?
-- Emergent behavior. The world is full of Emergent behavior from complex interactions of simple systems.
-- Anti-scummable. the world should not be scummable, grinding the same monsters is not fun.
-- Scary. Alive. The world should be scary, and feel alive. It should feel like the game is always trying to kill you.
-  - example: traveling should be dangerous. **good example. More. How will game punish poor playing? What kind of aspects will appear scary? 
-- Varied Content. Dungeons, open areas, narrow corridors, all with differing atmospheres.
-
-MISC:
-
-- Players can collect items and resources to get stronger. These items can both be taken from enemy monsters, found in the world, taken from other players, or purchased from NPC characters, etc...
-- Solo players should be at a disadvantage to others who play in a group, but no design decision shall be made that prevents a player from "winning" by themselves. A player with sufficient skill should be able to win solo, but this is not what the game is targeted at. Most players are expected to win with other players aiding them.
-- Solo players will still have to interact with other players in order to win, but they will never be required to win as a group. Solo gameplay is possible but has disadvantages over players who choose to group with others.
-- NPC or Player clans/factions can take control of territory.
-  - A faction with no territory no longer exists.
-  - Clans can own territory, but are not required to in order to exist (unlike Factions).
-- building
-  - Requires using resources.
-  - Raidable by other players.
-  - Primarily used for storage and shelter.
-  - Risk/reward when deciding where to put a base.
-  - Safe place to hide from monsters, other players, weather, or just to logout in (assuming you don't get raided).
-  - NPC characters can destroy your home given the proper motivation and resources.
-- Players should playing the game the way they want to.
-- What does it mean when a group of players "wins"?
-- Difference between PvP and PvE servers? When does the world on each type of game? Are there other types of game modes. A PvP server that never ends?This worlds within the universe are infused with life and various kinds of magic.
-
 ## Gameplay
-**good, establishes rules of the world
+Initially the game will present you with a character to control, some initial starting gear for your character, and a short dialogue from an NPC greeting you to the world. From there, the player can do whatever they like.
 
-Initially the game will present you with a character to control, some initial starting gear for your character, and a short dialogue from an NPC greeting you to the world.
+The game will run as a In the spirit of a sandbox game, the game will offer little direction to the player. Instead as the player engages with the world, she will have to discover the main story through normal gameplay. The game will have a strong focus on emergent behavior and player-to-player interactions driving the player experience. The player will select a specific server, which can have different rulesets (PvP, PvE, hardcore PvP, hardcore PvE). Once selected, the player will select the class they wish to play as. After the player selects her starting class, the game will generate the player a character, selecting a race/gender on their behalf.
 
-From there, the player can do whatever they like. The game's simulation and systems drive the interactions players can have on the world. None of these systems are inheritantly *better* than one another, it's up to the player to pursue systems that they believe will further their own interests within the game. For example some players could derive most of their gamplay through leveling and PvE or PvE interactions, while others could never see an ounce of danger their entire career. It should be the players who determine what is successful and what is not within each world.
+- This design choice is made to foster a specific gameplay experience that is different from other modern games. A game-mode where this choice is up to the player can exist, this will just not be the default game mode.
 
-Other gamplay systems examples include: exploring, trading, crafting, building, leveling, PvE raids/dungeons, PvP, PvP raids (taking over opposing clan or faction territory), resource farming, item farming, joining a group/clan/faction.
+The gameplay itself will play like either a first-or-third (toggleable by the player at will) RPG/shooter, with many traditional mechanics borrowed from both genres. For example the player will be able to target other entities with tab targeting, but combat will also sometimes utilize manual aiming of attacks or abilities (think aiming a bow at a specific location on the terrain, maybe to cause ice to melt, or an area-of-effect spell). Players can collect items and resources to get stronger. These items can both be taken from enemy monsters, found in the world, taken from other players, or purchased from NPC characters, etc...
 
- * 
+The player can expect to engage in a wide variety of gameplay types, with confidence any choice could lead them to a reasonable expectation of being successful within the game world. Some examples of systems the player can pursue are: exploring, trading, crafting, building, leveling, PvE raids/dungeons, PvP, PvP raids (taking over opposing clan or faction territory), resource farming, item farming, joining a group/clan/faction, and more! None of these systems will be strictly superior to the others, encouraging the players to play the game how they want!
 
+Eventually after some event in the world occurs, the possibility of unlocking the beginning of a *quest* which will lead players to the end scenario will be available. It it important to note that the game will never tell the player this explicitly, instead experienced players will begin to recognize patterns from previous play throughs that hint an event such as this has occurred. Players who are less experienced will have to either discover this organically from playing the game (ie: conversing with other players, or genuine exploration).
 
-At certain stages of gameplay the palyers all around the server will simultaneously experience flashforward of the world being destroyed (wizard). What do these flash forwards mean? Are they meant to be hints to advanced players about how the world is going to end specifically? They are meant to create a sense of fear/uncertainty for new/experienced players. It's based on who's found what in terms of prefab locations and items, which will create a sense of collaboration/competition.
+At certain stages of gameplay the player progression, players will simultaneously be given cryptic hints that a player may be making certain progress towards the main story arc (eventually leading to the end-game scenarios). These hints will serve useful to advanced players, but give less experienced players something to be curious about.
 
-![Alt text](./screenshots/33.png?raw=true "06/24/2018")
-
-The player character is controlled directly by the user, either through a first person or third person perspective. As the player advances through the game and will earn autonomy over various NPC characters, other control schemes will present themselves (such as top-down overview if you decide to become a local village leader) to the player.
-
-Unlike most class-fantasy games where the player can choose a race/class/height/weight, in this game the player is assigned/generated a character on their behalf when their account first joins a new server. What this means is that some players will be fat, some short, some ugly, some not... this choice is removed from the player, allowing a different experience then players are used too from traditional games. To balance this mechanic, periodically each server will end up finishing the story (w) or server reset (long periods, think seasons in any other online game) will cause a new race/
-
-The player will then use this character until the end of eternity while playing on that server session. The gameplay will result in the world being periodically re-created 
-
-This process will ultimately end up being opaque to the user, who may wish to choose a
+- I can imagine scenarios of experienced players both lying or telling the truth to their fellow players.
 
 ## World Design
+![Alt text](./screenshots/33.png?raw=true "06/24/2018")
+
 The world is designed with the following:
 
   * Open sandbox environment.
@@ -96,36 +56,13 @@ The world is designed with the following:
 
       ** Need to list the game will first operate in one world, with multiple zones. Later on, future worlds can be added to the game (idk this portals to another plane of existence) through either community contributions becoming merged into the main game trunk or whatnot.
 
-#### Story
-Players are put into an online world with the vague introduction to the idea that an evil wizard is bent on destroying the star within their galaxy. The star's destruction will ensure the entire galaxy you live in will be destroyed. A player will spawn into the world with nothing, and will need to figure out how to survive and thrive.
+## Story
 
-The player will haave no indication on the wizard's progress towards destroying their universe at the outset. Clues and story lines will be interwoven into the gameplay, through static prefab content that is dynamically placed on the world. 
-
-**is the vague evil wizard ever mentioned again after the start of the game? Larger part of story plot players can access? Does the players progress mean a possible "save the world" route is unlocked for them?
-
-Yeah, when players progress far enough (they have made progress on the appropriate quest line as determined when the world was created/generated).
-
-** Add flashforwards (multiple) indicating to the player different ways the worlds ends. Fire, water air and  earth.
-
-PLOT:
-
-The world takes place in a galaxy on the edge of destruction, a wizard is in the process of preparing to destroy the solar system's sun, destroying all life within the solar system. Players will travel through the world, and visit other worlds in their attempts to reach and confront the wizard. 
-
-The player will then choose whether to fight the wizard (and possibly die) or let the wizard move ahead with their plan and destroy the solar system. Either way when this happens the game is complete and
-
-The gameplay itself is a first/third person view of a character you create (or was created for you) when first joining the world. Once in the world, the sandbox nature of the game will lead players on their adventures. Players will run into other players, and can choose how they want to interact with them. Alternatively they may choose to pursue adventures that do not involve interacting with other players. After all running into other players can be both advantageous and disadvantageous.
-
-**clarify fantasty/sci fi/survival aspect
-
-Loosely, when you start playing your character you end in one of N different starting areas within the game. You'll character will be initially *created* once at a starting spot within the starting areas. Once in the game the player is free to play how they want.
-
-Players will find themselves in one of these starting areas without much direction. *The game will not be telling the player what to do. The player is free to play the game however she likes.*
-
-From this point the player will receive basic control instructions, but that's it. The player will then explore the world around her in order to progress. The simplicity of the control scheme coupled with the open world sandbox world is the primary design goal.
+Players are initially spawned into a world with the vague introduction to the idea that an evil wizard at some point in the near future going to destroy the star within their galaxy. The star's destruction will ensure the entire galaxy you live in will be destroyed. After this short introduction (cutscene or dialogue) the player will spawn into the world barely clothed and alone. They will then be given a small introduction dialogue box welcoming them to the world and telling them a little about the city they just spawned in. At this point the game will play like a sandbox, giving no explicit instructions to the player, instead it will be up to the player to discover the underlying story and ultimately either kill the wizard, or help him execute all life in the known solar system.
 
 ## Roadmap
 
-There are currently 2 development milestones planned. WIP
+![cone](./assets/cone.png?raw=true) Work in progress! Future milestones may/should be expected to be added.
 
 #### Milestone 1 (Avocado Release)
 
@@ -139,7 +76,7 @@ This milestone for development is world building and world generation. The goal 
 2. Basic AI for the NPCs.
 
    - Pathfinding.
-   - Player interaction.
+   - Player interaction. (talking and super basic combat)
 
 3. A basic *level editor* (to be used on a generated world, or hand-craft an entire world using the editor.
 
@@ -176,22 +113,60 @@ This step being complete should give confidence in the project architecture supp
    - Players should be able to interact in limited ways. Players should be able to:
      - See each other. See in real-time players and NPCs moving through the world.
      - Player movement shouldn't be smooth in the face of lag, gameplay shouldn't be choppy in an online environment.
-
 2. Performance maintained at 60+ FPS in an online (also offline) environment.
+3. Load assets on a background thread while the player sits in the main menu.
+   - If the player starts a game before loading is complete, show a loading screen for the remaining duration with a progress indicator.
+   - Load assets from multiple background threads (parallelize loading a level).
+   - When a player reaches a new zone/level, load the entire zone/level (will switch to a streaming *chunk* system that means players will never see a loading screen later).
 
-#### Milestone 3 (Drop-the-beets Release)
+#### Milestone 3 (Drop-the-Beets Release)
 
 The focus of this milestone is to start to introduce basic gameplay features.
 
 1. Item system.
-   - Pickup/drop items on the g
+   - Pickup/drop items on the ground.
    - Trade items with other players.
+   - Basic resource gathering (gathering herbs/ore, various other items) that doesn't come from killing and looting another entity (player or AI).
+
 2. Combat system.
    - Player to AI and player-to-player combat.
    - Death and respawning systems.
    - AI to AI.
-3. Game-over scenario.
+
+3. Implement the chunk system, so the player never has to pause and load when running around the world.
+
+   - As the player moves around, dynamically load/unload terrain/entity data for everything nearby. This will probably use a quadtree data structure. If a player's hardware cannot load the assets fast enough, then the game will have to show a temporary load screen.
+     - QUESTION: What is the experience for potato computers that can't load assets fast enough? When should their loading screen occur? We don't want to have a user have random loading screens while trying to run around the world, or in the middle of combat, etc..)
+     - ANSWER: The runtime maintains a minimum number of terrain vertices that it keeps in memory Vmin and a maximum number of vertices Vmax. When a player passes a zone line, if the number of nearby vertices a player has loaded currently is less than Vmin, show a loading screen and wait until at least Vmin vertices have been loaded. This will give a slightly worse experience to players with potatoes, but it's intuitive to most players and allows for faster PCs to never show the user a loading screen outside of initial loading / teleportation mechanics.
+   - If a player is teleported (ie: gm commands, some teleportation spell, etc...) then the game will have to show a loading screen.
+
+4. Game-over scenario.
+
    - In some game scenarios the game world will come to a conclusion. Implement a basic system that a player in-game can cause a "win/loss" scenario, ending the current world. In this game mode, the world will support the ability to regenerate a new world for players to join.
+
+   ## Design Goals
+
+   1. Emergent behavior driven from the sandbox nature of the game.
+   2. Encourage, but do not require group gameplay.
+   3. Recognize player (or NPC) organizations such that territory can be understood as owned by a specific group of players, giving them advantages/disadvantages for *taking/loosing* territory.
+   4. Allow players to build in the world (mostly) wherever they choose.
+   5. Each game world (hosted either locally or remotely) will eventually come to a conclusion. Players should carry-through some of their advancements to their character to the new session. (This does not include some of the more hardcore competitive modes).
+   6. Easy to learn, difficult to master. The game should allow a large range of skill, meaning players will want to keep playing to get better. Players who play poorly should be punished. This is explicitly in response to modern games where mechanics are more often not very punishing when players perform poorly, such as dying).
+      - If a player is killed, they shall gain an experience debt proportional to their level. Higher level players will take more time to repay this debt, before they are allowed to continue gaining experience (and thus leveling up). This debt will have a maximum value dependent on the player's current level. This penalty should be severe enough that players will try hard to avoid death, but not be too afraid in late game scenarios such as raiding to die as many times as they want. The experience debt mechanic was chosen over an experience loss system, so the player can choose to engage in late-game activities resulting in multiple deaths. The thought is that players will engage in experience-gaining activities when they are not engaging in risky activities such as raiding.
+   7. Weird. The world should be weird, and have weird things occur because of this weirdness.
+   8. The world should always feel scary and alive. Traveling through zones that are dangerous should kill the underprepared player.
+   9. Varied Content. Dungeons, open areas, narrow corridors, each with differing atmospheres.
+   10. Solo players should be at a disadvantage to others who play in a group, but no design decision shall be made that prevents a player from "winning" by themselves. A player with sufficient skill should be able to win solo, but this is not what the game is targeted at. Most players are expected to win with other players aiding them.
+   11. Allow NPC or Player clans/factions to acquire/loose territory within the world.
+       - A faction with no territory no longer exists.
+       - Clans can own territory, but are not required to in order to exist (unlike Factions).
+   12. Players can build structures within the world.
+
+   - Requires using resources.
+   - They can be taken over through a *raiding* system by other players or NPCs given the proper motivation and resources.
+   - Primarily used for storage and shelter.
+   - Risk/reward when deciding where to put a base.
+   - Safe place to hide from monsters, other players, weather, or just to logout in (assuming you don't get raided).
 
 ### Why did I create this game?
 
@@ -238,15 +213,11 @@ Many of the games entering today's marked target a general audience, which means
 >***I would add discussion either here or at the top about how much coding and world building experience a player should possess prior to playing. Can play off of the concept of this open world sandbox as being a "game for coders by a coder", i.e. not your average sandbox, needs a certain level of smarts to participate?
 
 ### Gameplay Ideas
-Curse brings out a second or third moon to impact world environment (ie tides rising dramatically, volcanoes, tides being messed with given the gravitational pull)
-this plunges world into turmoil (environmental instability, return to farming culture, cultural regression). Ben had idea that cursed moon/moons only occur on certain nights, randomly, impact environment for a day and a night and then people have to regroup the next day. Monsters could be mutated humans/creatures that have adapted to the new world (an option). Would add plenty of gameplay options with exploration, above ground and below, as well  as fights with enemies. 
-Example, fighting an enemy and suddenly tides start to rise because the cursed moon/moons have appeared. Additionally, very cool visual that can add a sense of random/impending doom. 
-Caving/exploring underground, stakes raised given the pull on the planet's gravity/magma. Ben thinks a moon shaped like a skull would be a good plan (can be simplified, the moons' marias --canyons and patches on the surface--could be shaped to resemble a skull face). Realistically, looking at player's suspension of disbelief is important, can a player believe that a moon/moons curse or otherwise can be created in this world. Possibly. Could also be interesting exploration into the "curse", did this phenemenon just conveniently occur as the curser was to be executed, could allow for interesting dialogue with characters (those who believe in the curse and those who don't and are realists), further storyplot to flesh out. 
-could allow for the "cursed moons" to circle in a skeejawed kind of orbit that allows them to appear randomly (one at a time, both at same time) and wreak havoc on the planet involved. 
-thought, large asteroid hits single moon, moon breaks into multiple moons, asteroid also caught by planets gravitational pull, becomes an additional moon. Check science of this realistically happening, could the chunks actually be knocked into seperate orbits. 
-Ben idea, curse comes, moon chunks decaying ***go through, edit, select ideas which seem most viable with vague evil wizard storyplot
 
+Below is an unordered list of ideas currently considered for implementation.
 
+- The wizard periodically places various curses upon the world.
+  - A spell that causes a second or third moon to appear. This will impact the climate within the world such as tides rising dramatically, volcanoes, tides being messed with given the gravitational pull). Perhaps this only occurs on certain days of the in-game week/month/year. This can add a  cool visual that can add a sense of immersion and impending doom.
 
 ## Developer Information
 The project is written in modern C++, and currently uses the OpenGL API directly for rendering. The code is structured so that another backend can be swapped in someday without rewriting everything.
