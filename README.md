@@ -10,6 +10,7 @@ A sandbox online roleplaying game focusing on emergent gameplay through player i
       + [World Design](#world-design)
       + [Player Progression](#player-progression)
       + [Story](#story)
+      + [Roadmap](#roadmap)
       + [Design Tenants](#design-tenants)
       + [Screenshots](./screenshots/)
       + [FAQ](#gameplay-faq)
@@ -142,7 +143,27 @@ Players will find themselves in one of these starting areas without much directi
 
 From this point the player will receive basic control instructions, but that's it. The player will then explore the world around her in order to progress. The simplicity of the control scheme coupled with the open world sandbox world is the primary design goal.
 
+## Roadmap
+
+There are currently 2 development milestones planned. WIP
+
+#### Milestone 1 (Avocado Release)
+
+The first milestone for development is world building and world generation. The goal of this release is to develop the infrastructure necessary to allow the developers to create a basic world, and explore it using only the game itself. This release will support *offline mode only*.
+
+1. Generate a world starting from a random seed.
+2. A basic *level editor* (to be used on a generated world, or hand-craft an entire world using the editor.
+3. Move around in the world with basic systems in place (sound, graphics, keyboard/mouse support, controller support).
+4. Get the game running on the following platforms: Linux, Window1. s, and OSX.
+
+#### Milestone 2 (Brussel Sprout Release)
+
+1. Basic online support. 
+   - Chat support among players.
+   - Basic microphone support (two players can communicate in-game using their microphones).
+
 ### Why was this game created?
+
 **would suggest changing to "why I created this game" if seeking personalized tone. Otherwise design tenants can be more cut and dry. Either option works. 
 
 I am creating the game that I would like to play some day. This means that certain philosophies behind the design are in play:
@@ -202,23 +223,38 @@ The project is written in modern C++, and currently uses the OpenGL API directly
 + The entities within the game are managed using an [ECS system](https://github.com/skypjack/entt).
 + A full list of external dependencies can be seen from the [external](./external/)  directory.
 
-
 ### Getting Started
-General Procedure
-1. Install dependencies.
-2. Bootstrap the project (setup cmake database).
-3. Build and run.
 
-```bash
+The general procedure for a developer getting started for the first time is straightforward.
+
+1. Fetch the repository locally.
+
+```
 git clone https://github.com/bjadamson/BoomHS.git
+```
+
+2. Install dependencies. (A bash script is provided in the `scripts/` directory that will interactively install the dependencies locally necessary to compile the project.)
+
+```
 cd BoomHS
 scripts/install-dependencies.bash
+```
+
+3. Bootstrap the project (setup cmake database).
+
+```
 scripts/bootstrap.bash
+```
+
+4. Build and run.
+
+```
 scripts/build.bash
 scripts/build-and-run.bash
 ```
 
 ### Install dependencies.
+
 To install external dependencies, a script is used.
 ```bash
 scripts/install-dependencies.bash
@@ -271,7 +307,7 @@ There are helpful scripts in the [scripts/](./scripts/) directory that do lots o
   - Sometimes a macro inside a translation unit is a better choice than inheriting from a base class.
 - Limit heap usage.
   - Use the stack for your objects.
-  - So far invoking raw "new" has not been necessary, this should be maintained moving forward unless a discussion results in it being considered necessary.
+  - So far invoking raw operator "new" has not been necessary, this should be maintained moving forward unless a discussion results in it being considered necessary.
 
   + Source-code formatting is done by invoking clang-format, use the format script inside the scripts/ directory.
 ```bash
