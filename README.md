@@ -4,27 +4,7 @@ A sandbox online roleplaying game focusing on emergent gameplay through player i
 
 ![cone](./assets/cone.png?raw=true)`Under Construction! This project and README file are in active development.`
 
-## Table of contents
-  * [Project Information](#project-information)
-      + [Gameplay](#gameplay)
-      + [World Design](#world-design)
-      + [Player Progression](#player-progression)
-      + [Story](#story)
-      + [Roadmap](#roadmap)
-      + [Design Tenants](#design-tenants)
-      + [Screenshots](./screenshots/)
-      + [FAQ](#gameplay-faq)
-      + [Roadmap](#gameplay-roadmap)
-
-  * [Developer Information](#developer-information)
-      + [Building the Game](#getting-started)
-      + [Install Dependencies](#install-dependencies)
-      + [Bootstrapping](#bootstrap-the-project)
-       + [Command-Line Arguments](#command-line-arguments)
-      + [Compiling](#compiling-the-project)
-      + [Run the Project](#run-the-project)
-      + [Developer Guidelines](#developer-guidelines)
-      + [Helpful Scripts](#helpful-scripts)
+[TOC]
 
 ## Project Information
 The project at it's core is a simulation aimed at letting emergent behavior rise organically from interactions between the environment and the players. The universe the game takes place in can be loosely described as a mix of science fiction fantasy and traditional fantasy, mixing static content (known more commonly as prefabs) with generated content. The players will join this sandbox universe of worlds with no real direction, deciding amongst themselves how the game should be played. Underneath this sandbox a story about the universe's imminent destruction or potential salvation is waiting to be discovered. The fate of the world could potentially rest in the hands of a small group of players.
@@ -149,26 +129,77 @@ There are currently 2 development milestones planned. WIP
 
 #### Milestone 1 (Avocado Release)
 
-The first milestone for development is world building and world generation. The goal of this release is to develop the infrastructure necessary to allow the developers to create a basic world, and explore it using only the game itself. This release will support *offline mode only*.
+This milestone for development is world building and world generation. The goal of this release is to develop the infrastructure necessary to allow the developers to create a basic world, and explore it using only the game itself. Basic textures and basic sounds will be used to test the features developed at this stage. This release will support *offline mode only*.
 
 1. Generate a world starting from a random seed.
-2. A basic *level editor* (to be used on a generated world, or hand-craft an entire world using the editor.
-3. Move around in the world with basic systems in place (sound, graphics, keyboard/mouse support, controller support).
-4. Get the game running on the following platforms: Linux, Window1. s, and OSX.
+
+   - Terrain, water.
+   - Time of day, night-day cycle.
+
+2. Basic AI for the NPCs.
+
+   - Pathfinding.
+   - Player interaction.
+
+3. A basic *level editor* (to be used on a generated world, or hand-craft an entire world using the editor.
+
+   - Orthographic top-down view of the world with scrolling and zoom supporting.
+   - Uniform translation/rotation/zoom.
+
+4. Move around in the world with <u>**BASIC**</u> systems in place.
+
+   - First-person camera.
+   - Third-person orbital camera.
+
+   - Ambient and non-ambient sounds.
+   - 3D graphics.
+   - Keyboard/mouse and controller support.
+
+5. Offline chat support (ie: allow player to type in commands into an in-game console).
+
+6. Get the game running on supported platforms. (Linux, Windows, and OSX)
+
+7. Performant enough that players can maintain 60+ FPS.
+
+   - Since only basic gameplay is to be implemented, optimizations should be made at this stage so future development can easily profiled and a 60+ framerate can be maintained moving forward.
 
 #### Milestone 2 (Brussel Sprout Release)
 
+This step being complete should give confidence in the project architecture supporting the features planned for future milestones. Specifically the networking code interacting with the features from the first milestone. The bulk of this milestone will require re-architecting some of the project to support an server/client model. The client will support basic prediction, but the server will be the authority.
+
 1. Basic online support. 
-   - Chat support among players.
+
+   - Online pre-game lobby support. This allows players to gather together and chat in preparation to joining a world.
+
+   - In-game chat support among players (text).
    - Basic microphone support (two players can communicate in-game using their microphones).
+   - Players should be able to interact in limited ways. Players should be able to:
+     - See each other. See in real-time players and NPCs moving through the world.
+     - Player movement shouldn't be smooth in the face of lag, gameplay shouldn't be choppy in an online environment.
 
-### Why was this game created?
+2. Performance maintained at 60+ FPS in an online (also offline) environment.
 
-**would suggest changing to "why I created this game" if seeking personalized tone. Otherwise design tenants can be more cut and dry. Either option works. 
+#### Milestone 3 (Drop-the-beets Release)
 
-I am creating the game that I would like to play some day. This means that certain philosophies behind the design are in play:
+The focus of this milestone is to start to introduce basic gameplay features.
 
-### Gameplay FAQ (AWESOME GOOD IDEA)
+1. Item system.
+   - Pickup/drop items on the g
+   - Trade items with other players.
+2. Combat system.
+   - Player to AI and player-to-player combat.
+   - Death and respawning systems.
+   - AI to AI.
+3. Game-over scenario.
+   - In some game scenarios the game world will come to a conclusion. Implement a basic system that a player in-game can cause a "win/loss" scenario, ending the current world. In this game mode, the world will support the ability to regenerate a new world for players to join.
+
+### Why did I create this game?
+
+In today's modern gaming era, the trend of *hardcore* games are becoming less common then when I was growing up. I grew up when games were designed not to streamline content, but to immerse players into the virtual environment. In a sense, I feel the hardcore games I grew up playing are being replaced by *casual* games.
+
+Many of the games entering today's marked target a general audience, which means the hardcore mechanics that were in games when I grew up are often not included in the product. Instead, casual friendly features such as instant transportation, dying without meaningful consequences (ie: no experience loss, ability to resurrect yourself, often around where you died), pay-to-win cash shops or purchasing in-game buffs with real money). The effect of these *casual-friendly* features is that I find it hard to get immersed in the world, and thus I cannot enjoy the gameplay. This game is my attempt at designing and implementing a game I would personally like to play with my friends in the future.
+
+### Gameplay FAQ
 >Q. Can you play this game online or offline? Both?
 >A. Players can either play by themselves (in a fully offline mode), or log onto the public servers for an online adventure. We also would like to see a LAN mode.
 >
