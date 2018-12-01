@@ -4,7 +4,7 @@ A sandbox online roleplaying game focusing on emergent gameplay through player i
 
 ![cone](./assets/cone.png?raw=true)`Under Construction! This project and README file are in active development.`
 
-[TOC]
+{:toc}
 
 ## Project Information
 The project at it's core is a simulation aimed at letting emergent behavior rise organically from interactions between the environment and the players. The universe the game takes place in can be loosely described as a mix of science fiction fantasy and traditional fantasy, mixing static content (known more commonly as prefabs) with generated content. The players will join this sandbox universe of worlds with no real direction, deciding amongst themselves how the game should be played. Underneath this sandbox a story about the universe's imminent destruction or potential salvation is waiting to be discovered. The fate of the world could potentially rest in the hands of a small group of players.
